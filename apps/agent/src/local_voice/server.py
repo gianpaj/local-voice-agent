@@ -1,0 +1,165 @@
+"""Loopback-only signaling with one active browser and real model readiness."""
+import asyncio
+from contextlib import asynccontextmanager
+from dataclasses import dataclass
+import json
+import sys
+
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
+from loguru import logger
+from pydantic import BaseModel, ConfigDict, Field
+from pipecat.transports.smallwebrtc.request_handler import (
+    ConnectionMode, IceCandidate, SmallWebRTCPatchRequest,
+    SmallWebRTCRequest, SmallWebRTCRequestHandler,
+)
+
+from .config import Config
+from .llm import prepare_ollama
+from .pipeline import build_worker, run_worker
+from .tts import PhononEngine
+
+
+class Offer(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    sdp: str = Field(min_length=1, max_length=200_000)
+    type: str = "offer"
+    pc_id: str | None = Field(default=None, max_length=100)
+    restart_pc: bool = False
+    request_data: dict | None = None
+
+
+class Candidate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    candidate: str = Field(max_length=2000)
+    sdp_mid: str = Field(max_length=50)
+    sdp_mline_index: int = Field(ge=0, le=10)
+
+
+class Patch(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    pc_id: str = Field(min_length=1, max_length=100)
+    candidates: list[Candidate] = Field(max_length=64)
+
+
+def create_app(config=None, *, initialize=True):
+    config = config or Config.from_env()
+    handler = SmallWebRTCRequestHandler(ice_servers=[], connection_mode=ConnectionMode.SINGLE)
+    lock = asyncio.Lock()
+    state = {"phase": "initializing", "ready": False, "busy": False, "error": None}
+    active = {"connection": None, "task": None, "worker": None}
+    engine = PhononEngine(config.phonon_model)
+
+    async def warmup():
+        try:
+            config.validate()
+            await engine.load()
+            details = await prepare_ollama(config)
+            state.update(ready=True, phase="ready", **details)
+            logger.info("Models warmed and ready; no conversation recording enabled")
+        except Exception as error:
+            logger.error("Model preflight failed: {}", type(error).__name__)
+            state.update(phase="error", error=str(error))
+
+    @asynccontextmanager
+    async def lifespan(app):
+        warming = asyncio.create_task(warmup()) if initialize else None
+        try:
+            yield
+        finally:
+            if warming and not warming.done():
+                warming.cancel()
+                await asyncio.gather(warming, return_exceptions=True)
+            if active["worker"]:
+                await active["worker"].cancel(reason="server shutdown")
+            await handler.close()
+            if active["task"]:
+                await asyncio.gather(active["task"], return_exceptions=True)
+            await engine.close()
+
+    app = FastAPI(lifespan=lifespan, docs_url=None, redoc_url=None)
+    app.state.voice_state = state
+    app.state.active = active
+    app.state.handler = handler
+
+    @app.middleware("http")
+    async def limits(request, call_next):
+        if request.method in {"POST", "PATCH", "DELETE"}:
+            origin = request.headers.get("origin")
+            if origin not in config.allowed_origins:
+                return JSONResponse({"detail": "Origin is not allowed"}, status_code=403)
+            # Reject chunked/oversized requests too, not only Content-Length.
+            body = await request.body()
+            if len(body) > 256_000:
+                return JSONResponse({"detail": "Signaling request is too large"}, status_code=413)
+        return await call_next(request)
+
+    @app.get("/health")
+    async def health():
+        return {**state, "models": {"stt": "Parakeet TDT 0.6B v3 Q8_0", "llm": config.ollama_model, "tts": "Phonon 31M English CPU"}}
+
+    async def attached(connection):
+        worker = build_worker(connection, config, engine)
+        active.update(connection=connection, worker=worker)
+
+        async def run():
+            try:
+                await run_worker(worker)
+            except asyncio.CancelledError:
+                raise
+            except Exception:
+                logger.exception("Voice session failed")
+            finally:
+                engine.interrupt()
+                await connection.disconnect()
+                active.update(connection=None, task=None, worker=None)
+                state["busy"] = False
+        active["task"] = asyncio.create_task(run())
+
+    @app.post("/api/offer")
+    async def offer(body: Offer):
+        if body.type != "offer":
+            raise HTTPException(400, "Expected an SDP offer")
+        if not state["ready"]:
+            raise HTTPException(503, state["error"] or "Local models are warming up")
+        async with lock:
+            current = active["connection"]
+            if state["busy"] and (not current or body.pc_id != current.pc_id):
+                raise HTTPException(409, "Another browser is already using the voice agent")
+            if body.pc_id and (not current or body.pc_id != current.pc_id):
+                raise HTTPException(404, "This voice session has ended; reconnect")
+            state["busy"] = True
+            try:
+                return await handler.handle_web_request(SmallWebRTCRequest(**body.model_dump()), attached)
+            except Exception:
+                state["busy"] = bool(active["connection"])
+                raise
+
+    @app.patch("/api/offer")
+    async def patch(body: Patch):
+        await handler.handle_patch_request(SmallWebRTCPatchRequest(body.pc_id, [IceCandidate(**x.model_dump()) for x in body.candidates]))
+        return {"ok": True}
+
+    @app.delete("/api/offer")
+    async def stop(request: Request):
+        body = await request.json()
+        connection = active["connection"]
+        if connection and body.get("pc_id") == connection.pc_id:
+            engine.interrupt()
+            await active["worker"].cancel(reason="browser stopped")
+            await connection.disconnect()
+        return {"ok": True}
+
+    return app
+
+
+def main():
+    import uvicorn
+    # Library DEBUG logs include speech text/SDP; keep default logs metadata-only.
+    logger.remove()
+    logger.add(sys.stderr, level="INFO", filter=lambda record: not record["name"].startswith("pipecat"))
+    uvicorn.run(create_app(), host="127.0.0.1", port=7860, log_level="warning")
+
+
+if __name__ == "__main__":
+    main()
