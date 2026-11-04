@@ -107,10 +107,16 @@ async def main(args):
                 await page.get_by_role("button", name="Mute mic").click()
                 assert await page.evaluate("window.__voiceTest.peers[0].getSenders().filter(s=>s.track?.kind==='audio').every(s=>!s.track.enabled)")
                 await page.get_by_role("button", name="Unmute mic").click()
+                replaced = False
+                if await page.locator("select").first.locator("option").count() > 2:
+                    old_track = await page.evaluate("window.__voiceTest.peers[0].getSenders().find(s=>s.track?.kind==='audio').track.id")
+                    await page.locator("select").first.select_option(index=2)
+                    await page.wait_for_function("old=>window.__voiceTest.peers[0].getSenders().find(s=>s.track?.kind==='audio').track.id!==old", arg=old_track)
+                    replaced = True
                 await page.get_by_role("button", name="Stop session").click()
                 assert await page.locator(".message").count() == 0
                 assert await page.evaluate("window.__voiceTest.peers[0].connectionState") == "closed"
-                summary = {"turns": users, "assistant_segments": assistants, "http_destinations": sorted(hosts), "gpu_peak_mib": max(gpu), "vad_complete_to_bot_started_seconds": latencies, "median_seconds": statistics.median(latencies), "decoded_audio_energy": result["inbound"][0].get("totalAudioEnergy"), "second_offer_status": busy, "stop_clears_and_closes": True}
+                summary = {"turns": users, "assistant_segments": assistants, "http_destinations": sorted(hosts), "gpu_peak_mib": max(gpu), "vad_complete_to_bot_started_seconds": latencies, "median_seconds": statistics.median(latencies), "decoded_audio_energy": result["inbound"][0].get("totalAudioEnergy"), "second_offer_status": busy, "stop_clears_and_closes": True, "microphone_sender_replaced": replaced}
                 if args.barge_in:
                     summary["barge_in_drops_old_reply"] = True
                 print(json.dumps(summary, indent=2))

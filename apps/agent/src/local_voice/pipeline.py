@@ -9,7 +9,7 @@ from pipecat.transports.base_transport import TransportParams
 from pipecat.transports.smallwebrtc.transport import SmallWebRTCTransport
 from pipecat.workers.runner import WorkerRunner
 
-from .llm import BoundedOllama, SYSTEM_PROMPT
+from .llm import BoundedOllama
 from .stt import ParakeetSTT
 from .tts import PhononTTS
 

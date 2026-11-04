@@ -1,9 +1,11 @@
 """Loopback-only signaling with one active browser and real model readiness."""
 import asyncio
 from contextlib import asynccontextmanager
-from dataclasses import dataclass
-import json
 import sys
+import time
+
+import numpy as np
+import soxr
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
@@ -18,6 +20,7 @@ from .config import Config
 from .llm import prepare_ollama
 from .pipeline import build_worker, run_worker
 from .tts import PhononEngine
+from .stt import transcribe_pcm
 
 
 class Offer(BaseModel):
@@ -55,6 +58,16 @@ def create_app(config=None, *, initialize=True):
             config.validate()
             await engine.load()
             details = await prepare_ollama(config)
+            # Ready must include genuine GPU STT and PCM synthesis, not just files.
+            pcm = bytearray()
+            async for chunk in engine.stream("Ready."):
+                pcm.extend(chunk)
+            samples = np.frombuffer(pcm, dtype="<i2").astype(np.float32) / 32768
+            normalized = (soxr.resample(samples, 24000, 16000) * 32767).astype("<i2").tobytes()
+            started = time.monotonic()
+            if not await transcribe_pcm(config, normalized):
+                raise ValueError("Parakeet readiness check returned no speech")
+            details["stt_preflight_seconds"] = round(time.monotonic() - started, 3)
             state.update(ready=True, phase="ready", **details)
             logger.info("Models warmed and ready; no conversation recording enabled")
         except Exception as error:

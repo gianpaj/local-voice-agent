@@ -9,7 +9,7 @@
 
 `pnpm dev` starts only the first two, in separate process groups; Ctrl+C or either child's exit terminates both. Occupied ports cause an explicit error, not a kill of an unrelated process. Ollama and OpenClaw are never stopped or reconfigured.
 
-`GET /health` (browser proxy `/api/health`) reports initializing/ready/error and busy. Startup validates paths, loads local CPU Phonon, creates only the project alias, warms Qwen, and verifies its actual 4,096 context. A prior cold load took about 29 seconds; Start remains disabled until this completes.
+`GET /health` (browser proxy `/api/health`) reports initializing/ready/error and busy. Startup validates paths, loads local CPU Phonon, creates only the project alias, warms Qwen, verifies its actual 4,096 context, then synthesizes/transcribes a public “Ready” phrase through the actual GPU Parakeet runner. A prior cold load took about 29 seconds; Start remains disabled until these checks complete.
 
 ## Private Tailscale access
 
