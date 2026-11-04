@@ -56,6 +56,7 @@ class BoundedOllama(OLLamaLLMService):
         )
 
     async def _process_context(self, context):
+        started = time.monotonic()
         # System instruction is set on the service, never dropped by history bounds.
         messages = context.messages
         if len(messages) > 12:
@@ -65,3 +66,6 @@ class BoundedOllama(OLLamaLLMService):
                 await super()._process_context(context)
         except TimeoutError:
             await self.push_error("The local language model took too long. Please try again.")
+        finally:
+            from loguru import logger
+            logger.info("stage=llm seconds={:.3f}", time.monotonic() - started)

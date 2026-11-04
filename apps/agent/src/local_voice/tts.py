@@ -4,6 +4,7 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 import queue
 import threading
+import time
 
 import numpy as np
 from pipecat.frames.frames import CancelFrame, InterruptionFrame, TTSAudioRawFrame
@@ -99,12 +100,21 @@ class PhononEngine:
 
 class PhononTTS(TTSService):
     def __init__(self, engine: PhononEngine):
-        super().__init__(sample_rate=24000, push_start_frame=True)
+        super().__init__(sample_rate=24000, push_start_frame=True, push_stop_frames=True)
         self.engine = engine
 
     async def run_tts(self, text, context_id):
+        if len(text) > 1200:
+            await self.push_error("That response is too long to synthesize. Please ask for a shorter answer.")
+            return
+        started = time.monotonic()
+        first = True
         try:
-            async for data in self.engine.stream(text[:1200]):
+            async for data in self.engine.stream(text):
+                if first:
+                    from loguru import logger
+                    logger.info("stage=tts first_pcm_seconds={:.3f}", time.monotonic() - started)
+                    first = False
                 yield TTSAudioRawFrame(data, 24000, 1, context_id=context_id)
         except RuntimeError as error:
             await self.push_error(str(error))

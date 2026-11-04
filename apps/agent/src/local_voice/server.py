@@ -89,9 +89,12 @@ def create_app(config=None, *, initialize=True):
             if origin not in config.allowed_origins:
                 return JSONResponse({"detail": "Origin is not allowed"}, status_code=403)
             # Reject chunked/oversized requests too, not only Content-Length.
-            body = await request.body()
-            if len(body) > 256_000:
-                return JSONResponse({"detail": "Signaling request is too large"}, status_code=413)
+            body = bytearray()
+            async for chunk in request.stream():
+                body.extend(chunk)
+                if len(body) > 256_000:
+                    return JSONResponse({"detail": "Signaling request is too large"}, status_code=413)
+            request._body = bytes(body)  # Starlette's cached body for downstream parsing.
         return await call_next(request)
 
     @app.get("/health")
@@ -130,7 +133,11 @@ def create_app(config=None, *, initialize=True):
                 raise HTTPException(404, "This voice session has ended; reconnect")
             state["busy"] = True
             try:
-                return await handler.handle_web_request(SmallWebRTCRequest(**body.model_dump()), attached)
+                answer = await handler.handle_web_request(SmallWebRTCRequest(**body.model_dump()), attached)
+                if not active["connection"]:
+                    await handler.close()
+                    raise HTTPException(500, "The local voice pipeline could not start")
+                return answer
             except Exception:
                 state["busy"] = bool(active["connection"])
                 raise

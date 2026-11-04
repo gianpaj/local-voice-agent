@@ -33,7 +33,7 @@ def build_worker(connection, config, engine):
     worker = PipelineWorker(Pipeline([
         transport.input(), ParakeetSTT(config, status), aggregators.user(),
         BoundedOllama(config), PhononTTS(engine), transport.output(), aggregators.assistant(),
-    ]), params=PipelineParams(audio_in_sample_rate=16000, audio_out_sample_rate=24000),
+    ]), params=PipelineParams(audio_in_sample_rate=16000, audio_out_sample_rate=24000, enable_metrics=True),
         enable_rtvi=True, idle_timeout_secs=300, cancel_timeout_secs=8)
 
     @transport.event_handler("on_client_disconnected")

@@ -10,7 +10,7 @@ import numpy as np
 import pytest
 
 from local_voice.config import Config
-from local_voice.stt import transcribe_pcm
+from local_voice.stt import transcribe_pcm, ParakeetSTT
 from local_voice.tts import PhononEngine, pcm16
 
 
@@ -85,7 +85,8 @@ async def test_phonon_cancel_closes_iterator_on_owner_and_can_restart(tmp_path):
         first = engine.stream("First")
         assert len(await anext(first)) == 96
         engine.interrupt()
-        await first.aclose()
+        with pytest.raises(StopAsyncIteration):
+            await anext(first)
         assert closed and closed[0][0] == closed[0][1]
         second = engine.stream("Second")
         assert len(await anext(second)) == 96
@@ -93,3 +94,18 @@ async def test_phonon_cancel_closes_iterator_on_owner_and_can_restart(tmp_path):
         assert len(closed) == 2
     finally:
         await engine.close()
+
+
+async def test_capture_is_bounded_and_rejects_overlong_turn(config):
+    from pipecat.frames.frames import InputAudioRawFrame, VADUserStoppedSpeakingFrame
+    from pipecat.processors.frame_processor import FrameDirection
+    service = ParakeetSTT(replace(config, max_utterance_seconds=0.1))
+    service._user_speaking = True
+    errors = []
+    async def capture_error(message, **kwargs):
+        errors.append(message)
+    service.push_error = capture_error
+    await service.process_audio_frame(InputAudioRawFrame(b"\x01\x00" * 3200, 16000, 1), FrameDirection.DOWNSTREAM)
+    assert service._overflow and not service._audio_buffer and errors
+    await service._handle_user_stopped_speaking(VADUserStoppedSpeakingFrame())
+    assert not service._overflow and service._segment_queue.empty()
