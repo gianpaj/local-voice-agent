@@ -10,7 +10,7 @@ Linux, Ryzen 5 7600X, about 30 GiB RAM, RTX 4060 Ti 16,380 MiB. Node 24.22.1, pn
 
 `pnpm setup`, `pnpm preflight`, `pnpm test`, `pnpm build`, and `pnpm typecheck` pass. The setup was rerun against the committed lockfiles and preserved `.env`.
 
-Nine Python checks cover transcript-only output rather than stdout banners, silence bypass, invalid/overlong PCM, subprocess timeout and cancellation/reaping, loopback/model validation, PCM clipping/format, same-owner native-stream closure and restart, bounded utterance capture, and signaling readiness/origin/size/busy/invalid-body behavior. Two upstream deprecation warnings remain (`audioop` and a Pipecat compatibility class); Python is intentionally pinned below 3.13.
+Eleven Python checks cover transcript-only output rather than stdout banners, silence bypass, invalid/overlong PCM, subprocess timeout and cancellation/reaping, loopback/model validation, PCM clipping/format, same-owner native-stream closure and restart, bounded utterance capture, signaling readiness/origin/size/busy/invalid-body behavior, and project-only finite Ollama keepalive/readiness recovery/cancellation. Two upstream deprecation warnings remain (`audioop` and a Pipecat compatibility class); Python is intentionally pinned below 3.13.
 
 ## Individual real models
 
@@ -46,6 +46,9 @@ The first integration attempt caught a real playback bug: SmallWebRTC remote-tra
 - The final production-build smoke additionally asserted that selecting another fake microphone changed the actual RTP sender track ID, rather than only updating a UI selection. It passed with decoded audio energy, localhost-only HTTP traffic and 409 second-session rejection.
 - A simulated browser `NotAllowedError` displayed “Microphone permission denied” instead of leaving a stuck connection.
 - Native STT timeout/cancellation tests prove the child process is reaped; Phonon tests prove stream closure occurs on its owning worker and another generation can start.
+- Independent review caught a terminal-disconnect bug: the React callback left the old client reference populated, causing the next Start to return immediately. It now calls the ownership-guarded unified Stop cleanup. A production-build browser regression completed a real spoken turn, ended the actual server peer via DELETE, asserted all captured microphone tracks ended/all browser AudioContexts closed/playback detached/transcript cleared, then successfully connected a new peer without reloading. This run also passed decoded non-silent audio, second-offer rejection and actual microphone sender replacement.
+- Independent review also confirmed that ordinary Ollama requests leave the alias eligible for idle eviction while the original readiness flag remained true. Maintenance now refreshes only the project alias every 60 seconds with finite five-minute retention. Focused HTTP regressions exercise eviction → not ready → rewarm → ready, refresh failure/recovery, and task cancellation without any model unload request.
+- A real restarted backend reached readiness at 22:51:35 UTC; after its first idle maintenance cycle, Ollama `/api/ps` showed the project alias's expiration renewed to 22:57:35 UTC with the same 4,096 context. The unrelated embedding model remained loaded. This verifies the actual server retention API, in addition to mocked failure/recovery coverage.
 
 Reproduce the software browser checks while the app is running:
 
@@ -54,6 +57,7 @@ Reproduce the software browser checks while the app is running:
 uv run --project apps/agent --group browser playwright install chromium
 uv run --project apps/agent --group browser python scripts/browser-smoke.py --turns 10
 uv run --project apps/agent --group browser python scripts/browser-smoke.py --barge-in
+uv run --project apps/agent --group browser python scripts/browser-smoke.py --disconnect-reconnect
 ```
 
 An existing Chrome binary can be selected with `--executable /path/to/chrome`. The harness creates only public test speech in a temporary directory and removes it afterward.

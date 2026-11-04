@@ -70,7 +70,9 @@ export default function VoiceAgent() {
         transport, enableMic: true, enableCam: false,
         callbacks: {
           onBotReady: () => { active.current = true; setConnected(true); setConnecting(false); setPhase("listening"); },
-          onDisconnected: () => { if (client.current === current) { active.current = false; setConnected(false); setConnecting(false); setPhase("ready"); setLevel(0); } },
+          // A remote close must release the same resources as the Stop button.
+          // Ignore a late callback from an older client after a new Start.
+          onDisconnected: () => { if (client.current === current) void stop(); },
           onError: (message) => { setError(String((message.data as { error?: string })?.error || "Voice session error. Stop and reconnect.")); setPhase("error"); },
           onDeviceError: (event) => { setError(event.message || "Microphone unavailable. Check browser permissions."); setPhase("error"); },
           onAvailableMicsUpdated: setMics,

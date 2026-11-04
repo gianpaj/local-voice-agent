@@ -11,6 +11,8 @@
 
 `GET /health` (browser proxy `/api/health`) reports initializing/ready/error and busy. Startup validates paths, loads local CPU Phonon, creates only the project alias, warms Qwen, verifies its actual 4,096 context, then synthesizes/transcribes a public “Ready” phrase through the actual GPU Parakeet runner. A prior cold load took about 29 seconds; Start remains disabled until these checks complete.
 
+While the app is running, a lifespan-owned task refreshes only the project Ollama alias every 60 seconds using an empty generation and finite five-minute retention. If the alias was evicted, readiness changes to `warming` until it is loaded again; refresh errors disable Start and are retried on the next cycle. Shutdown cancels this task; the model then expires normally instead of being pinned indefinitely or forcibly unloading other Ollama users' models. No global Ollama configuration is changed.
+
 ## Private Tailscale access
 
 The project does not change Serve automatically. Preserve existing routes:
@@ -36,6 +38,7 @@ Serve carries the page and same-origin POST/PATCH signaling, **not WebRTC UDP au
 - Microphone inaccessible: use HTTPS or localhost, allow permission, select an input. Test actual echo with the intended speaker/microphone; headphones help diagnose barge-in.
 - Origin rejected: add the exact scheme/host/port to `ALLOWED_ORIGINS` and restart. Inference endpoints stay loopback.
 - Agent in use: stop the existing browser session; it is never replaced. ICE/pipeline teardown releases the slot; idle sessions time out after five minutes.
+- Lost connection: a terminal SDK disconnect uses the same cleanup as Stop, releases microphone/audio resources and clears the transcript. Start can reconnect without a page reload once the server slot is released.
 - Missing model/invalid format: correct `.env`; there is no automatic pull or fallback. The Handy GGUF requires the matching Handy runner.
 - GPU OOM: stop unrelated GPU work, or explicitly select a smaller existing local source model and remeasure. Do not alter global Ollama defaults.
 - Long utterance: pause between thoughts; exceeding 30 seconds rejects that utterance rather than pretending it was complete.

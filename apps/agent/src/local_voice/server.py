@@ -17,7 +17,7 @@ from pipecat.transports.smallwebrtc.request_handler import (
 )
 
 from .config import Config
-from .llm import prepare_ollama
+from .llm import keep_ollama_warm, prepare_ollama
 from .pipeline import build_worker, run_worker
 from .tts import PhononEngine
 from .stt import transcribe_pcm
@@ -70,6 +70,7 @@ def create_app(config=None, *, initialize=True):
             details["stt_preflight_seconds"] = round(time.monotonic() - started, 3)
             state.update(ready=True, phase="ready", **details)
             logger.info("Models warmed and ready; no conversation recording enabled")
+            await keep_ollama_warm(config, state)
         except Exception as error:
             logger.error("Model preflight failed: {}", type(error).__name__)
             state.update(phase="error", error=str(error))

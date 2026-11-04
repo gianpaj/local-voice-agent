@@ -26,7 +26,25 @@ QUESTIONS = [
     "Say goodbye in one sentence.",
 ]
 INSTRUMENT = """
-window.__voiceTest={events:[], peers:[]};
+window.__voiceTest={events:[], peers:[], streams:[], contexts:[], pcIds:[]};
+const nativeGetUserMedia=navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+navigator.mediaDevices.getUserMedia=async (...args)=>{
+  const stream=await nativeGetUserMedia(...args);window.__voiceTest.streams.push(stream);return stream;
+};
+const NativeAudioContext=window.AudioContext;
+window.AudioContext=class extends NativeAudioContext {
+  constructor(...args){super(...args);window.__voiceTest.contexts.push(this);}
+};
+const nativeFetch=window.fetch.bind(window);
+window.fetch=async (...args)=>{
+  const response=await nativeFetch(...args);
+  const input=args[0],url=typeof input==='string'?input:input.url||String(input);
+  const method=String(args[1]?.method||input.method||'GET').toUpperCase();
+  if(url.endsWith('/api/offer') && method==='POST'){
+    try{const body=await response.clone().json();if(body.pc_id)window.__voiceTest.pcIds.push(body.pc_id);}catch{}
+  }
+  return response;
+};
 const NativePeer=window.RTCPeerConnection;
 window.RTCPeerConnection=class extends NativePeer {
   constructor(...args){super(...args);window.__voiceTest.peers.push(this);}
@@ -113,12 +131,41 @@ async def main(args):
                     await page.locator("select").first.select_option(index=2)
                     await page.wait_for_function("old=>window.__voiceTest.peers[0].getSenders().find(s=>s.track?.kind==='audio').track.id!==old", arg=old_track)
                     replaced = True
+                if args.disconnect_reconnect:
+                    # End the actual server peer, not a simulated React/SDK callback.
+                    closed = await page.evaluate("""async()=>{
+                      const response=await fetch('/api/offer',{method:'DELETE',headers:{'content-type':'application/json'},
+                        body:JSON.stringify({pc_id:window.__voiceTest.pcIds.at(-1)})});return response.status;
+                    }""")
+                    assert closed == 200, f"Server-side close failed: {closed}"
+                    try:
+                        await page.wait_for_function("""()=>Array.from(document.querySelectorAll('button')).some(b=>b.textContent.includes('Start talking')&&!b.disabled)
+                          &&window.__voiceTest.streams.every(s=>s.getTracks().every(t=>t.readyState==='ended'))
+                          &&window.__voiceTest.contexts.every(c=>c.state==='closed')
+                          &&document.querySelector('audio').srcObject===null""")
+                    except Exception:
+                        print(await page.evaluate("""()=>({buttons:Array.from(document.querySelectorAll('button')).map(b=>[b.textContent,b.disabled]),
+                          peers:window.__voiceTest.peers.map(p=>p.connectionState),
+                          tracks:window.__voiceTest.streams.map(s=>s.getTracks().map(t=>t.readyState)),
+                          contexts:window.__voiceTest.contexts.map(c=>c.state),audioAttached:!!document.querySelector('audio').srcObject,
+                          pcIds:window.__voiceTest.pcIds})"""))
+                        raise
+                    assert await page.locator(".message").count() == 0
+                    await page.get_by_role("button", name="Start talking").click()
+                    await page.wait_for_function("""()=>window.__voiceTest.peers.length===2
+                      &&window.__voiceTest.peers[1].connectionState==='connected'
+                      &&!!document.querySelector('audio').srcObject
+                      &&Array.from(document.querySelectorAll('button')).some(b=>b.textContent==='Mute mic'&&!b.disabled)""")
+                    assert await page.evaluate("window.__voiceTest.streams.at(-1).getAudioTracks().every(t=>t.readyState==='live')")
                 await page.get_by_role("button", name="Stop session").click()
                 assert await page.locator(".message").count() == 0
                 assert await page.evaluate("window.__voiceTest.peers[0].connectionState") == "closed"
                 summary = {"turns": users, "assistant_segments": assistants, "http_destinations": sorted(hosts), "gpu_peak_mib": max(gpu), "vad_complete_to_bot_started_seconds": latencies, "median_seconds": statistics.median(latencies), "decoded_audio_energy": result["inbound"][0].get("totalAudioEnergy"), "second_offer_status": busy, "stop_clears_and_closes": True, "microphone_sender_replaced": replaced}
                 if args.barge_in:
                     summary["barge_in_drops_old_reply"] = True
+                if args.disconnect_reconnect:
+                    await page.wait_for_function("window.__voiceTest.peers.every(p=>p.connectionState==='closed') && window.__voiceTest.streams.every(s=>s.getTracks().every(t=>t.readyState==='ended')) && window.__voiceTest.contexts.every(c=>c.state==='closed')")
+                    summary["remote_disconnect_releases_media_and_reconnects"] = True
                 print(json.dumps(summary, indent=2))
             finally:
                 await browser.close()
@@ -130,4 +177,5 @@ if __name__ == "__main__":
     parser.add_argument("--executable")
     parser.add_argument("--turns", type=int, choices=range(1, 11), default=1)
     parser.add_argument("--barge-in", action="store_true", help="Interrupt a dragon story with 'say only okay'")
+    parser.add_argument("--disconnect-reconnect", action="store_true", help="End the server peer, verify media cleanup, then Start again without reloading")
     asyncio.run(main(parser.parse_args()))

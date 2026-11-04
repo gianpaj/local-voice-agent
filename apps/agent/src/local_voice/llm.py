@@ -46,6 +46,42 @@ async def prepare_ollama(config: Config):
         return {"warmup_seconds": round(time.monotonic() - started, 3), "llm_bytes": source["size"], "llm_context": 4096}
 
 
+async def refresh_ollama(config: Config, state: dict, client):
+    """Retain only our alias for a finite window, and report eviction honestly."""
+    def project_model(models):
+        return next((m for m in models if m["name"] in {config.ollama_model, config.ollama_model + ":latest"}), None)
+
+    try:
+        running = await client.get("/api/ps")
+        running.raise_for_status()
+        if not project_model(running.json()["models"]):
+            state.update(ready=False, phase="warming", error=None)
+        # Empty generation loads/retains the model without a conversation or tokens.
+        refreshed = await client.post("/api/generate", json={
+            "model": config.ollama_model, "keep_alive": "5m", "stream": False,
+        })
+        refreshed.raise_for_status()
+        running = await client.get("/api/ps")
+        running.raise_for_status()
+        loaded = project_model(running.json()["models"])
+        if not loaded or loaded.get("context_length") != 4096:
+            raise ValueError("The project language model is not ready with a 4096-token context")
+        state.update(ready=True, phase="ready", error=None)
+    except (httpx.HTTPError, ValueError, KeyError) as error:
+        state.update(ready=False, phase="error", error="The local language model is unavailable; retrying warmup.")
+        from loguru import logger
+        logger.warning("Project model keepalive failed: {}", type(error).__name__)
+
+
+async def keep_ollama_warm(config: Config, state: dict, *, interval=60):
+    # Canceled with the app lifespan. Never alter Ollama global defaults or unload
+    # another model; this alias expires normally within five minutes after exit.
+    async with httpx.AsyncClient(base_url=config.ollama_url, timeout=120, trust_env=False) as client:
+        while True:
+            await asyncio.sleep(interval)
+            await refresh_ollama(config, state, client)
+
+
 class BoundedOllama(OLLamaLLMService):
     def __init__(self, config: Config):
         super().__init__(
