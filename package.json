@@ -1,0 +1,15 @@
+{
+  "name": "local-voice-agent",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@11.16.0",
+  "engines": { "node": ">=24 <25" },
+  "scripts": {
+    "dev": "bash scripts/dev",
+    "setup": "bash scripts/setup",
+    "preflight": "bash scripts/preflight",
+    "build": "pnpm --filter web build",
+    "typecheck": "pnpm --filter web typecheck",
+    "test": "uv run --project apps/agent pytest apps/agent/tests -q"
+  }
+}

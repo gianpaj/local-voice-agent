@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd "$(dirname "$0")/.."
+for port in 3000 7860; do
+  if ss -ltn "sport = :$port" | tail -n +2 | read -r _; then
+    echo "Port $port is already in use. Stop that service before starting this project." >&2; exit 1
+  fi
+done
+children=()
+cleanup() {
+  trap - INT TERM EXIT
+  for child in "${children[@]}"; do kill -TERM -- "-$child" 2>/dev/null || true; done
+  for child in "${children[@]}"; do wait "$child" 2>/dev/null || true; done
+}
+trap cleanup INT TERM EXIT
+setsid uv run --project apps/agent python -m local_voice.server & children+=("$!")
+setsid pnpm --filter web dev & children+=("$!")
+echo "Local Voice: http://localhost:3000 — models warm in the background. Ctrl+C stops both apps."
+wait -n "${children[@]}"

@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd "$(dirname "$0")/.."
+command -v uv >/dev/null || { echo "Install uv first: https://docs.astral.sh/uv/" >&2; exit 1; }
+command -v pnpm >/dev/null || { echo "Install Node 24 and pnpm 11.16.0 first." >&2; exit 1; }
+uv sync --project apps/agent --locked
+pnpm install --frozen-lockfile
+if [ ! -f .env ]; then cp .env.example .env; echo "Created .env: set the three local model/runtime paths before starting."; fi
+echo "Dependencies installed. Run pnpm preflight, then pnpm dev."
