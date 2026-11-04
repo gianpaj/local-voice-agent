@@ -7,7 +7,7 @@
 - Existing Ollama: `127.0.0.1:11434`.
 - WebRTC: direct encrypted browser ↔ Python peer UDP. Both ICE-server lists are empty.
 
-`pnpm dev` starts only the first two, in separate process groups; Ctrl+C or either child's exit terminates both. Occupied ports cause an explicit error, not a kill of an unrelated process. Ollama and OpenClaw are never stopped or reconfigured.
+`pnpm dev` starts only the first two, in separate process groups, with Next.js development/HMR enabled. For the shared Tailscale HTTPS handoff, run `pnpm build` once and then `pnpm start`; the same supervisor starts the Python agent and production Next.js without a development WebSocket. Rebuild after frontend changes. Ctrl+C or either child's exit terminates both. Occupied ports cause an explicit error, not a kill of an unrelated process. Ollama and OpenClaw are never stopped or reconfigured.
 
 `GET /health` (browser proxy `/api/health`) reports initializing/ready/error and busy. Startup validates paths, loads local CPU Phonon, creates only the project alias, warms Qwen, verifies its actual 4,096 context, then synthesizes/transcribes a public “Ready” phrase through the actual GPU Parakeet runner. A prior cold load took about 29 seconds; Start remains disabled until these checks complete.
 
@@ -31,6 +31,15 @@ ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000,https://gpu-host.exa
 
 Use the HTTPS page on the remote Tailscale device and grant its browser microphone permission. No Funnel/public exposure is needed. Tailnet ACLs control peer access.
 
+Use the production launcher behind this HTTPS proxy:
+
+```bash
+pnpm build
+pnpm start
+```
+
+The development server's HMR/cross-origin checks are not part of the shared app; do not widen development origins to make the handoff work.
+
 Serve carries the page and same-origin POST/PATCH signaling, **not WebRTC UDP audio**. Inspect the selected pair in `chrome://webrtc-internals` or WebRTC stats and test bidirectional media. If the page loads but audio fails, check candidate reachability, VPN/browser behavior and firewall. Do not silently introduce public STUN/TURN. Never use `tailscale serve reset` to remove just this app.
 
 ## Troubleshooting
@@ -45,3 +54,14 @@ Serve carries the page and same-origin POST/PATCH signaling, **not WebRTC UDP au
 - Playback blocked: click Enable sound. Browser autoplay policy varies despite the initial Start gesture.
 
 Default logs filter library DEBUG because it can include transcripts/SDP. STT subprocess groups are terminated/reaped on timeout/cancel, temporary files are removed, and Phonon closes its native iterator in the same worker thread that owns it. Setup/model acquisition and Tailscale coordination traffic are not model inference uploads.
+
+## Managed test instance
+
+The handoff instance runs as the transient user service `local-voice-agent.service`, with the canonical repository as its working directory. This keeps the two project processes alive independently of the chat turn. It does not change boot/login startup and does not own Ollama.
+
+```bash
+systemctl --user status local-voice-agent
+systemctl --user stop local-voice-agent
+```
+
+Stop that instance before running `pnpm dev` or `pnpm start` manually, because both use ports 3000/7860. A transient service is collected after it stops; run `pnpm build` then `pnpm start` to start the HTTPS handoff manually again (`pnpm dev` remains available for local development). The added tailnet-only HTTPS 8443 proxy is separate and can be removed with `tailscale serve --https=8443 off`, without resetting any other route.

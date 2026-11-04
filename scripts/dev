@@ -1,6 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 cd "$(dirname "$0")/.."
+web_mode="${1:-dev}"
+case "$web_mode" in
+  dev) ;;
+  start)
+    if [ ! -f apps/web/.next/BUILD_ID ]; then
+      echo "Production build missing. Run pnpm build before pnpm start." >&2; exit 1
+    fi
+    ;;
+  *) echo "Expected dev or start mode." >&2; exit 2 ;;
+esac
 for port in 3000 7860; do
   if ss -ltn "sport = :$port" | tail -n +2 | read -r _; then
     echo "Port $port is already in use. Stop that service before starting this project." >&2; exit 1
@@ -14,6 +24,6 @@ cleanup() {
 }
 trap cleanup INT TERM EXIT
 setsid uv run --project apps/agent python -m local_voice.server & children+=("$!")
-setsid pnpm --filter web dev & children+=("$!")
+setsid pnpm --filter web "$web_mode" & children+=("$!")
 echo "Local Voice: http://localhost:3000 — models warm in the background. Ctrl+C stops both apps."
 wait -n "${children[@]}"

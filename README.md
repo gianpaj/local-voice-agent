@@ -17,7 +17,7 @@ pnpm dev
 
 Open **http://localhost:3000** on the same computer. Wait for model warmup, click Start talking, and allow microphone access. Stop clears the conversation. Ctrl+C stops both project services, not Ollama. Setup preserves an existing `.env` and installs from committed lockfiles.
 
-On another tailnet device use private **Tailscale HTTPS**, not plain HTTP to an IP. The browser supplies that device's audio, not host-attached devices. See the [runbook](docs/runbook.md).
+On another tailnet device use private **Tailscale HTTPS**, not plain HTTP to an IP. Run `pnpm build` then `pnpm start` for this shared handoff; `pnpm dev` is for local development. Production mode avoids the dev server's HMR/cross-origin WebSocket. The browser supplies that device's audio, not host-attached devices. See the [runbook](docs/runbook.md).
 
 ## Models
 

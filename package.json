@@ -6,6 +6,7 @@
   "engines": { "node": ">=24 <25" },
   "scripts": {
     "dev": "bash scripts/dev",
+    "start": "bash scripts/dev start",
     "setup": "bash scripts/setup",
     "preflight": "bash scripts/preflight",
     "build": "pnpm --filter web build",
