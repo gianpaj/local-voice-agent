@@ -69,3 +69,15 @@ An existing Chrome binary can be selected with `--executable /path/to/chrome`. T
 - No real microphone unplug/permission-revocation test, browser crash-during-native-call injection, or forced native-library hang. Simulated/model-adapter failure paths are covered, not every OS/device failure.
 - Phonon cancellation is cooperative between native chunks, not an instantaneous hard kill of a Rust worker thread.
 - No GitHub remote, push, PR, model upgrade, public exposure, or OpenClaw transcription changes. The only persistent inference change was the project-owned `local-voice-qwen` alias reusing existing Ollama blobs.
+
+## Canonical repository and private HTTPS handoff
+
+The parent fast-forwarded the completed implementation/review fixes into the requested canonical repository on `feat/pipecat-local-voice`. Setup and preflight succeeded from that directory. The independently reviewed fix had eleven passing Python checks and a successful production build/typecheck; the canonical production build also passed.
+
+The first private HTTPS browser attempt exposed blocked Next development HMR: the server page was available, but Start remained disabled. The shared instance was changed to the supervised `pnpm start` production mode after `pnpm build`, without broadening allowed development origins. Production HTTPS showed a secure browser context with no page or console errors.
+
+A new tailnet-only HTTPS 8443 proxy was added for the app; before/after checks confirmed the existing background routes were preserved. The reviewed app runs from the canonical directory under the transient user unit `local-voice-agent.service`; it is not enabled for boot/login.
+
+Actual Chromium on the GPU host then exercised the private HTTPS origin with a synthetic public microphone question through genuine WebRTC and local Parakeet/Qwen/Phonon. One complete English turn passed, with two assistant text segments, nonzero decoded audio energy (0.16648), 409 second-client rejection, actual microphone-sender replacement, and Stop clearing/closing the session. HTTP destinations were limited to that private origin. The observed transcribing-event-to-speaking interval was 0.805 seconds (plus VAD silence); sampled machine-total GPU usage peaked at 9,348 MiB. These remain software/event measurements, not acoustic latency or an allocation bound.
+
+After the test the HTTPS health endpoint returned ready=true/busy=false and the service was active. This validates the deployed origin from the host, not the user's distinct remote device, physical microphone, speaker or echo behavior; those still require the intended device.
