@@ -34,6 +34,16 @@ Parent supplied corrected observability base `76358a24db86e26859875e9784f4de1dec
 - Coordinated dispatcher/config seam with the Whistle worker: an application-owned `engine` keyword is used only for resident Parakeet. Parent composes backend selection so selecting Whistle does not initialize unused Parakeet. No VAD/turn-ownership redesign in this change.
 - Prepared a paired CLI/resident benchmark using the Whistle comparison's exact seven labeled public/synthetic/silence fixtures and shared WER/entity scoring implementation. Results remain pending; no speed or quality-parity claim yet.
 
+## 2026-11-05 — controlled evidence and review fixes
+
+- Exclusive native/CLI comparison completed: 70/70 attempts successful, 35/35 exact/normalized transcript matches, both 0% WER/CER on this small corpus, both 100% number/entity probes, zero adapter-silence false positives. Speech p50/p95: CLI 487.6/538.5 ms, resident 52.3/113.4 ms; 29 warm resident calls p50 48.7 ms. Startup 341.6 ms, model load 243.5 ms, first inference 158.9 ms are separate costs.
+- Qwen stayed fully GPU-resident at unchanged context 4,096 before/after. Device-wide sampled peak 10,299 MiB (includes unrelated embedding model and overlap with temporary CLI), worker RSS 536,350,720 bytes; no instantaneous GPU/RAM peak claim.
+- Actual native CUDA cancellation/deadline/recovery/shutdown checks passed. Five native cancel-plus-follow-up checks retained the same worker and the identical next reference transcript. Combined times 283–295 ms are not pure abort latency. In-flight shutdown reaped its child in 66.3 ms. Evidence is ignored metadata-only JSON, no transcript/audio content.
+- Reviewer identified and implementation fixed: offer/readiness inconsistency, TERM-resistant shutdown waiting behind an inference lock, process ownership lost on repeated cleanup cancellation, and close-before-spawn-handle startup race. Strongly retained shielded cleanup tasks now finish owned reaping before references clear; pending process creation is canceled on close, and closed is checked after creation.
+- Parent configuration metadata API was cherry-picked (`0ddbdb5` → equivalent local `e7604ad`); attached sessions now retain safe backend/mode/thread labels outside numeric metrics.
+- 40 backend tests pass; independent read-only lifecycle/ABI review reports no outstanding blocking issues. No timing rerun was needed for cleanup/readiness-only fixes; actual benchmark/lifecycle checks exercised the corresponding native path, and new edge cases have deterministic subprocess regressions.
+- Detailed measured conditions/results: [native inference results](../../docs/native-inference-results-2026-11-05.md). Parent still owns browser/deployment acceptance, optional local default switch and push. OpenBLAS/TTS-thread/model/runtime changes remain unadopted rather than presented as unmeasured improvements.
+
 ## Evidence still required
 
 - Corrected telemetry baseline and model/build hashes.
