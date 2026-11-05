@@ -1,5 +1,6 @@
 """SmallWebRTC -> Parakeet -> local Qwen -> Phonon -> SmallWebRTC."""
 from pipecat.audio.vad.silero import SileroVADAnalyzer
+from pipecat.frames.frames import TranscriptionFrame, LLMContextFrame
 from pipecat.audio.vad.vad_analyzer import VADParams
 from pipecat.pipeline.pipeline import Pipeline
 from pipecat.pipeline.worker import PipelineWorker, PipelineParams
@@ -25,6 +26,21 @@ def build_worker(connection, config, engine, telemetry=None):
         vad_analyzer=SileroVADAnalyzer(sample_rate=16000, params=VADParams(stop_secs=config.vad_stop_seconds)),
         empty_user_turn=None,
     ))
+    if telemetry:
+        user_aggregator = aggregators.user()
+        aggregation_turn = None
+
+        @user_aggregator.event_handler("on_before_process_frame")
+        async def bind_transcript(_processor, frame):
+            nonlocal aggregation_turn
+            if isinstance(frame, TranscriptionFrame):
+                aggregation_turn = getattr(frame, "local_voice_turn", None)
+
+        @user_aggregator.event_handler("on_before_push_frame")
+        async def bind_context(_processor, frame):
+            if isinstance(frame, LLMContextFrame):
+                frame.local_voice_turn = aggregation_turn
+
     worker = None
 
     async def status(phase):

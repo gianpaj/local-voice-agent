@@ -140,7 +140,9 @@ class SafeSpanExporter(SpanExporter):
             sink.emit({"schema_version": 1, "record_type": "span", "timestamp": timestamp(),
                        "session_id": session_id, "turn_id": valid_uuid(attrs.get("local.turn_id")),
                        "request_id": valid_uuid(attrs.get("local.request_id")), "stage": kind,
-                       "model": None, "status": "error" if span.status.status_code == StatusCode.ERROR else "ok",
+                       "model": None, "status": attrs.get("local.status") if attrs.get("local.status") in {
+                           "ok", "cancelled", "error", "timeout", "empty", "interrupted", "disconnected", "superseded"
+                       } else "error" if span.status.status_code == StatusCode.ERROR else "interrupted" if attrs.get("turn.was_interrupted") else "ok",
                        "trace_id": f"{span.context.trace_id:032x}", "span_id": f"{span.context.span_id:016x}",
                        "parent_span_id": f"{span.parent.span_id:016x}" if span.parent else None,
                        "metrics": metrics})
@@ -216,6 +218,7 @@ class RequestMetrics:
         self.started = time.monotonic()
         self.metrics = dict(metrics or {})
         self.finished = False
+        self.status = None
         self.span = trace.get_tracer("local_voice").start_span(stage, context=trace.set_span_in_context(turn.span), attributes={
             "local.session_id": session.id, "local.turn_id": turn.id, "local.request_id": self.id,
         })
@@ -226,6 +229,8 @@ class RequestMetrics:
         if self.finished:
             return
         self.finished = True
+        self.status = status
+        self.span.set_attribute("local.status", status)
         self.metrics["total_ms"] = elapsed_ms(self.started)
         if self.metrics.get("audio_seconds", 0) > 0:
             self.metrics["rtf"] = self.metrics["total_ms"] / 1000 / self.metrics["audio_seconds"]
@@ -290,10 +295,21 @@ class SessionMetrics:
         if turn.status is None and turn.first_pcm is None:
             turn.first_pcm = time.monotonic()
 
+    def turn_outcome(self, turn, proposed="ok"):
+        outcomes = {r.status for r in turn.requests if r.finished}
+        for outcome in ("error", "timeout", "cancelled", "empty"):
+            if outcome in outcomes:
+                return "interrupted" if outcome == "cancelled" and proposed == "interrupted" else outcome
+        return proposed
+
     def end_turn(self, turn, status):
         if turn.status is not None:
             return
+        status = self.turn_outcome(turn, status)
         turn.status = status
+        turn.span.set_attribute("local.status", status)
+        if status in {"error", "timeout"}:
+            turn.span.set_status(Status(StatusCode.ERROR))
         metrics = {"agent_ttfa_ms": elapsed_ms(turn.vad_stopped, turn.first_pcm) if turn.first_pcm is not None else None,
                    "server_speaking_ms": elapsed_ms(turn.vad_stopped, turn.bot_started) if turn.bot_started is not None else None,
                    "endpointing_config_ms": self.endpointing_ms,
@@ -317,6 +333,7 @@ class SessionMetrics:
         health = self.sink.health()
         self.record("session", status=status, metrics={"session_duration_ms": elapsed_ms(self.started),
                     "dropped_records": health["dropped"], "write_errors": health["write_errors"]})
+        self.span.set_attribute("local.status", status)
         self.span.end()
 
 
@@ -337,15 +354,10 @@ class CascadeObserver(BaseObserver):
 
     async def on_push_frame(self, data):
         frame, session = data.frame, self.session
-        if isinstance(frame, VADUserStartedSpeakingFrame):
-            self._cancel_end()
-            session.start_turn()
-        elif isinstance(frame, VADUserStoppedSpeakingFrame):
-            turn = session.current or session.start_turn()
-            turn.vad_stopped = time.monotonic()
-            # This is the VAD's declared silence window, NOT a waveform measurement.
-            turn.endpointing_vad_reported_ms = frame.stop_secs * 1000 if frame.stop_secs else None
-        elif isinstance(frame, BotStartedSpeakingFrame):
+        # VAD ownership is updated inline by ParakeetSTT before its segment
+        # enters the async queue. Worker observers run asynchronously and must
+        # never choose a segment's owner or reset it after transcription starts.
+        if isinstance(frame, BotStartedSpeakingFrame):
             self._cancel_end()
             turn = session.response_turn
             if turn and turn.status is None and turn.bot_started is None:

@@ -7,7 +7,7 @@ import threading
 import time
 
 import numpy as np
-from pipecat.frames.frames import CancelFrame, InterruptionFrame, TTSAudioRawFrame
+from pipecat.frames.frames import CancelFrame, InterruptionFrame, TTSAudioRawFrame, LLMTextFrame, LLMFullResponseEndFrame
 from pipecat.services.tts_service import TTSService
 
 
@@ -103,12 +103,13 @@ class PhononTTS(TTSService):
         super().__init__(sample_rate=24000, push_start_frame=True, push_stop_frames=True)
         self.engine = engine
         self.telemetry = telemetry
+        self._response_turn = None
 
     def can_generate_metrics(self):
         return True
 
     async def run_tts(self, text, context_id):
-        request = self.telemetry.request("tts", "phonon-31m-en-q8_0-cpu", metrics={
+        request = self.telemetry.request("tts", "phonon-31m-en-q8_0-cpu", turn=self._response_turn, metrics={
             "first_pcm_ms": None, "audio_seconds": 0.0,
         }) if self.telemetry else None
         started = time.monotonic()
@@ -145,6 +146,8 @@ class PhononTTS(TTSService):
                     self.telemetry.end_turn(request.turn, status)
 
     async def process_frame(self, frame, direction):
+        if isinstance(frame, (LLMTextFrame, LLMFullResponseEndFrame)):
+            self._response_turn = getattr(frame, "local_voice_turn", None) or self._response_turn
         if isinstance(frame, (InterruptionFrame, CancelFrame)):
             self.engine.interrupt()
         await super().process_frame(frame, direction)

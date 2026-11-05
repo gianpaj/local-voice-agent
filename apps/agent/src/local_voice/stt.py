@@ -102,7 +102,18 @@ class ParakeetSTT(SegmentedSTTService):
             self._overflow = True
             await self.push_error("Please pause at least every 30 seconds. This utterance was not transcribed.")
 
+    async def _handle_user_started_speaking(self, frame):
+        # This handler runs inline in the STT processor. Pipeline observers are
+        # queued notifications, so using one to select ownership races the CLI.
+        if self.telemetry:
+            self.telemetry.start_turn()
+        await super()._handle_user_started_speaking(frame)
+
     async def _handle_user_stopped_speaking(self, frame):
+        if self.telemetry:
+            turn = self.telemetry.current or self.telemetry.start_turn()
+            turn.vad_stopped = time.monotonic()
+            turn.endpointing_vad_reported_ms = frame.stop_secs * 1000 if frame.stop_secs else None
         if self._overflow:
             self._overflow = False
             self._user_speaking = False
@@ -123,6 +134,7 @@ class ParakeetSTT(SegmentedSTTService):
         request = None
         turn = self._segment_turns.pop(self._transcribing_segment, None)
         if self.telemetry:
+            turn = turn or self.telemetry.start_turn()
             request = self.telemetry.request("stt", "parakeet-tdt-0.6b-v3-Q8_0", turn=turn,
                 metrics={"audio_seconds": len(audio) / 32000, "cli_ms": None})
         status = "empty"
@@ -135,6 +147,7 @@ class ParakeetSTT(SegmentedSTTService):
                 if request:
                     self.telemetry.response_turn = request.turn
                 frame = TranscriptionFrame(text, self._user_id, time_now_iso8601(), language=Language.EN)
+                frame.local_voice_turn = request.turn if request else None
                 yield frame
         except (asyncio.CancelledError, GeneratorExit):
             status = "cancelled"

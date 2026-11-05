@@ -1,10 +1,11 @@
 """Local Ollama setup, honest readiness, and bounded Pipecat requests."""
 import asyncio
+from contextvars import ContextVar
 import time
 
 import httpx
 from pipecat.services.ollama.llm import OLLamaLLMService
-from pipecat.frames.frames import LLMTextFrame, MetricsFrame
+from pipecat.frames.frames import LLMTextFrame, MetricsFrame, LLMContextFrame
 from pipecat.metrics.metrics import TTFBMetricsData, TTFATMetricsData, LLMUsageMetricsData
 from pipecat.processors.frame_processor import FrameDirection
 from opentelemetry import trace
@@ -96,11 +97,15 @@ class BoundedOllama(OLLamaLLMService):
         )
 
         self.telemetry = telemetry
-        self._request_metrics = None
+        self._request_metrics = ContextVar("local_voice_llm_request", default=None)
+        self._frame_turn = ContextVar("local_voice_llm_turn", default=None)
         self._model_label = config.ollama_model
 
     async def push_frame(self, frame, direction=FrameDirection.DOWNSTREAM):
-        request = self._request_metrics
+        request = self._request_metrics.get()
+        owner = request.turn if request else self._frame_turn.get()
+        if owner:
+            frame.local_voice_turn = owner
         if request:
             # This is the request captured by _process_context, never the mutable
             # session.current turn (which may already be a new interruption).
@@ -123,15 +128,25 @@ class BoundedOllama(OLLamaLLMService):
                             request.metrics[key] = getattr(data.value, key, None)
         await super().push_frame(frame, direction)
 
+    async def process_frame(self, frame, direction):
+        if isinstance(frame, LLMContextFrame):
+            token = self._frame_turn.set(getattr(frame, "local_voice_turn", None))
+            try:
+                await super().process_frame(frame, direction)
+            finally:
+                self._frame_turn.reset(token)
+        else:
+            await super().process_frame(frame, direction)
+
     async def _process_context(self, context):
         started = time.monotonic()
-        request = self.telemetry.request("llm", self._model_label, metrics={
+        request = self.telemetry.request("llm", self._model_label, turn=self._frame_turn.get(), metrics={
             "first_answer_token_ms": None, "service_ttfb_ms": None,
             "service_ttfat_ms": None, "service_thinking_ms": None,
             "prompt_tokens": None, "completion_tokens": None, "total_tokens": None,
             "reasoning_tokens": None,
         }) if self.telemetry else None
-        self._request_metrics = request
+        request_token = self._request_metrics.set(request)
         if self.telemetry:
             self.telemetry.register_native(getattr(self, "_tracing_context", None))
         status = "ok"
@@ -158,7 +173,6 @@ class BoundedOllama(OLLamaLLMService):
                 request.finish(status)
                 if status in {"empty", "error", "timeout"}:
                     self.telemetry.end_turn(request.turn, status)
-            if self._request_metrics is request:
-                self._request_metrics = None
+            self._request_metrics.reset(request_token)
             from loguru import logger
             logger.info("stage=llm seconds={:.3f}", time.monotonic() - started)

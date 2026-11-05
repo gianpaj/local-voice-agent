@@ -60,9 +60,13 @@ async def test_vad_ttfa_and_server_speaking_are_separate_and_missing_stays_null(
     observer = CascadeObserver(session)
     async def pushed(frame):
         await observer.on_push_frame(SimpleNamespace(frame=frame))
+    # Speech ownership is established inline by the STT processor, not by a
+    # queued observer event. This test isolates only the audio/server boundaries.
+    turn = session.start_turn()
+    turn.vad_stopped = time.monotonic()
+    turn.endpointing_vad_reported_ms = 600
     await pushed(VADUserStartedSpeakingFrame())
     await pushed(VADUserStoppedSpeakingFrame(stop_secs=0.6))
-    turn = session.current
     request = session.request("tts", "phonon", turn=turn)
     session.response_turn = turn
     await asyncio.sleep(0.002)
@@ -196,3 +200,56 @@ async def test_llm_native_metrics_capture_original_request_and_answer_not_reason
     assert item["metrics"]["first_answer_token_ms"] is not None
     assert item["metrics"]["total_tokens"] == 9
     assert "sentinel answer" not in (path / "metrics.jsonl").read_text()
+
+
+async def test_delayed_vad_observer_cannot_bind_new_segment_to_old_response(config, telemetry, monkeypatch):
+    import local_voice.stt as module
+    session, sink, path = telemetry
+    old = session.start_turn()
+    session.end_turn(old, "ok")
+    session.response_turn = old
+    service = module.ParakeetSTT(config, telemetry=session)
+    observer = CascadeObserver(session)
+    start, stop = VADUserStartedSpeakingFrame(), VADUserStoppedSpeakingFrame(stop_secs=0.6)
+    await service._handle_user_started_speaking(start)
+    await service._handle_user_stopped_speaking(stop)
+    audio, number = service._segment_queue.get_nowait()
+    service._transcribing_segment = number
+    new = session.current
+    async def transcribe(*args, **kwargs):
+        return "not for retained logs"
+    monkeypatch.setattr(module, "transcribe_pcm", transcribe)
+    frames = [frame async for frame in service.run_stt(audio)]
+    assert frames[0].local_voice_turn is new
+    # Model completion beats the delayed worker observer queue.
+    await observer.on_push_frame(SimpleNamespace(frame=start))
+    await observer.on_push_frame(SimpleNamespace(frame=stop))
+    assert session.current is new and session.response_turn is new and new is not old
+    assert len(session.turns) == 1
+    session.close()
+    await observer.cleanup()
+    sink.flush()
+    item = next(r for r in records(path) if r["record_type"] == "stage")
+    assert item["turn_id"] == new.id and item["turn_id"] != old.id
+    assert not any(r["status"] == "superseded" for r in records(path))
+
+
+async def test_cancelled_tts_is_not_successful_turn_or_span(telemetry):
+    session, sink, path = telemetry
+    turn = session.start_turn()
+    turn.vad_stopped = time.monotonic()
+    session.response_turn = turn
+    request = session.request("tts", "phonon", turn=turn)
+    observer = CascadeObserver(session)
+    await observer.on_push_frame(SimpleNamespace(frame=BotStartedSpeakingFrame()))
+    request.finish("cancelled")
+    await observer.on_push_frame(SimpleNamespace(frame=BotStoppedSpeakingFrame()))
+    session.close()
+    await observer.cleanup()
+    sink.flush()
+    items = records(path)
+    assert next(r for r in items if r["record_type"] == "turn")["status"] == "cancelled"
+    request_span = next(r for r in items if r["record_type"] == "span" and r["request_id"] == request.id)
+    assert request_span["status"] == "cancelled"
+    turn_span = next(r for r in items if r["record_type"] == "span" and r["stage"] == "turn")
+    assert turn_span["status"] == "cancelled"
