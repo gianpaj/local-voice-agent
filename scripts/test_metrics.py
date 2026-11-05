@@ -9,6 +9,17 @@ import metrics
 
 
 class MetricsAnalysisTests(unittest.TestCase):
+    def test_cli_resident_and_legacy_are_separate_samples(self):
+        rows = [{"record_type": "stage", "stage": "stt", "model": "same-model", "status": "ok", "metrics": {"total_ms": 300}}]
+        rows += [{**rows[0], "configuration": {"stt_backend": "parakeet", "stt_mode": mode, "stt_threads": 4}} for mode in ("cli", "resident")]
+        groups = metrics.summarize(rows, {}, 1)["groups"]
+        self.assertEqual(len(groups), 3)
+        self.assertEqual({g["stt_mode"] for g in groups}, {"unknown", "cli", "resident"})
+        output = io.StringIO()
+        metrics.write_csv(rows, output)
+        self.assertIn("stt_backend,stt_mode,stt_threads", output.getvalue())
+        self.assertIn("parakeet,resident,4", output.getvalue())
+
     def test_outcomes_and_grains_are_not_mixed(self):
         rows = [
             {"record_type": "stage", "stage": "tts", "model": "phonon", "status": "ok", "metrics": {"first_pcm_ms": value}}

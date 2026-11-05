@@ -241,8 +241,16 @@ class RequestMetrics:
 
 
 class SessionMetrics:
-    def __init__(self, sink, endpointing_seconds):
+    def __init__(self, sink, endpointing_seconds, *, configuration=None):
         self.sink = sink
+        supplied = configuration or {}
+        # Categorical configuration is not a numeric metric. Never serialize
+        # arbitrary config/env values (which may include paths or credentials).
+        self.configuration = {
+            "stt_backend": supplied.get("stt_backend") if supplied.get("stt_backend") in {"parakeet", "whistle"} else None,
+            "stt_mode": supplied.get("stt_mode") if supplied.get("stt_mode") in {"cli", "resident"} else None,
+            "stt_threads": supplied.get("stt_threads") if type(supplied.get("stt_threads")) is int and 1 <= supplied["stt_threads"] <= 64 else None,
+        }
         self.id = str(uuid.uuid4())
         self.started = time.monotonic()
         self.endpointing_ms = endpointing_seconds * 1000
@@ -268,6 +276,7 @@ class SessionMetrics:
                        "request_id": request.id if request else None, "stage": stage, "model": model,
                        "status": status, "trace_id": f"{context.trace_id:032x}",
                        "span_id": f"{context.span_id:016x}", "metrics": metrics or {},
+                       "configuration": self.configuration,
                        "runtime": {"pipecat_version": "1.15.0", "app_version": "0.1.0"}})
 
     def register_native(self, tracing_context):

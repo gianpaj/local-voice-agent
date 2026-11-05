@@ -63,6 +63,14 @@ Do not add TTFB to TTFAT (it already includes it), sum concurrent stage totals, 
 
 ## Later tool calling
 
+Retained session/stage/turn records also carry an allowlisted categorical
+`configuration` (`stt_backend`, `stt_mode`, `stt_threads`), outside numeric
+`metrics`. Offline analysis separates these configurations automatically, so
+CLI and resident runs of the same checkpoint are not averaged together.
+Older records have unknown configuration; no historical mode is guessed.
+CSV exports include those configuration columns. Paths/env values are never
+serialized through this field.
+
 The session/turn/request schema permits additional request spans. When tools are implemented, add complete-valid-arguments latency, per-tool execution/wait/status, post-result model latency and final-answer TTFA. Persist identifiers and timing/outcome metadata only, not tool parameters or returned data. Tool calling itself is not introduced by this instrumentation feature.
 
 Implementation uses the pinned Pipecat 1.15 APIs, checked against [official tracing documentation](https://docs.pipecat.ai/api-reference/server/utilities/opentelemetry).

@@ -55,6 +55,24 @@ def test_privacy_exporter_discards_every_content_surface(telemetry):
     assert item["turn_id"] is None and "events" not in item
 
 
+def test_configuration_is_allowlisted_and_not_numeric_metrics(telemetry):
+    _, sink, path = telemetry
+    session = SessionMetrics(sink, 0.6, configuration={
+        "stt_backend": "parakeet", "stt_mode": "resident", "stt_threads": 4,
+        "model_path": "DO_NOT_PERSIST_private_path", "api_key": "DO_NOT_PERSIST_secret",
+    })
+    session.close()
+    invalid = SessionMetrics(sink, 0.6, configuration={"stt_backend": "DO_NOT_PERSIST_bad", "stt_mode": "bad", "stt_threads": True})
+    invalid.close()
+    sink.flush()
+    rows = [r for r in records(path) if r.get("session_id") == session.id and r["record_type"] == "session"]
+    assert rows and all(r["configuration"] == {"stt_backend": "parakeet", "stt_mode": "resident", "stt_threads": 4} for r in rows)
+    assert "stt_mode" not in rows[0]["metrics"]
+    invalid_row = next(r for r in records(path) if r.get("session_id") == invalid.id)
+    assert invalid_row["configuration"] == {"stt_backend": None, "stt_mode": None, "stt_threads": None}
+    assert "DO_NOT_PERSIST" not in "\n".join(p.read_text() for p in path.glob("metrics.jsonl*"))
+
+
 async def test_vad_ttfa_and_server_speaking_are_separate_and_missing_stays_null(telemetry):
     session, sink, path = telemetry
     observer = CascadeObserver(session)

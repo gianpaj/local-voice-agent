@@ -75,7 +75,9 @@ def read_records(paths, *, session=None, since=None):
 def summarize(records, counts, file_count):
     grouped = defaultdict(list)
     for record in records:
-        key = tuple(str(record.get(name) or "-") for name in ("record_type", "stage", "model"))
+        key = tuple(str(record.get(name) or "-") for name in ("record_type", "stage", "model")) + tuple(
+            str((record.get("configuration") or {}).get(name) or "unknown")
+            for name in ("stt_backend", "stt_mode", "stt_threads"))
         grouped[key].append(record)
     groups = []
     for key, rows in sorted(grouped.items()):
@@ -94,17 +96,18 @@ def summarize(records, counts, file_count):
                     "p95": percentile(valid, 0.95) if valid else None, "max": max(valid) if valid else None,
                     "mean": statistics.mean(valid) if valid else None}
             by_status.append({"status": status, "records": len(selected), "metrics": metrics})
-        groups.append(dict(zip(("record_type", "stage", "model"), key), records=len(rows), status_counts=dict(statuses), by_status=by_status))
+        groups.append(dict(zip(("record_type", "stage", "model", "stt_backend", "stt_mode", "stt_threads"), key), records=len(rows), status_counts=dict(statuses), by_status=by_status))
     return {"files": file_count, "records": len(records), "read_counts": dict(counts),
         "percentile_method": "linear interpolation; small sample p95 is descriptive only", "groups": groups}
 
 
 def write_csv(records, output):
-    columns = ["timestamp", "session_id", "turn_id", "request_id", "trace_id", "span_id", "record_type", "stage", "model", "status", "metric", "value"]
+    columns = ["timestamp", "session_id", "turn_id", "request_id", "trace_id", "span_id", "record_type", "stage", "model", "status", "stt_backend", "stt_mode", "stt_threads", "metric", "value"]
     writer = csv.DictWriter(output, fieldnames=columns)
     writer.writeheader()
     for record in records:
         base = {name: record.get(name) for name in columns[:-2]}
+        base.update({name: (record.get("configuration") or {}).get(name) for name in ("stt_backend", "stt_mode", "stt_threads")})
         for name, value in sorted(record.get("metrics", {}).items()):
             if value is None or (isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)):
                 writer.writerow({**base, "metric": name, "value": value})
@@ -130,7 +133,7 @@ def main():
         print(f"{result['records']} records from {result['files']} files; read counts: {dict(counts)}")
         print("Each request/turn is one sample; spans excluded. Percentiles separated by outcome. Units are in metric names.")
         for group in result["groups"]:
-            print(f"\n{group['record_type']} / {group['stage']} / {group['model']}: {group['status_counts']}")
+            print(f"\n{group['record_type']} / {group['stage']} / {group['model']} / {group['stt_backend']}:{group['stt_mode']}:{group['stt_threads']}: {group['status_counts']}")
             for status in group["by_status"]:
                 for name, metric in status["metrics"].items():
                     numbers = " ".join(f"{key}={metric[key]:.3f}" for key in ("p50", "p95", "max") if metric[key] is not None)
