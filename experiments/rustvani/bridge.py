@@ -8,6 +8,7 @@ CLI, checkpoint, voice, precision, sampling and reasoning settings.
 import asyncio
 import base64
 import json
+import importlib.metadata
 import os
 import signal
 import sys
@@ -41,7 +42,16 @@ async def main():
     # CPU engine initialization and first synthesis are outside turn timings.
     async for _ in engine.stream("Ready."):
         pass
-    emit({"event": "ready", "sample_rate": 24000, "tts_runtime": "ptts-0.5.0", "tts_buffering": "full_reply"})
+    emit({"event": "ready", "settings": {
+        "stt": {"runtime": "existing-transcribe-cli", "backend": "cuda", "threads": 4,
+                "checkpoint_format": "GGUF-Q8_0", "timestamps": "none", "input_rate": 16000},
+        "llm": {"model": config.ollama_model, "context": 4096, "max_tokens": 128,
+                "temperature": 0.5, "reasoning_effort": "none", "history": "single-turn",
+                "system_prompt": "project-baseline"},
+        "tts": {"runtime": "ptts", "version": importlib.metadata.version("ptts"),
+                "model": "phonon-31m-en", "device": "cpu", "quantization": "q8_0",
+                "threads": 4, "sample_rate": 24000, "buffering": "full_reply"}
+    }})
     reader = asyncio.StreamReader(limit=MAX_LINE)
     pipe = asyncio.StreamReaderProtocol(reader)
     await asyncio.get_running_loop().connect_read_pipe(lambda: pipe, sys.stdin)

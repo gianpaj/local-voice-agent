@@ -24,7 +24,7 @@ The bridge receives transient conversation text and audio over bounded private I
 
 ## Run without changing the app
 
-Requirements: Rust **1.99.1** (the tested isolated toolchain), existing `apps/agent/.venv`, populated ignored project `.env`, the already installed model files, and an already warm project Ollama alias. This experiment does not start, stop or reconfigure the production service. Use an exclusive inference window for any performance interpretation.
+Requirements: this Linux host, Rust **1.99.1** (the tested isolated toolchain), existing `apps/agent/.venv`, populated ignored project `.env`, the already installed model files, and an already warm project Ollama alias. This experiment does not start, stop or reconfigure the production service. Use an exclusive inference window for any performance interpretation.
 
 ```bash
 # Run from the repository root. Build artifacts stay ignored.
@@ -68,6 +68,7 @@ The pinned [OpenAI handler](https://github.com/Allenmylath/rustvani/blob/b134ad0
 - Handlers receive raw argument strings; registration alone does not validate our future tool schema or business policy.
 - The tool batch is awaited sequentially in `run_inference`; independent reads are not automatically parallelized there.
 - No per-tool deadline is applied around those registry calls in that loop. Future integrations must supply deadlines, validation, linkage, cancellation policy and side-effect safeguards.
+- The current 128-output-token speech budget can truncate nontrivial tool arguments; tool completion needs its own adequate bound rather than inheriting the short spoken-answer limit.
 - Default info logs include transcript text in the user aggregator. Production telemetry would need our metadata-only policy rather than enabling unrestricted framework logs.
 
 Before adoption, run the same tool-selection/argument/task-success cases, preserve whole tool-call/result groups when trimming context, and separate acknowledgement audio from result-grounded answer latency. No actual external tools/actions were added.
@@ -75,3 +76,28 @@ Before adoption, run the same tool-selection/argument/task-success cases, preser
 ## Evidence and decision
 
 Build, model-free fault/privacy tests and same-model runtime evidence are recorded below after execution. A small successful roundtrip can establish feasibility; it cannot establish acoustic quality parity, robust interruption handling, cross-device networking or a speedup over the complete Pipecat app.
+
+### Observed results: two real local-model roundtrips
+
+An exclusive inference window was used after the other STT experiment stopped; the unrelated native build was paused. Both public fixtures completed Parakeet → Qwen → Phonon through the Rustvani pipeline, with nonzero 24 kHz PCM and **no forced pipeline or bridge shutdown**. No recording or conversation text was retained. Four model-free fault/privacy tests also passed. This is a feasibility sample of two turns, not a latency distribution or quality evaluation.
+
+| Boundary / outcome | LibriSpeech 1272-128104-0000 | JFK |
+|---|---:|---:|
+| Public input audio | 5.855 s | 11.000 s |
+| STT CLI adapter wall time | 501.53 ms | 517.29 ms |
+| STT → LLM Rust handler handoff | 0.051 ms | 0.047 ms |
+| LLM first answer token | 192.15 ms | 172.24 ms |
+| LLM complete response | 889.61 ms | 679.49 ms |
+| LLM → TTS Rust handler handoff | 0.0075 ms | 0.0057 ms |
+| Warm Phonon first generated PCM | 25.79 ms | 20.73 ms |
+| Phonon complete synthesis | 389.93 ms | 296.09 ms |
+| Generated PCM duration | 7.44 s | 6.00 s |
+| Completed utterance injected → first PCM at headless sink | 1,429.45 ms | 1,229.53 ms |
+| Experiment process tree sampled peak RSS | 733.76 MiB | 730.25 MiB |
+| Total GPU sampled peak memory, all processes | 9,406 MiB | 9,430 MiB |
+
+RSS was sampled from the experiment process and current descendants every 100 ms; it **excludes the pre-existing Ollama server process**, so is not total stack RAM. GPU memory was sampled once per second, includes all GPU processes, and can miss short peaks. Neither is a universal memory requirement for Rustvani or the models. Model/voice precision and request settings remain the baseline values above; Phonon initialization/first warmup synthesis is outside the timed turn.
+
+Fixture provenance is the [pinned public LibriSpeech dummy subset](https://huggingface.co/datasets/hf-internal-testing/librispeech_asr_dummy/tree/5be91486e11a2d616f4ec5db8d3fd248585ac07a) and the [public JFK sample](https://github.com/ggml-org/whisper.cpp/blob/master/samples/jfk.wav) (audio only; no Whisper recognizer was used). Exact input hashes are `bf964d77ca0de8e384e98ddf741f630548e91f97201a4ad991522cd59366e533` and `4d968ac99a1d0d4bc42ae8dd1552f4235e7b952a8121b39797f3dc2ca16123e9`. The fixture manifest and metadata-only summary/per-fixture JSON remain in ignored local experiment artifacts for the parent comparison report.
+
+**Decision: feasible, not adopted.** The measured handler handoffs are tiny relative to model execution and complete-reply buffering in these two runs. They support measuring model/runtime work before rewriting orchestration, but do **not** measure Pipecat overhead or prove Rustvani faster/slower. Keep Pipecat as the deployed browser baseline; retain this isolated prototype for a future equivalent-streaming, VAD, tool-calling and browser/cancellation comparison if warranted.

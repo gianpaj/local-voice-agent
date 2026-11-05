@@ -28,3 +28,12 @@ Private recordings, generated audio, model paths, raw text and benchmark JSON st
 - Fixed our own cancellation-frame direction after inspection: task-control conversion is an upstream escape API; explicit downstream lifecycle cancellation uses `Frame::cancel()`. Tests then complete in 0.036 seconds with graceful pipeline shutdown, not the earlier forced deadline.
 - Bridge requests preserve the baseline model/prompt/reasoning/precision settings. Full-reply TTS aggregation is explicitly a reduced-scope experiment, not production sentence-streaming parity.
 - Actual model execution remains gated on the parent's exclusive inference window. No measured Rust-versus-Pipecat speedup or browser compatibility claim.
+
+## Real-model window and decision
+
+- Parent granted an exclusive inference window after Whistle comparison; native compilation was paused. Ran exactly two public 16 kHz fixtures, LibriSpeech 0000 and JFK, against the same installed Parakeet/Qwen/Phonon stack. Both succeeded with nonzero PCM, no forced pipeline/bridge shutdown, and no leftover experiment/bridge/sampler process observed afterward. Immediately notified parent `RESOURCES FREE` so native compilation could resume.
+- Rust STT→LLM handoffs: 0.051/0.047 ms; LLM→TTS: 0.0075/0.0057 ms. CLI STT 501.53/517.29 ms; LLM first answer token 192.15/172.24 ms. Warm Phonon first PCM 25.79/20.73 ms.
+- Completed-input-frame→headless-first-PCM: 1429.45/1229.53 ms. This excludes VAD/network/playback and buffers the full reply, so is explicitly **not comparable** to production browser TTFA or evidence of a framework speedup.
+- Sampled experiment process tree peak RSS 733.76/730.25 MiB excludes the existing Ollama server. Sampled total GPU peak 9406/9430 MiB includes all processes. Sampling intervals and limitations retained in JSON/docs.
+- Metadata artifacts retain fixture source/hash, exact model/request settings, native/framework boundaries, errors/missing-as-null and resource labels. All artifacts are ignored; no transcripts or recordings committed.
+- Verdict: actual headless feasibility established; no browser, interruption, quality or speed parity proven. Do not adopt as the deployed baseline. The frame handoff is tiny in these two runs relative to model/buffering time, consistent with prioritizing native inference beneath Pipecat.

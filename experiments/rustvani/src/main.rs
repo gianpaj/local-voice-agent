@@ -345,10 +345,10 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
         done: Notify::new(),
         trace: StdMutex::new(json!({
             "schema_version":1, "experiment":"rustvani_headless", "rustvani_revision":REV,
-            "status":"running", "tts_buffering":"full_reply", "vad_included":false,
+            "model_settings":ready["settings"], "status":"running", "tts_buffering":"full_reply", "vad_included":false,
             "browser_playback_measured":false, "framework_speedup_claimed":false,
             "audio_input_duration_ms":pcm.len() as f64 / 32.0,
-            "first_pcm_sink_at_ms":null, "audio_samples":0, "audio_energy_sum":0.0
+            "bridge_shutdown_forced":false, "first_pcm_sink_at_ms":null, "audio_samples":0, "audio_energy_sum":0.0
         })),
     });
     let failed = Arc::new(AtomicBool::new(false));
