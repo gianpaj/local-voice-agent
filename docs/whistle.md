@@ -23,7 +23,7 @@ Whistle receives the same bounded VAD-completed 16 kHz mono int16 PCM as Parakee
 
 ## Retained comparison
 
-STT stage records retain the selected model, `stt_backend`, `stt_device`, thread count, wall-clock CLI duration and audio length. Whistle's valid positive native `ttft_ms`/`decode_tps`, when present, are separate optional counters (`native_ttft_ms`, `native_decode_tps`); absent/invalid values remain null. Native ASR TTFT is not generated-speech TTFA. See [observability](observability.md) for session/turn timing boundaries.
+STT stage records retain the selected model identifier and numeric thread count, wall-clock CLI duration and audio length. The health response and explicit benchmark settings identify CPU/CUDA; categorical labels are not inserted into the numeric-or-null metrics dictionary. Whistle's valid positive native `ttft_ms`/`decode_tps`, when present, are separate optional counters (`native_ttft_ms`, `native_decode_tps`); absent/invalid values remain null. Native ASR TTFT is not generated-speech TTFA. See [observability](observability.md) for session/turn timing boundaries.
 
 Use the same normalized WAV bytes and labels for both models. Report WER/CER, names/numbers, silence false positives, failures and paired latency; do not select a smaller model on latency alone or describe a few clean synthetic samples as proof of conversational accuracy. Model substitutions do not preserve quality by construction. The comparison harness/evidence below is updated after a coordinated real-inference run.
 

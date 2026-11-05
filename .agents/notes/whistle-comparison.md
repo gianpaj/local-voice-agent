@@ -39,3 +39,8 @@ Reading, implementation and fake tests are allowed now. No heavy inference/build
 - **Decision: keep Parakeet default; Whistle opt-in only.** The small CPU footprint is useful to explore on weaker machines, but this run fails the no-quality-loss/tail-latency gate. Qwen/Phonon/framework and project deployment settings unchanged.
 - Machine-readable `summary.json` supports component/fixture drilldowns, explicit timing mode/settings, outcomes, hashes/bytes and null runtime-memory peaks. No runtime-memory peak claim was inferred from checkpoint size. The run explicitly saved the public corpus text privately for inspection; no private meeting material or raw artifacts were committed.
 - Parent notified **RESOURCES FREE** immediately after inference ended; parent owns final integration/deployment and any full-browser Whistle test. Adapter/unit checks: 31 Python tests, six offline-script tests, frontend typecheck passed.
+
+## Parent review follow-up
+
+- Kept categorical backend/device labels in health, selected model identity and benchmark settings, not inside the stage's numeric-or-null metrics dictionary. Numeric `stt_threads` remains. This prevents the offline analyzer from treating strings as invalid numeric observations. No inference/configuration setting or retained benchmark result changed.
+- `Config.from_env` requests Parakeet paths only for the default `parakeet` backend and Needle/Whistle paths only for `whistle`; an unknown backend makes both STT path groups optional, then `validate()` rejects `STT_BACKEND`. The always-required Phonon path is resolved before validation, so an independently missing Phonon setting can be the first reported configuration error. No hosted or implicit fallback is selected.

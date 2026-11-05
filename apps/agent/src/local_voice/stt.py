@@ -140,7 +140,6 @@ class ParakeetSTT(SegmentedSTTService):
             turn = turn or self.telemetry.start_turn()
             request = self.telemetry.request("stt", self.config.stt_model_id, turn=turn,
                 metrics={"audio_seconds": len(audio) / 32000, "cli_ms": None,
-                         "stt_backend": self.config.stt_backend, "stt_device": self.config.stt_device,
                          "stt_threads": self.config.stt_threads})
         status = "empty"
         try:
