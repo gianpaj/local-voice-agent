@@ -22,6 +22,8 @@ class ResidentParakeet:
         self.inflight = 0
         self.recovery_task = None
         self.recovery_attempted = False
+        self.cleanup_tasks = set()
+        self.spawning_task = None
 
     @property
     def ready(self):
@@ -63,7 +65,10 @@ class ResidentParakeet:
         parent.setblocking(False)
         started = time.monotonic()
         try:
-            self.process = await self._spawn(child)
+            self.spawning_task = asyncio.create_task(self._spawn(child))
+            self.process = await self.spawning_task
+            if self.closed:
+                raise RuntimeError("The resident transcription engine is closed")
             child.close()
             self.reader, self.writer = await asyncio.open_connection(sock=parent)
             async with asyncio.timeout(self.config.parakeet_startup_timeout):
@@ -85,6 +90,8 @@ class ResidentParakeet:
             child.close()
             await self._stop_locked()
             raise RuntimeError("The resident Parakeet worker could not initialize") from error
+        finally:
+            self.spawning_task = None
 
     async def load(self):
         async with self.lock:
@@ -157,8 +164,31 @@ class ResidentParakeet:
 
     async def _stop_locked(self):
         process, writer = self.process, self.writer
-        self.process = self.reader = self.writer = None
         self.info = {}
+        try:
+            await self._finish_cleanup(self._cleanup_owned(process, writer))
+        finally:
+            # Retain ownership until the shielded cleanup has actually reaped it.
+            if self.process is process:
+                self.process = self.reader = self.writer = None
+
+    async def _finish_cleanup(self, operation):
+        task = asyncio.create_task(operation)
+        self.cleanup_tasks.add(task)
+        interrupted = False
+        try:
+            while not task.done():
+                try:
+                    await asyncio.shield(task)
+                except asyncio.CancelledError:
+                    interrupted = True
+            task.result()
+        finally:
+            self.cleanup_tasks.discard(task)
+        if interrupted:
+            raise asyncio.CancelledError()
+
+    async def _cleanup_owned(self, process, writer):
         if writer:
             try:
                 writer.write(encode({"type": "close"}))
@@ -170,31 +200,46 @@ class ResidentParakeet:
                 await asyncio.wait_for(writer.wait_closed(), 0.1)
             except (Exception, asyncio.CancelledError):
                 pass
+        await self._reap_owned(process, graceful=True)
+
+    async def _reap_owned(self, process, *, graceful=False):
         if process and process.returncode is None:
-            try:
-                await asyncio.wait_for(process.wait(), 0.5)
-            except TimeoutError:
-                for sig, grace in ((signal.SIGTERM, 0.5), (signal.SIGKILL, 1.0)):
-                    try:
-                        os.killpg(process.pid, sig)
-                    except ProcessLookupError:
-                        break
-                    try:
-                        await asyncio.wait_for(process.wait(), grace)
-                        break
-                    except TimeoutError:
-                        continue
+            if graceful:
+                try:
+                    await asyncio.wait_for(process.wait(), 0.5)
+                    return
+                except TimeoutError:
+                    pass
+            for sig, grace in ((signal.SIGTERM, 0.5), (signal.SIGKILL, 1.0)):
+                try:
+                    os.killpg(process.pid, sig)
+                except ProcessLookupError:
+                    break
+                try:
+                    await asyncio.wait_for(process.wait(), grace)
+                    break
+                except TimeoutError:
+                    continue
+        if process and process.returncode is not None:
+            await process.wait()
 
     async def close(self):
         self.closed = True
+        await self._finish_cleanup(self._close_owned())
+
+    async def _close_owned(self):
         if self.recovery_task and not self.recovery_task.done():
             self.recovery_task.cancel()
             await asyncio.gather(self.recovery_task, return_exceptions=True)
+        if self.spawning_task and not self.spawning_task.done():
+            # The process handle does not exist yet. Cancel subprocess creation
+            # rather than queueing shutdown behind a future startup deadline.
+            self.spawning_task.cancel()
+            await asyncio.gather(self.spawning_task, return_exceptions=True)
         # Shutdown never waits the full inference deadline to acquire this lock.
         if self.process and self.process.returncode is None and self.lock.locked():
-            try:
-                os.killpg(self.process.pid, signal.SIGTERM)
-            except ProcessLookupError:
-                pass
+            # Escalate before awaiting the holder: a TERM-resistant native call
+            # must not keep shutdown behind its normal 15/45-second deadline.
+            await self._reap_owned(self.process)
         async with self.lock:
             await self._stop_locked()

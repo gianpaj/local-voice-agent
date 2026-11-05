@@ -3,6 +3,7 @@ import asyncio
 from dataclasses import replace
 from pathlib import Path
 import struct
+import sys
 import time
 
 import pytest
@@ -232,3 +233,61 @@ async def test_readiness_recovery_is_one_attempt_not_a_restart_loop(resident_con
         assert engine.ready and not engine.recovery_attempted
     finally:
         await engine.close()
+
+
+async def test_shutdown_escalates_before_waiting_on_term_resistant_request(resident_config, monkeypatch):
+    engine = ResidentParakeet(resident_config)
+    program = '''
+import signal,socket,sys,time
+from local_voice.native_protocol import encode,receive_blocking
+signal.signal(signal.SIGTERM,signal.SIG_IGN)
+sock=socket.socket(fileno=int(sys.argv[1]))
+sock.sendall(encode({'type':'ready','version':'0.4.1','commit':'5700f12'}))
+while True:
+ message,pcm=receive_blocking(sock)
+ if message['type']=='run':time.sleep(60)
+'''
+    async def spawn(child):
+        return await asyncio.create_subprocess_exec(sys.executable, "-c", program, str(child.fileno()),
+            pass_fds=(child.fileno(),), start_new_session=True,
+            stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.DEVNULL)
+    monkeypatch.setattr(engine, "_spawn", spawn)
+    await engine.load()
+    pid = engine.process.pid
+    task = asyncio.create_task(engine.transcribe(b"\1\0" * 100))
+    await asyncio.sleep(0.03)
+    await asyncio.wait_for(engine.close(), 2)
+    with pytest.raises(RuntimeError):
+        await task
+    assert not Path(f"/proc/{pid}").exists()
+
+
+async def test_repeated_cancel_during_cleanup_still_reaps_child(resident_config):
+    engine = ResidentParakeet(replace(resident_config, stt_timeout=0.05))
+    await engine.load()
+    pid = engine.process.pid
+    resident_config.parakeet_model.write_bytes(b"GGUFhang")
+    task = asyncio.create_task(engine.transcribe(b"\1\0" * 100))
+    await asyncio.sleep(0.9)  # Deadline + abort grace have entered process cleanup.
+    task.cancel()
+    await asyncio.sleep(0.03)
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+    assert not Path(f"/proc/{pid}").exists() and not engine.cleanup_tasks
+    await engine.close()
+
+
+async def test_close_cancels_startup_before_a_child_handle_exists(resident_config, monkeypatch):
+    engine = ResidentParakeet(resident_config)
+    entered = asyncio.Event()
+    async def delayed_spawn(child):
+        entered.set()
+        await asyncio.Event().wait()
+    monkeypatch.setattr(engine, "_spawn", delayed_spawn)
+    loading = asyncio.create_task(engine.load())
+    await entered.wait()
+    await asyncio.wait_for(engine.close(), 1)
+    with pytest.raises(asyncio.CancelledError):
+        await loading
+    assert engine.process is None and not engine.ready and not engine.cleanup_tasks

@@ -156,7 +156,12 @@ def create_app(config=None, *, initialize=True):
                 "telemetry": sink.health() if sink else {"active": False}, "models": {"stt": config.stt_model_id, "stt_device": config.stt_device, "llm": config.ollama_model, "tts": "Phonon 31M English CPU"}}
 
     async def attached(connection):
-        telemetry = SessionMetrics(sink, config.vad_stop_seconds) if sink else None
+        backend = getattr(config, "stt_backend", "parakeet")
+        telemetry = SessionMetrics(sink, config.vad_stop_seconds, configuration={
+            "stt_backend": backend,
+            "stt_mode": config.parakeet_mode if backend == "parakeet" else "cli",
+            "stt_threads": config.stt_threads,
+        }) if sink else None
         try:
             worker = build_worker(connection, config, engine, telemetry, **({"stt_engine": stt_engine} if stt_engine else {}))
         except BaseException:
@@ -189,6 +194,9 @@ def create_app(config=None, *, initialize=True):
             raise HTTPException(400, "Expected an SDP offer")
         if not state["ready"]:
             raise HTTPException(503, state["error"] or "Local models are warming up")
+        if stt_engine and not stt_engine.ready:
+            stt_engine.request_recovery()
+            raise HTTPException(503, "The local transcription worker is warming or unavailable")
         async with lock:
             current = active["connection"]
             if state["busy"] and (not current or body.pc_id != current.pc_id):
