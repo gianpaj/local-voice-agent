@@ -28,6 +28,11 @@ DEFINITIONS = {
     "browser_playback_ms": ("Browser / acoustic onset", "ms", "lower", "Not measured. Decoded audio energy proves received non-silent audio, not the time a human heard it."),
     "runtime_rss_mib": ("Sampled process-tree RSS", "MiB", "lower", "Sampled RSS of the experiment process tree; excludes the preexisting Ollama daemon. Sampling can miss peaks; not total host RAM."),
     "checkpoint_mib": ("Checkpoint size", "MiB", "lower", "Bytes on disk / 2^20. NOT runtime RAM or VRAM. All selected model files are under the user's 8 GB per-model limit."),
+    "native_mel_p50_ms": ("Native mel median", "ms", "lower", "Native feature extraction counter for successful resident speech requests. Zero/unreported counters remain missing; marginal medians must not be added together."),
+    "native_encode_p50_ms": ("Native encoder median", "ms", "lower", "CUDA encoder counter for successful resident speech requests, with the same precision and checkpoint. First inference can include kernel warmup."),
+    "native_decode_p50_ms": ("Native decoder median", "ms", "lower", "Host decoder counter for successful resident speech requests. No OpenBLAS was linked in this comparison."),
+    "total_p50_ms": ("Request lifetime median", "ms", "lower", "Per-stage request lifetime through completion or cancellation cleanup. Check per-sample outcomes; TTS can include streaming backpressure."),
+    "rtf_p50": ("Real-time factor median", "×", "lower", "Processing seconds / generated or submitted audio seconds. Below 1 is faster than real time; does not measure browser delivery."),
 }
 
 
@@ -130,7 +135,7 @@ def rust_cases(document):
     }]
 
 
-def browser_cases(path, session_ids):
+def browser_cases(path, session_ids, *, mode="cli", tag="baseline"):
     records, counts = analysis.read_records([path])
     selected = [r for r in records if r.get("session_id") in session_ids]
     rows = []
@@ -145,13 +150,17 @@ def browser_cases(path, session_ids):
         if component == "pipeline":
             measured["server_speaking_p50_ms"] = percentile([r["metrics"].get("server_speaking_ms") for r in values])
         statuses = Counter(r["status"] for r in values)
-        rows.append({"id": "browser-baseline-" + component, "component":component, "label":label, "model":model, "engine":"Pipecat 1.15.0", "mode":"warm, real Chromium over private HTTPS", "boundary": DEFINITIONS[key_out][3], "comparison_group": "Browser semantic validation / " + component, "decision":"baseline", "metrics":measured,
+        if component != "pipeline":
+            measured["total_p50_ms"] = percentile([r["metrics"].get("total_ms") for r in values])
+        if component == "tts":
+            measured["rtf_p50"] = percentile([r["metrics"].get("rtf") for r in values])
+        rows.append({"id": "browser-" + tag + "-" + component, "component":component, "label":label.replace("baseline",tag) + (" / resident STT" if mode == "resident" else ""), "model":model.replace("Parakeet CLI", "Parakeet resident") if mode == "resident" else model, "engine":"Pipecat 1.15.0", "mode":"warm, real Chromium over private HTTPS", "boundary": DEFINITIONS[key_out][3], "comparison_group": "Browser " + tag + " / " + component, "decision":"validated" if mode == "resident" else "baseline", "metrics":measured,
             "outcomes":{"attempts":len(values), "failed":sum(v for k,v in statuses.items() if k in {"error","timeout"}), "statuses":dict(statuses), "missing_first_observation":sum(r["metrics"].get(key) is None for r in values)},
             "quality":{"model_or_voice_changed":False, "purpose":"Timing semantics, real decoded audio, interruption/reconnect checks; not a controlled model-quality benchmark."},
-            "configuration":{"stt_mode":"cli", "stt_backend":"parakeet", "stt_threads":4, "phonon_threads":4, "llm_context":4096, "llm_max_output_tokens":128, "reasoning_effort":"none", "vad_stop_seconds":0.6},
-            "methodology":"Selected corrected three-turn and two-turn interruption-validation sessions only. Historical initial buggy measurements are excluded. Counts include interrupted/cancelled outcomes; medians use available numeric observations, with missing observations counted.",
+            "configuration":{"stt_mode":mode, "stt_backend":"parakeet", "stt_threads":4, "phonon_threads":4, "llm_context":4096, "llm_max_output_tokens":128, "reasoning_effort":"none", "vad_stop_seconds":0.6},
+            "methodology":"Explicitly selected corrected browser validation sessions only. Historical initial buggy measurements are excluded. Counts include interrupted/cancelled outcomes; medians use available numeric observations, with missing observations counted. Browser groups have different prompts/history and are not a controlled speedup comparison.",
             "notes":["No LLM checkpoint, quantization, context, voice, TTS sample rate or reasoning policy was reduced for speed."],
-            "limitations":["Five-turn validation is not a stable performance baseline; prompts/history vary.", "Interrupted and successful requests remain explicitly identified per sample.", "Chrome ran on the GPU host through the private HTTPS origin; a separate remote device has not been tested.", "No acoustic onset measurement or tool calling test."],
+            "limitations":["Small browser validation sample, not a stable performance baseline; prompts/history vary.", "Interrupted and successful requests remain explicitly identified per sample.", "Chrome ran on the GPU host through the private HTTPS origin; a separate remote device has not been tested.", "No acoustic onset measurement or tool calling test."],
             "samples":[{"id":r.get("request_id") or r.get("turn_id"), "session_id":r["session_id"], "status":r["status"], **r["metrics"]} for r in values], "evidence":{"selected_sessions":session_ids, "read_counts":dict(counts)},
             "sources":[source("Pipecat tracing utilities", "https://docs.pipecat.ai/api-reference/server/utilities/opentelemetry"), source("Phonon model", "https://huggingface.co/gradium/phonon-31m-en")],
         })
@@ -165,15 +174,29 @@ def main():
     parser.add_argument("--native", type=Path)
     parser.add_argument("--metrics", type=Path)
     parser.add_argument("--session", action="append", default=[])
+    parser.add_argument("--optimized-metrics", type=Path)
+    parser.add_argument("--optimized-session", action="append", default=[])
     parser.add_argument("--output", type=Path, default=Path(".local/reports/comparison.json"))
     args = parser.parse_args()
     rows = asr_cases(read(args.whistle)) + rust_cases(read(args.rustvani))
     if args.native:
         rows = asr_cases(read(args.native), native=True) + rows
+        attempts_path = args.native.with_name("attempts.jsonl")
+        if attempts_path.is_file():
+            attempts = [json.loads(line) for line in attempts_path.read_text().splitlines() if line.strip()]
+            resident = next(row for row in rows if row["id"] == "native-parakeet-resident")
+            speech = [r for r in attempts if r.get("backend") == "parakeet-resident" and r.get("status") == "ok" and r.get("reference_words",0) > 0]
+            for name in ("mel", "encode", "decode"):
+                resident["metrics"]["native_" + name + "_p50_ms"] = percentile([r.get("timings",{}).get("native_" + name + "_ms") for r in speech])
+            resident["evidence"]["attempts"] = identity(attempts_path)
     if args.metrics:
         if not args.session:
             parser.error("--metrics requires explicit corrected --session UUIDs")
         rows += browser_cases(args.metrics, args.session)
+    if args.optimized_metrics:
+        if not args.optimized_session:
+            parser.error("--optimized-metrics requires explicit --optimized-session UUIDs")
+        rows += browser_cases(args.optimized_metrics, args.optimized_session, mode="resident", tag="integrated acceptance")
     data = {"schema_version":1, "generated_at":datetime.now(timezone.utc).isoformat(), "summary":"Keep Pipecat; optimize the native inference underneath. Compare the same-model Parakeet residency experiment, the smaller Whistle alternative, and the isolated Rustvani prototype without mixing their measurement boundaries.",
         "caveats":["Compare within an experiment group, not across unrelated corpora or timing boundaries.", "Six English speech fixtures plus silence and five repeats are a smoke corpus, not a broad quality study.", "Generated PCM is not audible speaker onset; missing measurements stay null.", "All models remain local and below 8 GB of weights each. Runtime RAM/VRAM is a different budget."],
         "metric_definitions":{key:dict(zip(("label","unit","direction","description"),value)) for key,value in DEFINITIONS.items()}, "comparisons":rows,
