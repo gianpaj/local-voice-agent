@@ -12,6 +12,8 @@ Setup deliberately does not fetch weights. Populate ignored `.env` using portabl
 
 The adapter uses VAD-completed 16 kHz mono int16 PCM and transcript-only output files. No NeMo/ONNX substitution or Whisper dependency. This application remains English-only even though v3 supports other languages.
 
+For an explicit smaller CPU ASR experiment, see [optional Needle/Whistle](whistle.md). This leaves Parakeet as default and does not replace the conversational Qwen model with Needle's text/tool-routing model.
+
 ## Phonon
 
 - [gradium/phonon-31m-en](https://huggingface.co/gradium/phonon-31m-en), revision `92741c5b07d085ff840e26fea8ce43110b87852f`.

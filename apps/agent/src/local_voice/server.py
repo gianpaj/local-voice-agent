@@ -68,7 +68,7 @@ def create_app(config=None, *, initialize=True):
             normalized = (soxr.resample(samples, 24000, 16000) * 32767).astype("<i2").tobytes()
             started = time.monotonic()
             if not await transcribe_pcm(config, normalized):
-                raise ValueError("Parakeet readiness check returned no speech")
+                raise ValueError("Selected STT readiness check returned no speech")
             details["stt_preflight_seconds"] = round(time.monotonic() - started, 3)
             state.update(ready=True, phase="ready", **details)
             if sink:
@@ -135,7 +135,7 @@ def create_app(config=None, *, initialize=True):
 
     @app.get("/health")
     async def health():
-        return {**state, "telemetry": sink.health() if sink else {"active": False}, "models": {"stt": "Parakeet TDT 0.6B v3 Q8_0", "llm": config.ollama_model, "tts": "Phonon 31M English CPU"}}
+        return {**state, "telemetry": sink.health() if sink else {"active": False}, "models": {"stt": config.stt_model_id, "stt_device": config.stt_device, "llm": config.ollama_model, "tts": "Phonon 31M English CPU"}}
 
     async def attached(connection):
         telemetry = SessionMetrics(sink, config.vad_stop_seconds) if sink else None

@@ -4,7 +4,7 @@ import type { BotOutputData, PipecatClient } from "@pipecat-ai/client-js";
 import { BrowserMediaManager } from "./browser-media";
 
 type Line = { id: string; role: "user" | "assistant"; text: string; status?: string };
-type Health = { ready: boolean; busy: boolean; phase: string; error?: string };
+type Health = { ready: boolean; busy: boolean; phase: string; error?: string; models?: { stt?: string } };
 
 export default function VoiceAgent() {
   const [health, setHealth] = useState<Health>({ ready: false, busy: false, phase: "initializing" });
@@ -133,7 +133,7 @@ export default function VoiceAgent() {
         <div className="controls">{connected || connecting ? <><button className="button secondary" disabled={connecting} onClick={() => { const next = !muted; client.current?.enableMic(!next); setMuted(next); }}>{muted ? "Unmute mic" : "Mute mic"}</button><button className="button stop" onClick={() => void stop()}>Stop session</button></> : <button className="button primary" onClick={() => void start()} disabled={!health.ready || health.busy}>↗ {health.busy ? "Agent is in use" : "Start talking"}</button>}</div>
         {(error || health.error) && <div className="error" role="alert">{error || health.error}{playbackBlocked && <button onClick={() => void audio.current?.play().then(() => { setError(""); setPlaybackBlocked(false); }).catch(() => {})}>Enable sound</button>}</div>}
         <div className="devices"><label>Microphone<select value={mic} disabled={!connected} onChange={e => { const id = e.target.value; void media.current?.updateMic(id).then(() => setMic(id)).catch(cause => setError(String(cause))); }}><option value="">System default</option>{mics.map(device => <option key={device.deviceId} value={device.deviceId}>{device.label || "Microphone"}</option>)}</select></label><label>Speaker<select value={speaker} disabled={!connected} onChange={e => { const id = e.target.value; void media.current?.updateSpeaker(id).then(() => setSpeaker(id)).catch(cause => setError(String(cause))); }}><option value="">System default</option>{speakers.map(device => <option key={device.deviceId} value={device.deviceId}>{device.label || "Speaker"}</option>)}</select></label></div>
-        <div className="model-strip"><span>Parakeet <small>ears</small></span><span>Qwen <small>thoughts</small></span><span>Phonon <small>voice</small></span></div>
+        <div className="model-strip"><span>{health.models?.stt?.startsWith("whistle") ? "Whistle" : "Parakeet"} <small>ears</small></span><span>Qwen <small>thoughts</small></span><span>Phonon <small>voice</small></span></div>
       </section>
       <section className="transcript-card" aria-label="Conversation"><div className="card-top"><span className="eyebrow">THE CONVERSATION</span><span className="session-only">Session only</span></div><div className="transcript" aria-live="polite">{lines.length ? lines.map(line => <article key={line.id} className={`message ${line.role}`}><div className="speaker">{line.role === "user" ? "YOU" : "LOCAL VOICE"}{line.status === "interrupted" && <span> · interrupted</span>}</div><p>{line.text}</p></article>) : <div className="empty"><span>“</span><h3>Good conversations<br />start with hello.</h3><p>Your words and replies appear here.<br />Nothing is recorded or saved.</p></div>}<div ref={end} /></div><div className="transcript-footer">English · Pause between thoughts · Stop clears the conversation</div></section>
     </div><footer>One browser. Three local models. All yours.<span>LOCAL VOICE / 01</span></footer><audio ref={audio} autoPlay playsInline />

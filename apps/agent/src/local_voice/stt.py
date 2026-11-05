@@ -40,6 +40,9 @@ async def transcribe_pcm(config: Config, pcm: bytes, *, timings=None) -> str:
         raise ValueError("Please pause at least every 30 seconds; that utterance was too long")
     if not pcm or not any(pcm):
         return ""
+    if config.stt_backend == "whistle":
+        from .whistle import transcribe_whistle
+        return await transcribe_whistle(config, pcm, timings=timings)
     with tempfile.TemporaryDirectory(prefix="local-voice-stt-") as directory:
         wav_path = Path(directory) / "utterance.wav"
         output = Path(directory) / "transcript.txt"
@@ -50,7 +53,7 @@ async def transcribe_pcm(config: Config, pcm: bytes, *, timings=None) -> str:
             wav.writeframes(pcm)
         cli_started = time.monotonic()
         process = await asyncio.create_subprocess_exec(
-            str(config.parakeet_bin), "--backend", "cuda", "--threads", "4",
+            str(config.parakeet_bin), "--backend", "cuda", "--threads", str(config.stt_threads),
             "--timestamps", "none", "--quiet", "-m", str(config.parakeet_model),
             str(wav_path), "-o", str(output),
             stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.DEVNULL,
@@ -87,7 +90,7 @@ class ParakeetSTT(SegmentedSTTService):
 
     def _record_rejection(self, captured_seconds):
         if self.telemetry:
-            request = self.telemetry.request("stt", "parakeet-tdt-0.6b-v3-Q8_0", turn=self.telemetry.current,
+            request = self.telemetry.request("stt", self.config.stt_model_id, turn=self.telemetry.current,
                 metrics={"audio_seconds": 0, "captured_audio_seconds": captured_seconds, "cli_ms": None, "rejected": 1})
             request.finish("error")
             self.telemetry.end_turn(request.turn, "error")
@@ -135,8 +138,10 @@ class ParakeetSTT(SegmentedSTTService):
         turn = self._segment_turns.pop(self._transcribing_segment, None)
         if self.telemetry:
             turn = turn or self.telemetry.start_turn()
-            request = self.telemetry.request("stt", "parakeet-tdt-0.6b-v3-Q8_0", turn=turn,
-                metrics={"audio_seconds": len(audio) / 32000, "cli_ms": None})
+            request = self.telemetry.request("stt", self.config.stt_model_id, turn=turn,
+                metrics={"audio_seconds": len(audio) / 32000, "cli_ms": None,
+                         "stt_backend": self.config.stt_backend, "stt_device": self.config.stt_device,
+                         "stt_threads": self.config.stt_threads})
         status = "empty"
         try:
             if self.status:

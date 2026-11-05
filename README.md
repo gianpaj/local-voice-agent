@@ -4,6 +4,8 @@ An English-only voice playground. Talk through **your browser's microphone and s
 
 **Next.js + Pipecat SmallWebRTC + Parakeet + Ollama Qwen + Phonon.** No LiveKit server, Daily room, hosted inference, Whisper, cloud API key, database, or recording. The Python agent is the direct WebRTC peer; there is no separate media-server service.
 
+Optional CPU ASR comparison: [Needle + Whistle](docs/whistle.md). Parakeet remains the default; this experiment is a model-quality tradeoff to measure, not a promised equivalent.
+
 ## Quick start
 
 Requires Linux, an NVIDIA GPU/CUDA-capable `transcribe.cpp`, Python 3.12 via [uv](https://docs.astral.sh/uv/), Node 24, pnpm 11.16.0, existing named model weights, and loopback Ollama. Tested with a 16 GB RTX 4060 Ti.

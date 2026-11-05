@@ -17,7 +17,9 @@ from .tts import PhononEngine
 async def check(smoke=False, audio=None):
     config = Config.from_env()
     gpu = subprocess.run(["nvidia-smi", "--query-gpu=name,memory.total,memory.free", "--format=csv,noheader"], check=True, capture_output=True, text=True)
-    result = {"configuration": "ok", "gpu": gpu.stdout.strip(), "parakeet_bytes": config.parakeet_model.stat().st_size}
+    checkpoint = config.whistle_model if config.stt_backend == "whistle" else config.parakeet_model
+    result = {"configuration": "ok", "gpu": gpu.stdout.strip(), "stt_model": config.stt_model_id,
+              "stt_device": config.stt_device, "stt_bytes": checkpoint.stat().st_size}
     async with httpx.AsyncClient(base_url=config.ollama_url, timeout=5, trust_env=False) as client:
         version = await client.get("/api/version")
         version.raise_for_status()
@@ -54,7 +56,7 @@ async def check(smoke=False, audio=None):
             transcript = await transcribe_pcm(config, pcm16)
             result.update(stt_seconds=round(time.monotonic() - started, 3), stt_text=transcript)
             if not transcript:
-                raise ValueError("Parakeet returned no text for the speech smoke sample")
+                raise ValueError("Selected STT returned no text for the speech smoke sample")
         finally:
             await engine.close()
     print(json.dumps(result, indent=2))
