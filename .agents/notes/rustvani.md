@@ -19,3 +19,12 @@
 4. Record what passed and what remains unverified. No browser/cancellation parity or quality/speed claim without evidence. Commit the runnable experiment and evidence separately where useful.
 
 Private recordings, generated audio, model paths, raw text and benchmark JSON stay in ignored `.local/` storage, not this journal.
+
+## Minimal build and model-free verification
+
+- Parent granted a two-job compile window, not model inference. Installed Rust 1.99.1 with `--no-modify-path` into ignored project-local storage; no global toolchain changes.
+- Pinned Rustvani builds successfully with `default-features = false`; release harness binary is approximately 2.2 MB. Lockfile retained. Build assets/cache/target are ignored.
+- Four model-free integration checks pass: real Rustvani frame routing with nonzero mock PCM and text-sentinel redaction; adapter failure retained rather than success/zero latency; wrong WAV format rejected; oversized IPC bounded/rejected.
+- Fixed our own cancellation-frame direction after inspection: task-control conversion is an upstream escape API; explicit downstream lifecycle cancellation uses `Frame::cancel()`. Tests then complete in 0.036 seconds with graceful pipeline shutdown, not the earlier forced deadline.
+- Bridge requests preserve the baseline model/prompt/reasoning/precision settings. Full-reply TTS aggregation is explicitly a reduced-scope experiment, not production sentence-streaming parity.
+- Actual model execution remains gated on the parent's exclusive inference window. No measured Rust-versus-Pipecat speedup or browser compatibility claim.

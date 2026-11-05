@@ -1,0 +1,14 @@
+[package]
+name = "local-voice-rustvani-spike"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+rustvani = { git = "https://github.com/Allenmylath/rustvani", rev = "b134ad055c754efaa690fec72f530d5390fd6180", default-features = false }
+async-trait = "0.1"
+base64 = "0.22"
+hound = "3.5"
+serde_json = "1"
+tokio = { version = "1", features = ["full"] }
+libc = "0.2"
