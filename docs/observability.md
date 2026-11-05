@@ -46,7 +46,8 @@ Durations use the **server monotonic clock**, while UTC timestamps support date/
 | STT `cli_ms` | CLI invocation through result handling; not pure encoder time and not warmed persistent-model throughput. |
 | STT `audio_seconds` | Submitted 16 kHz mono PCM duration, including adapter padding. |
 | LLM `service_ttfb_ms` | Native Pipecat response TTFB when emitted; not necessarily an answer token. |
-| LLM `first_answer_token_ms` | Request to first answer text; native TTFAT is used when available. Missing output stays null. |
+| LLM `first_answer_token_ms` | Adapter request to first actual answer-text frame. Missing output stays null. |
+| LLM `service_ttfat_ms`, `service_thinking_ms` | Native Pipecat first-answer-token and pre-answer interval when reported; kept distinct from the adapter's observation. |
 | LLM `total_ms` | This model inference/request lifetime, not total turn including spoken playback. |
 | LLM token metrics | Usage reported by the runtime; missing usage is null. |
 | TTS `first_pcm_ms` | Synthesis request to first generated PCM chunk. It can contain leading silence. |
@@ -55,7 +56,7 @@ Durations use the **server monotonic clock**, while UTC timestamps support date/
 | `rtf` | Elapsed processing seconds / submitted or generated audio seconds. Below one means faster than real time for that interval. |
 | Turn `agent_ttfa_ms` | VAD stop notification to first generated TTS PCM. **Excludes the earlier endpointing wait** and excludes network/browser/audio hardware delay. |
 | Turn `server_speaking_ms` | VAD stop notification to Pipecat server BotStartedSpeaking event; not physical speaker onset. |
-| Turn endpointing fields | Configured/reported VAD silence window, not an independent waveform measurement. |
+| Turn `endpointing_config_ms`, `endpointing_vad_reported_ms` | Configured/reported VAD silence window, not an independent waveform measurement. `endpointing_observed_ms` stays null. |
 | Turn `browser_playback_ms`, `acoustic_ttfa_ms` | Null: not measured by this server-only implementation. |
 
 Do not add TTFB to TTFAT (it already includes it), sum concurrent stage totals, or sum stage p95 values to derive end-to-end p95. Tool calling will add extra model rounds; measure first acknowledgement and final grounded-answer latency separately instead of claiming a filler response is the completed answer.
