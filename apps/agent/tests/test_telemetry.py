@@ -41,7 +41,7 @@ def test_privacy_exporter_discards_every_content_surface(telemetry):
     with tracer.start_as_current_span(sentinel, attributes={
         "conversation.id": session.id, "input": sentinel, "output": sentinel, "text": sentinel,
         "transcript": sentinel, "tool.arguments": sentinel, "metrics.ttfb": 0.25,
-        "gen_ai.usage.input_tokens": 9, "local.turn_id": sentinel,
+        "gen_ai.usage.input_tokens": 9, "local.turn_id": sentinel, "turn.was_interrupted": True,
     }) as span:
         span.add_event(sentinel, {"value": sentinel})
         span.record_exception(RuntimeError(sentinel))
@@ -52,6 +52,8 @@ def test_privacy_exporter_discards_every_content_surface(telemetry):
     item = next(r for r in records(path) if r["record_type"] == "span")
     assert item["stage"] == "operation" and item["status"] == "error"
     assert item["metrics"]["metrics_ttfb"] == 0.25
+    assert type(item["metrics"]["turn_was_interrupted"]) is int
+    assert item["metrics"]["turn_was_interrupted"] == 1
     assert item["turn_id"] is None and "events" not in item
 
 

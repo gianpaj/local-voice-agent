@@ -133,7 +133,7 @@ class SafeSpanExporter(SpanExporter):
             except (ValueError, TypeError, AttributeError):
                 continue  # Unrelated spans cannot enter this project's local logs.
             self.register(span.context.trace_id, session_id)
-            metrics = {key.replace(".", "_"): value for key, value in attrs.items()
+            metrics = {key.replace(".", "_"): int(value) if isinstance(value, bool) else value for key, value in attrs.items()
                        if key in self.numeric_attributes and isinstance(value, (int, float)) and math.isfinite(value)}
             metrics["total_ms"] = max(0, (span.end_time - span.start_time) / 1_000_000)
             kind = span.name if span.name in {"stt", "llm", "tts", "turn", "conversation"} else "operation"
