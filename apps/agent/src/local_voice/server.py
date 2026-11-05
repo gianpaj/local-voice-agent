@@ -75,7 +75,7 @@ def create_app(config=None, *, initialize=True):
             normalized = (soxr.resample(samples, 24000, 16000) * 32767).astype("<i2").tobytes()
             started = time.monotonic()
             if not await transcribe_pcm(config, normalized, **({"engine": stt_engine} if stt_engine else {})):
-                raise ValueError("Parakeet readiness check returned no speech")
+                raise ValueError("Selected STT readiness check returned no speech")
             details["stt_preflight_seconds"] = round(time.monotonic() - started, 3)
             state.update(ready=True, phase="ready", **details)
             if sink:
@@ -150,7 +150,7 @@ def create_app(config=None, *, initialize=True):
             stt_engine.request_recovery()
             runtime_state = {"ready": False, "phase": "warming" if stt_engine.recovery_task and not stt_engine.recovery_task.done() else "error",
                              "error": "The local transcription worker is unavailable; checking readiness."}
-        return {**state, "stt_runtime": config.parakeet_mode,
+        return {**state, "stt_runtime": config.parakeet_mode if config.stt_backend == "parakeet" else "cli",
                 "ready": state["ready"] and (stt_engine.ready if stt_engine else True),
                 **runtime_state,
                 "telemetry": sink.health() if sink else {"active": False}, "models": {"stt": config.stt_model_id, "stt_device": config.stt_device, "llm": config.ollama_model, "tts": "Phonon 31M English CPU"}}

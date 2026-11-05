@@ -19,6 +19,18 @@ The matching pure-Python upstream bindings are copied into the ignored output di
 
 Start without BLAS to isolate residency. An optional local OpenBLAS prefix can be passed using `--blas-prefix` with a **different** output directory; do not claim acceleration from linkage alone. BLAS/thread tuning requires its own comparison.
 
+Before enabling a deployment, copy the complete shared runtime (all GGML
+siblings and matching bindings, not weights) outside the disposable worktree:
+
+```bash
+python3 scripts/install-parakeet.py --build .local/parakeet-native --output ~/.local/share/openclaw/parakeet-native-0.4.1
+```
+
+The output directory must be fresh. Core library bytes are verified against the
+measured build manifest. Use the printed library/bindings paths in ignored
+`.env`; the supervisor scopes sibling-library search to its child process.
+No global linker/Ollama configuration changes. The existing CLI is unchanged.
+
 ## Configure and start
 
 Add the paths printed by the helper to the ignored `.env`:

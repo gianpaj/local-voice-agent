@@ -26,6 +26,10 @@ class Config:
     needle_bin: Path | None = None
     whistle_model: Path | None = None
     stt_threads: int = 4
+    parakeet_mode: str = "cli"
+    parakeet_library: Path | None = None
+    parakeet_bindings: Path | None = None
+    parakeet_startup_timeout: float = 45
 
     @property
     def stt_model_id(self):
@@ -34,10 +38,6 @@ class Config:
     @property
     def stt_device(self):
         return "cpu" if self.stt_backend == "whistle" else "cuda"
-    parakeet_mode: str = "cli"
-    parakeet_library: Path | None = None
-    parakeet_bindings: Path | None = None
-    parakeet_startup_timeout: float = 45
 
     @classmethod
     def from_env(cls):
@@ -81,7 +81,7 @@ class Config:
         if self.parakeet_mode not in {"cli", "resident"}:
             raise ValueError("PARAKEET_MODE must be cli or resident")
         if not 1 <= self.parakeet_startup_timeout <= 120:
-            raise ValueError("STT threads/startup timeout are out of bounds")
+            raise ValueError("PARAKEET_STARTUP_TIMEOUT must be between 1 and 120 seconds")
         if self.stt_backend == "parakeet" and self.parakeet_mode == "resident":
             if not self.parakeet_library or not self.parakeet_library.is_file():
                 raise ValueError("Set PARAKEET_LIBRARY to the pinned shared library")

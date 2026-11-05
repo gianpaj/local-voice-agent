@@ -44,6 +44,9 @@ class ResidentParakeet:
     async def _spawn(self, child):
         env = dict(os.environ)
         env["TRANSCRIBE_LIBRARY"] = str(self.config.parakeet_library)
+        # An installed bundle keeps its exact GGML siblings alongside the core
+        # library. Scope loader search to this child, never the global daemon.
+        env["LD_LIBRARY_PATH"] = str(self.config.parakeet_library.parent) + os.pathsep + env.get("LD_LIBRARY_PATH", "")
         env["PYTHONPATH"] = str(self.config.parakeet_bindings) + os.pathsep + env.get("PYTHONPATH", "")
         env.pop("TRANSCRIBE_NATIVE_PROVIDER", None)
         # Avoid BLAS oversubscription if a locally linked candidate is selected.
