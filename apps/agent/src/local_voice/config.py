@@ -19,6 +19,9 @@ class Config:
     stt_timeout: float = 15
     max_utterance_seconds: float = 30
     vad_stop_seconds: float = 0.6
+    metrics_dir: Path = Path(".local/metrics")
+    metrics_max_bytes: int = 10_000_000
+    metrics_backups: int = 5
 
     @classmethod
     def from_env(cls):
@@ -34,12 +37,17 @@ class Config:
             ollama_url=os.getenv("OLLAMA_URL", "http://127.0.0.1:11434").rstrip("/"),
             ollama_source=os.getenv("OLLAMA_SOURCE_MODEL", "qwen3.5:9b"),
             ollama_model=os.getenv("OLLAMA_MODEL", "local-voice-qwen"),
+            metrics_dir=Path(os.getenv("METRICS_DIR", str(Path(__file__).resolve().parents[4] / ".local/metrics"))).expanduser().resolve(),
+            metrics_max_bytes=int(os.getenv("METRICS_MAX_BYTES", "10000000")),
+            metrics_backups=int(os.getenv("METRICS_BACKUPS", "5")),
             allowed_origins=tuple(x.strip() for x in os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000").split(",") if x.strip()),
         )
         result.validate()
         return result
 
     def validate(self):
+        if not 1024 <= self.metrics_max_bytes <= 1_000_000_000 or not 1 <= self.metrics_backups <= 100:
+            raise ValueError("Metrics retention must be 1 KB–1 GB per file with 1–100 backups")
         url = urlparse(self.ollama_url)
         if url.scheme != "http" or url.hostname not in {"localhost", "127.0.0.1", "::1"} or url.username or url.password:
             raise ValueError("OLLAMA_URL must be a plain HTTP loopback endpoint")

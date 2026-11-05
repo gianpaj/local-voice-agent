@@ -99,25 +99,50 @@ class PhononEngine:
 
 
 class PhononTTS(TTSService):
-    def __init__(self, engine: PhononEngine):
+    def __init__(self, engine: PhononEngine, telemetry=None):
         super().__init__(sample_rate=24000, push_start_frame=True, push_stop_frames=True)
         self.engine = engine
+        self.telemetry = telemetry
+
+    def can_generate_metrics(self):
+        return True
 
     async def run_tts(self, text, context_id):
-        if len(text) > 1200:
-            await self.push_error("That response is too long to synthesize. Please ask for a shorter answer.")
-            return
+        request = self.telemetry.request("tts", "phonon-31m-en-q8_0-cpu", metrics={
+            "first_pcm_ms": None, "audio_seconds": 0.0,
+        }) if self.telemetry else None
         started = time.monotonic()
-        first = True
+        status = "empty"
         try:
+            if len(text) > 1200:
+                status = "error"
+                await self.push_error("That response is too long to synthesize. Please ask for a shorter answer.")
+                return
+            expected_generation = self.engine.generation + 1
             async for data in self.engine.stream(text):
-                if first:
-                    from loguru import logger
-                    logger.info("stage=tts first_pcm_seconds={:.3f}", time.monotonic() - started)
-                    first = False
+                status = "ok"
+                if request:
+                    if request.metrics["first_pcm_ms"] is None:
+                        request.metrics["first_pcm_ms"] = (time.monotonic() - started) * 1000
+                        self.telemetry.generated_pcm(request)
+                    request.metrics["audio_seconds"] += len(data) / 48000
                 yield TTSAudioRawFrame(data, 24000, 1, context_id=context_id)
+            if self.engine.generation != expected_generation:
+                status = "cancelled"
+        except (asyncio.CancelledError, GeneratorExit):
+            status = "cancelled"
+            raise
         except RuntimeError as error:
+            status = "error"
             await self.push_error(str(error))
+        except BaseException:
+            status = "error"
+            raise
+        finally:
+            if request:
+                request.finish(status)
+                if status in {"empty", "error"}:
+                    self.telemetry.end_turn(request.turn, status)
 
     async def process_frame(self, frame, direction):
         if isinstance(frame, (InterruptionFrame, CancelFrame)):

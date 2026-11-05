@@ -8,6 +8,7 @@ import wave
 from pathlib import Path
 
 from pipecat.frames.frames import TranscriptionFrame
+from pipecat.processors.frame_processor import FrameDirection
 from pipecat.services.stt_service import SegmentedSTTService
 from pipecat.transcriptions.language import Language
 from pipecat.utils.time import time_now_iso8601
@@ -32,7 +33,7 @@ async def terminate_process(process):
         await process.wait()
 
 
-async def transcribe_pcm(config: Config, pcm: bytes) -> str:
+async def transcribe_pcm(config: Config, pcm: bytes, *, timings=None) -> str:
     if len(pcm) % 2:
         raise ValueError("Expected signed 16-bit mono PCM")
     if len(pcm) > int((config.max_utterance_seconds + 1.5) * 16000 * 2):
@@ -47,6 +48,7 @@ async def transcribe_pcm(config: Config, pcm: bytes) -> str:
             wav.setsampwidth(2)
             wav.setframerate(16000)
             wav.writeframes(pcm)
+        cli_started = time.monotonic()
         process = await asyncio.create_subprocess_exec(
             str(config.parakeet_bin), "--backend", "cuda", "--threads", "4",
             "--timestamps", "none", "--quiet", "-m", str(config.parakeet_model),
@@ -61,26 +63,41 @@ async def transcribe_pcm(config: Config, pcm: bytes) -> str:
                 raise RuntimeError(f"Local Parakeet transcription failed (exit {process.returncode})")
             return output.read_text().strip()
         finally:
+            if timings is not None:
+                timings["cli_ms"] = (time.monotonic() - cli_started) * 1000
             await terminate_process(process)
 
 
 class ParakeetSTT(SegmentedSTTService):
-    def __init__(self, config: Config, status=None):
+    def __init__(self, config: Config, status=None, telemetry=None):
         super().__init__(sample_rate=16000, trailing_silence_secs=0.25)
         self.config = config
         self.status = status
         self._segment_queue = asyncio.Queue(maxsize=2)
         self._overflow = False
+        self.telemetry = telemetry
+        self._segment_turns = {}
+
+    def can_generate_metrics(self):
+        return True
 
     @property
     def wants_wav_segments(self):
         return False
+
+    def _record_rejection(self, captured_seconds):
+        if self.telemetry:
+            request = self.telemetry.request("stt", "parakeet-tdt-0.6b-v3-Q8_0", turn=self.telemetry.current,
+                metrics={"audio_seconds": 0, "captured_audio_seconds": captured_seconds, "cli_ms": None, "rejected": 1})
+            request.finish("error")
+            self.telemetry.end_turn(request.turn, "error")
 
     async def process_audio_frame(self, frame, direction):
         if self._overflow:
             return
         await super().process_audio_frame(frame, direction)
         if len(self._audio_buffer) > int(self.config.max_utterance_seconds * 32000):
+            self._record_rejection(len(self._audio_buffer) / 32000)
             self._audio_buffer.clear()
             self._overflow = True
             await self.push_error("Please pause at least every 30 seconds. This utterance was not transcribed.")
@@ -92,24 +109,49 @@ class ParakeetSTT(SegmentedSTTService):
             self._audio_buffer.clear()
             return
         if self._segment_queue.full():
+            self._record_rejection(len(self._audio_buffer) / 32000)
             self._user_speaking = False
             self._audio_buffer.clear()
             await self.push_error("Transcription is busy. Please wait and try that again.")
             return
+        if self.telemetry:
+            self._segment_turns[self._segment_count] = self.telemetry.current
         await super()._handle_user_stopped_speaking(frame)
 
     async def run_stt(self, audio):
         started = time.monotonic()
-        if self.status:
-            await self.status("transcribing")
+        request = None
+        turn = self._segment_turns.pop(self._transcribing_segment, None)
+        if self.telemetry:
+            request = self.telemetry.request("stt", "parakeet-tdt-0.6b-v3-Q8_0", turn=turn,
+                metrics={"audio_seconds": len(audio) / 32000, "cli_ms": None})
+        status = "empty"
         try:
-            text = await transcribe_pcm(self.config, audio)
+            if self.status:
+                await self.status("transcribing")
+            text = await transcribe_pcm(self.config, audio, timings=request.metrics if request else None)
             if text:
-                yield TranscriptionFrame(text, self._user_id, time_now_iso8601(), language=Language.EN)
+                status = "ok"
+                if request:
+                    self.telemetry.response_turn = request.turn
+                frame = TranscriptionFrame(text, self._user_id, time_now_iso8601(), language=Language.EN)
+                yield frame
+        except (asyncio.CancelledError, GeneratorExit):
+            status = "cancelled"
+            raise
         except TimeoutError:
+            status = "timeout"
             await self.push_error("Local transcription timed out. Please try a shorter phrase.")
         except (ValueError, RuntimeError) as error:
+            status = "error"
             await self.push_error(str(error))
+        except BaseException:
+            status = "error"
+            raise
         finally:
+            if request:
+                request.finish(status)
+                if status in {"empty", "error", "timeout"}:
+                    self.telemetry.end_turn(request.turn, status)
             from loguru import logger
             logger.info("stage=stt seconds={:.3f}", time.monotonic() - started)

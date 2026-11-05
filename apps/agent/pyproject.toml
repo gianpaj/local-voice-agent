@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Private English voice agent with Parakeet, Ollama, and Phonon"
 requires-python = ">=3.12,<3.13"
 dependencies = [
-  "pipecat-ai[webrtc,silero,ollama]==1.15.0",
+  "pipecat-ai[webrtc,silero,ollama,tracing]==1.15.0",
   "ptts==0.5.0",
   "fastapi==0.121.0",
   "uvicorn==0.38.0",

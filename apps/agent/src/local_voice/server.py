@@ -21,6 +21,7 @@ from .llm import keep_ollama_warm, prepare_ollama
 from .pipeline import build_worker, run_worker
 from .tts import PhononEngine
 from .stt import transcribe_pcm
+from .telemetry import JsonlSink, SessionMetrics, configure_tracing, close_tracing, timestamp
 
 
 class Offer(BaseModel):
@@ -50,7 +51,8 @@ def create_app(config=None, *, initialize=True):
     handler = SmallWebRTCRequestHandler(ice_servers=[], connection_mode=ConnectionMode.SINGLE)
     lock = asyncio.Lock()
     state = {"phase": "initializing", "ready": False, "busy": False, "error": None}
-    active = {"connection": None, "task": None, "worker": None}
+    active = {"connection": None, "task": None, "worker": None, "telemetry": None}
+    sink = None
     engine = PhononEngine(config.phonon_model)
 
     async def warmup():
@@ -69,14 +71,31 @@ def create_app(config=None, *, initialize=True):
                 raise ValueError("Parakeet readiness check returned no speech")
             details["stt_preflight_seconds"] = round(time.monotonic() - started, 3)
             state.update(ready=True, phase="ready", **details)
+            if sink:
+                sink.emit({"schema_version": 1, "record_type": "session", "timestamp": timestamp(),
+                           "session_id": None, "turn_id": None, "request_id": None, "stage": "startup",
+                           "model": None, "status": "ready", "metrics": {
+                               "warmup_ms": details["warmup_seconds"] * 1000,
+                               "stt_preflight_ms": details["stt_preflight_seconds"] * 1000}})
             logger.info("Models warmed and ready; no conversation recording enabled")
             await keep_ollama_warm(config, state)
         except Exception as error:
             logger.error("Model preflight failed: {}", type(error).__name__)
             state.update(phase="error", error=str(error))
+            if sink:
+                sink.emit({"schema_version": 1, "record_type": "session", "timestamp": timestamp(),
+                           "session_id": None, "turn_id": None, "request_id": None,
+                           "stage": "startup", "model": None, "status": "error", "metrics": {}})
 
     @asynccontextmanager
     async def lifespan(app):
+        nonlocal sink
+        sink = JsonlSink(config.metrics_dir, max_bytes=config.metrics_max_bytes, backups=config.metrics_backups)
+        try:
+            configure_tracing(sink)
+        except Exception:
+            await asyncio.to_thread(sink.close)
+            raise
         warming = asyncio.create_task(warmup()) if initialize else None
         try:
             yield
@@ -90,6 +109,9 @@ def create_app(config=None, *, initialize=True):
             if active["task"]:
                 await asyncio.gather(active["task"], return_exceptions=True)
             await engine.close()
+            if active["telemetry"]:
+                active["telemetry"].close("disconnected")
+            await asyncio.to_thread(close_tracing, sink)
 
     app = FastAPI(lifespan=lifespan, docs_url=None, redoc_url=None)
     app.state.voice_state = state
@@ -113,23 +135,33 @@ def create_app(config=None, *, initialize=True):
 
     @app.get("/health")
     async def health():
-        return {**state, "models": {"stt": "Parakeet TDT 0.6B v3 Q8_0", "llm": config.ollama_model, "tts": "Phonon 31M English CPU"}}
+        return {**state, "telemetry": sink.health() if sink else {"active": False}, "models": {"stt": "Parakeet TDT 0.6B v3 Q8_0", "llm": config.ollama_model, "tts": "Phonon 31M English CPU"}}
 
     async def attached(connection):
-        worker = build_worker(connection, config, engine)
-        active.update(connection=connection, worker=worker)
+        telemetry = SessionMetrics(sink, config.vad_stop_seconds) if sink else None
+        try:
+            worker = build_worker(connection, config, engine, telemetry)
+        except BaseException:
+            if telemetry:
+                telemetry.close("error")
+            raise
+        active.update(connection=connection, worker=worker, telemetry=telemetry)
 
         async def run():
+            outcome = "disconnected"
             try:
                 await run_worker(worker)
             except asyncio.CancelledError:
                 raise
             except Exception:
+                outcome = "error"
                 logger.exception("Voice session failed")
             finally:
                 engine.interrupt()
                 await connection.disconnect()
-                active.update(connection=None, task=None, worker=None)
+                if telemetry:
+                    telemetry.close(outcome)
+                active.update(connection=None, task=None, worker=None, telemetry=None)
                 state["busy"] = False
         active["task"] = asyncio.create_task(run())
 
