@@ -11,6 +11,7 @@
     "preflight": "bash scripts/preflight",
     "build": "pnpm --filter web build",
     "typecheck": "pnpm --filter web typecheck",
-    "test": "uv run --project apps/agent pytest apps/agent/tests -q"
+    "test": "uv run --project apps/agent pytest apps/agent/tests -q && python3 -m unittest discover -s scripts -p 'test_*.py'",
+    "metrics": "python3 scripts/metrics.py"
   }
 }

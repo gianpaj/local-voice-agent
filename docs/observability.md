@@ -1,0 +1,67 @@
+# Retained timing measurements
+
+The agent writes local **metadata-only JSONL** and sanitized **OpenTelemetry spans**. No collector, cloud account, database, or dashboard is required. This is separate from the transient browser transcript; audio, transcripts, prompts, tool arguments/results and raw trace events are not retained.
+
+## Analyze later, with the app stopped if desired
+
+From the repository root:
+
+```bash
+pnpm metrics
+pnpm metrics --format json
+pnpm metrics --format csv > .local/cascade-metrics.csv
+pnpm metrics --session SESSION_UUID
+pnpm metrics --since 2026-11-05T00:00:00Z
+pnpm metrics /path/to/metrics-directory
+```
+
+The underlying command is `python3 scripts/metrics.py`; it does not load models or import Pipecat. Directories include rotated JSONL files. JSON output is suitable for notebooks; CSV is a long-format measurement table with correlation IDs. Redirect exports into an ignored location if they should remain local.
+
+## Storage and overhead
+
+Default: `.local/metrics/metrics.jsonl`, with five rotated backups (`.1` … `.5`). Each file rotates at approximately 10 MB; the last individual record can affect the exact bound. `.local/` is ignored by Git. Set `METRICS_DIR`, `METRICS_MAX_BYTES` and `METRICS_BACKUPS` in the ignored `.env` to change storage/retention. Avoid sharing one directory between simultaneous agent processes.
+
+A bounded background queue performs disk writes outside the audio event loop. `/health` includes queued/written/dropped/write-error counts: a healthy audio call does not imply its metrics were all saved. Queue overflow or storage errors are counted instead of stopping speech. Completed records are flushed on orderly shutdown. Abrupt power/process loss can lose in-flight records; no claim of crash-proof transactional storage is made. The analyzer reports malformed/truncated lines instead of treating them as successful measurements.
+
+OpenTelemetry is configured once per process with a local exporter, not environment-selected OTLP destinations. Pipecat's decorators can put dialogue into native span attributes, so the exporter persists only an explicit numeric/identifier allowlist and drops raw attributes, events, links, resource attributes and status descriptions. Do not attach another automatic/global exporter without revisiting this boundary.
+
+## Schema and grain
+
+All records have `schema_version: 1`, `record_type`, UTC ISO `timestamp`, `session_id`, `turn_id`, `request_id`, `stage`, `model`, `status`, a `metrics` object, and trace/span IDs where available. Null means **not observed**, not zero.
+
+- **stage:** one actual STT, LLM or TTS request. Multiple sentences can create multiple TTS records in one turn.
+- **turn:** one observed user speech/response cycle, including incomplete/interrupted cycles. Stable request ownership prevents late completion from moving an old request onto a new turn.
+- **session:** browser-session lifecycle, plus distinct startup warmup records. Startup is not steady-state inference.
+- **span:** a sanitized application/Pipecat OpenTelemetry representation. It is a trace, not another independent request sample. Native Pipecat turn structure and application utterance IDs need not be one-to-one; application request/turn spans carry the explicit local IDs.
+
+The offline summary groups by record type, stage, model, then **outcome**, and includes counts/missing/invalid values beside min/mean/p50/p95/max. Failed/canceled requests are not silently removed or mixed into successful-latency percentiles. Span records are excluded from aggregates to avoid counting the same work twice. Percentiles use linear interpolation; small-sample p95 is descriptive, not an SLO estimate.
+
+## Timing boundaries
+
+Durations use the **server monotonic clock**, while UTC timestamps support date/session filtering. No duration subtracts a browser clock from a server clock.
+
+| Record/metric | Exact meaning |
+| --- | --- |
+| STT `total_ms` | Adapter request start through completion/error/cancellation cleanup; includes local preprocessing and subprocess/model-load costs. |
+| STT `cli_ms` | CLI invocation through result handling; not pure encoder time and not warmed persistent-model throughput. |
+| STT `audio_seconds` | Submitted 16 kHz mono PCM duration, including adapter padding. |
+| LLM `service_ttfb_ms` | Native Pipecat response TTFB when emitted; not necessarily an answer token. |
+| LLM `first_answer_token_ms` | Request to first answer text; native TTFAT is used when available. Missing output stays null. |
+| LLM `total_ms` | This model inference/request lifetime, not total turn including spoken playback. |
+| LLM token metrics | Usage reported by the runtime; missing usage is null. |
+| TTS `first_pcm_ms` | Synthesis request to first generated PCM chunk. It can contain leading silence. |
+| TTS `total_ms` | Synthesis iterator lifetime, including bounded-buffer backpressure/cleanup where applicable. |
+| TTS `audio_seconds` | PCM generated by this request, not proof that all of it reached the speaker. |
+| `rtf` | Elapsed processing seconds / submitted or generated audio seconds. Below one means faster than real time for that interval. |
+| Turn `agent_ttfa_ms` | VAD stop notification to first generated TTS PCM. **Excludes the earlier endpointing wait** and excludes network/browser/audio hardware delay. |
+| Turn `server_speaking_ms` | VAD stop notification to Pipecat server BotStartedSpeaking event; not physical speaker onset. |
+| Turn endpointing fields | Configured/reported VAD silence window, not an independent waveform measurement. |
+| Turn `browser_playback_ms`, `acoustic_ttfa_ms` | Null: not measured by this server-only implementation. |
+
+Do not add TTFB to TTFAT (it already includes it), sum concurrent stage totals, or sum stage p95 values to derive end-to-end p95. Tool calling will add extra model rounds; measure first acknowledgement and final grounded-answer latency separately instead of claiming a filler response is the completed answer.
+
+## Later tool calling
+
+The session/turn/request schema permits additional request spans. When tools are implemented, add complete-valid-arguments latency, per-tool execution/wait/status, post-result model latency and final-answer TTFA. Persist identifiers and timing/outcome metadata only, not tool parameters or returned data. Tool calling itself is not introduced by this instrumentation feature.
+
+Implementation uses the pinned Pipecat 1.15 APIs, checked against [official tracing documentation](https://docs.pipecat.ai/api-reference/server/utilities/opentelemetry).

@@ -49,6 +49,8 @@ One browser session at a time; another receives busy instead of taking over. Sta
 
 No persistent audio/conversation store is enabled. Browser transcript is capped at 60 entries; backend history is bounded and discarded at disconnect. Temporary STT WAV/text files are deleted on success/failure/cancel. Routine logging contains metadata, not speech. There is no cloud fallback.
 
+Timing metadata **is** retained locally: per-request STT/LLM/TTS measurements, per-turn latency and sanitized OpenTelemetry spans, without conversation content. Run `pnpm metrics` for outcome-separated p50/p95 reports or CSV/JSON export. See [observability and timing definitions](docs/observability.md), and the [performance research backlog](docs/performance-research-2026-11-05.md) for optimizations that preserve the current models.
+
 Local automated WebRTC checks do not verify physical audio or remote-device networking. [Verification](docs/verification.md) records what actually passed and what still needs the intended user's microphone/speaker test.
 
 Source: [gianpaj/local-voice-agent](https://github.com/gianpaj/local-voice-agent), a private repository published at the user's request. Model weights and local runtime configuration are not included. The implementation adapts the official [Pipecat P2P voice example](https://github.com/pipecat-ai/pipecat-examples/tree/7875d02bc0714d59528b0c8797664308af960a3a/p2p-webrtc/voice-agent), replacing Gemini/public STUN. See [notices](THIRD_PARTY_NOTICES.md), [design](docs/superpowers/specs/2026-11-04-local-voice-agent-design.md), and [plan](docs/superpowers/plans/2026-11-04-local-voice-agent-implementation.md).
