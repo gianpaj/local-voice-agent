@@ -22,7 +22,17 @@ Plan: [native inference performance](../../docs/superpowers/plans/2026-11-05-nat
 
 ## Coordination gate
 
-**Waiting for parent handoff:** corrected observability base plus an exclusive build/benchmark window. No heavy compile, inference or adapter edits have been performed by this worker. The first commit is plan/notes only; implementation resumes on the parent-confirmed updated base.
+Parent supplied corrected observability base `76358a24db86e26859875e9784f4de1dec4a2bd2` and authorized a two-job native build plus model-free tests. The build was paused and resumed on the parent's resource schedule while the independent Whistle/Rust comparisons ran. Timed model comparisons still require a parent-coordinated idle window.
+
+## 2026-11-05 — resident implementation and build
+
+- `a1d8b7f`: reproducible pinned alongside-build helper. Local shared CUDA/SM89/Release build completed without BLAS; existing static CLI untouched. Link inspection confirms local shared ggml CPU/CUDA and CUDA/cuBLAS dependencies. The local build manifest retains effective options and library hash; no binaries or private paths are committed.
+- `44240ca`: optional resident STT supervisor/child, bounded raw-PCM framing, pinned API/version/revision validation, one owned reusable model/session, serialized compute, one active plus two waiting calls, cancellation reaching native code and kill/reap fallback, request ID validation, controlled reload, startup/readiness/shutdown integration, rollback mode and operations guide. Default remains CLI pending acceptance.
+- Verified upstream int16 conversion uses `sample * 0.000030517578125f`; resident normalization is the identical float32 scale. Timestamp mode remains `none`; no language/decode-family/precision overrides were introduced.
+- 36 backend tests pass on this isolated worktree, including 14 new actual-child/fake-native protocol, reuse, cancellation, timeout, malformed-size, crash/reload, stuck-call kill, bounded admission and one-attempt readiness recovery checks. Existing corrected turn ownership/telemetry tests remain passing. Real CUDA model inference is a separate remaining gate.
+- Added native request queue/startup and mel/encode/decode/total timing fields, all numeric/null. One-time model load is startup metadata, not added to every warm request. No new transcript/audio retention.
+- Coordinated dispatcher/config seam with the Whistle worker: an application-owned `engine` keyword is used only for resident Parakeet. Parent composes backend selection so selecting Whistle does not initialize unused Parakeet. No VAD/turn-ownership redesign in this change.
+- Prepared a paired CLI/resident benchmark using the Whistle comparison's exact seven labeled public/synthetic/silence fixtures and shared WER/entity scoring implementation. Results remain pending; no speed or quality-parity claim yet.
 
 ## Evidence still required
 
