@@ -43,3 +43,37 @@ The harness alternates model order on each repeat, retains failures/timeouts, us
 ## Rollback
 
 Set `STT_BACKEND=parakeet`, retain the working `PARAKEET_BIN`/`PARAKEET_MODEL`, and restart normally. No OpenClaw/global Ollama/Tailscale setting is changed by this feature.
+
+## Measured comparison — 2026-11-05
+
+**Decision: retain Whistle as opt-in, not the default.** Smaller CPU inference helped several short clips, but this run did not meet a no-quality-loss/no-tail-regression adoption gate.
+
+Seven unique inputs: four public natural-speech clips, two synthetic Phonon name/number controls, and digital silence. Five alternating paired repetitions produced **35/35 successful attempts for each backend**, including 30 speech attempts and five shared silence fast-path attempts. Repetition measures timing consistency, not 30 independent speech examples. Same PCM bytes, explicit English, four threads, default full Whistle decoder and existing Parakeet Q8_0 CUDA settings. These are **fresh-process/model-load** timings with potentially warm OS caches, not resident-model timings or browser TTFA.
+
+| Metric | Parakeet CUDA | Whistle CPU |
+| --- | ---: | ---: |
+| Speech process-wall p50 | 493.8 ms | 263.0 ms |
+| Speech process-wall p95 | 549.8 ms | 1451.8 ms |
+| Reference WER, successful speech | 0% | 8.57% |
+| Reference CER, successful speech | 0% | 5.48% |
+| Names/numbers probe matches | 45/45 | 35/45 |
+| Failures/timeouts | 0/35 | 0/35 |
+| Silence fast-path false positives | 0/5 | 0/5 |
+| Checkpoint bytes | 739,508,576 | 16,919,407 |
+
+Speech p50/p95 by unique fixture (five repetitions each):
+
+| Public fixture ID | Seconds | Parakeet p50/p95 ms | Whistle p50/p95 ms |
+| --- | ---: | ---: | ---: |
+| librispeech-1272-128104-0000 | 5.855 | 495.5 / 518.4 | 714.6 / 719.2 |
+| librispeech-1272-128104-0001 | 4.815 | 486.8 / 498.1 | 120.5 / 126.5 |
+| librispeech-1272-128104-0002 | 12.485 | 549.5 / 553.4 | 1450.8 / 1457.8 |
+| jfk | 11.000 | 523.8 / 541.1 | 1242.5 / 1245.1 |
+| synthetic-names | 3.680 | 485.3 / 488.8 | 102.6 / 103.8 |
+| synthetic-numbers | 3.840 | 481.4 / 489.3 | 104.8 / 113.0 |
+
+**Quality inspection matters:** some Whistle WER errors were legitimate written/spoken normalization differences (titles and dates/times). All three numeric semantic probes passed. However, it also consistently misspelled the public proper name in two natural-speech clips and had real insertion/spelling errors in another. WER formatting differences do not explain away those regressions. Both recognizers matched the synthetic name control and JFK after case/punctuation normalization. Nine distinct probes were repeated five times; 45 trials do not mean 45 independent names/numbers.
+
+The silence result tests adapter bypass, not the raw recognizers' response to arbitrary silence/noise. This tiny corpus does not establish outdoor, meeting, accent, multilingual or general conversational accuracy. Runtime RAM/VRAM peaks, full browser-cascade latency and tool-routing quality were not measured by this comparison; smaller checkpoint size is not a runtime-memory measurement. No tool execution or framework change was introduced.
+
+Machine-readable retained evidence is in the ignored `.local/benchmarks/whistle/summary.json` and `attempts.jsonl`, with the exact manifest/model/executable/PCM hashes. The summary contains public fixture IDs and numeric metrics, not references/transcripts or machine-specific paths. The local run explicitly retained **public test-corpus** hypothesis text in `attempts.jsonl` for the error inspection above; default harness behavior does not retain text. No recordings, transcripts, weights or raw reports are committed.
