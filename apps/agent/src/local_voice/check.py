@@ -12,6 +12,7 @@ from .config import Config
 from .llm import prepare_ollama
 from .stt import transcribe_pcm
 from .tts import PhononEngine
+from .resident_stt import ResidentParakeet
 
 
 async def check(smoke=False, audio=None):
@@ -32,7 +33,10 @@ async def check(smoke=False, audio=None):
     if smoke:
         result.update(await prepare_ollama(config))
         engine = PhononEngine(config.phonon_model)
+        stt_engine = ResidentParakeet(config) if config.parakeet_mode == "resident" else None
         try:
+            if stt_engine:
+                result["resident_stt"] = await stt_engine.load()
             await engine.load()
             started = time.monotonic()
             pcm = bytearray()
@@ -53,12 +57,14 @@ async def check(smoke=False, audio=None):
                 floats = np.frombuffer(pcm, dtype="<i2").astype(np.float32) / 32768
                 pcm16 = (soxr.resample(floats, 24000, 16000) * 32767).astype("<i2").tobytes()
             started = time.monotonic()
-            transcript = await transcribe_pcm(config, pcm16)
+            transcript = await transcribe_pcm(config, pcm16, **({"engine": stt_engine} if stt_engine else {}))
             result.update(stt_seconds=round(time.monotonic() - started, 3), stt_text=transcript)
             if not transcript:
                 raise ValueError("Selected STT returned no text for the speech smoke sample")
         finally:
             await engine.close()
+            if stt_engine:
+                await stt_engine.close()
     print(json.dumps(result, indent=2))
 
 

@@ -16,7 +16,7 @@ from .tts import PhononTTS
 from .telemetry import CascadeObserver
 
 
-def build_worker(connection, config, engine, telemetry=None):
+def build_worker(connection, config, engine, telemetry=None, stt_engine=None):
     transport = SmallWebRTCTransport(connection, TransportParams(
         audio_in_enabled=True, audio_out_enabled=True,
         audio_in_sample_rate=16000, audio_out_sample_rate=24000,
@@ -58,7 +58,7 @@ def build_worker(connection, config, engine, telemetry=None):
             await worker.rtvi.send_server_message({"phase": phase})
 
     worker = PipelineWorker(Pipeline([
-        transport.input(), ParakeetSTT(config, status, telemetry), aggregators.user(),
+        transport.input(), ParakeetSTT(config, status, telemetry, stt_engine), aggregators.user(),
         BoundedOllama(config, telemetry), PhononTTS(engine, telemetry), transport.output(), aggregators.assistant(),
     ]), params=PipelineParams(audio_in_sample_rate=16000, audio_out_sample_rate=24000, enable_metrics=True, enable_usage_metrics=True),
         enable_rtvi=True, idle_timeout_secs=300, cancel_timeout_secs=8,

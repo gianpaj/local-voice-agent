@@ -34,6 +34,10 @@ class Config:
     @property
     def stt_device(self):
         return "cpu" if self.stt_backend == "whistle" else "cuda"
+    parakeet_mode: str = "cli"
+    parakeet_library: Path | None = None
+    parakeet_bindings: Path | None = None
+    parakeet_startup_timeout: float = 45
 
     @classmethod
     def from_env(cls):
@@ -60,6 +64,10 @@ class Config:
             metrics_dir=Path(os.getenv("METRICS_DIR", str(Path(__file__).resolve().parents[4] / ".local/metrics"))).expanduser().resolve(),
             metrics_max_bytes=int(os.getenv("METRICS_MAX_BYTES", "10000000")),
             metrics_backups=int(os.getenv("METRICS_BACKUPS", "5")),
+            parakeet_mode=os.getenv("PARAKEET_MODE", "cli"),
+            parakeet_library=Path(os.environ["PARAKEET_LIBRARY"]).expanduser().resolve() if os.getenv("PARAKEET_LIBRARY") else None,
+            parakeet_bindings=Path(os.environ["PARAKEET_BINDINGS"]).expanduser().resolve() if os.getenv("PARAKEET_BINDINGS") else None,
+            parakeet_startup_timeout=float(os.getenv("PARAKEET_STARTUP_TIMEOUT", "45")),
             allowed_origins=tuple(x.strip() for x in os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000").split(",") if x.strip()),
         )
         result.validate()
@@ -70,6 +78,15 @@ class Config:
             raise ValueError("STT_BACKEND must be parakeet or whistle")
         if not 1 <= self.stt_threads <= 64:
             raise ValueError("STT_THREADS must be between 1 and 64")
+        if self.parakeet_mode not in {"cli", "resident"}:
+            raise ValueError("PARAKEET_MODE must be cli or resident")
+        if not 1 <= self.parakeet_startup_timeout <= 120:
+            raise ValueError("STT threads/startup timeout are out of bounds")
+        if self.stt_backend == "parakeet" and self.parakeet_mode == "resident":
+            if not self.parakeet_library or not self.parakeet_library.is_file():
+                raise ValueError("Set PARAKEET_LIBRARY to the pinned shared library")
+            if not self.parakeet_bindings or not (self.parakeet_bindings / "transcribe_cpp/__init__.py").is_file():
+                raise ValueError("Set PARAKEET_BINDINGS to the matching pinned Python bindings directory")
         if not 1024 <= self.metrics_max_bytes <= 1_000_000_000 or not 1 <= self.metrics_backups <= 100:
             raise ValueError("Metrics retention must be 1 KB–1 GB per file with 1–100 backups")
         url = urlparse(self.ollama_url)

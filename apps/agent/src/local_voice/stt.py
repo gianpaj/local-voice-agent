@@ -33,7 +33,7 @@ async def terminate_process(process):
         await process.wait()
 
 
-async def transcribe_pcm(config: Config, pcm: bytes, *, timings=None) -> str:
+async def transcribe_pcm(config: Config, pcm: bytes, *, timings=None, engine=None) -> str:
     if len(pcm) % 2:
         raise ValueError("Expected signed 16-bit mono PCM")
     if len(pcm) > int((config.max_utterance_seconds + 1.5) * 16000 * 2):
@@ -43,6 +43,10 @@ async def transcribe_pcm(config: Config, pcm: bytes, *, timings=None) -> str:
     if config.stt_backend == "whistle":
         from .whistle import transcribe_whistle
         return await transcribe_whistle(config, pcm, timings=timings)
+    if config.parakeet_mode == "resident":
+        if engine is None:
+            raise RuntimeError("Resident Parakeet requires an application-owned inference engine")
+        return await engine.transcribe(pcm, timings=timings)
     with tempfile.TemporaryDirectory(prefix="local-voice-stt-") as directory:
         wav_path = Path(directory) / "utterance.wav"
         output = Path(directory) / "transcript.txt"
@@ -72,7 +76,7 @@ async def transcribe_pcm(config: Config, pcm: bytes, *, timings=None) -> str:
 
 
 class ParakeetSTT(SegmentedSTTService):
-    def __init__(self, config: Config, status=None, telemetry=None):
+    def __init__(self, config: Config, status=None, telemetry=None, engine=None):
         super().__init__(sample_rate=16000, trailing_silence_secs=0.25)
         self.config = config
         self.status = status
@@ -80,6 +84,7 @@ class ParakeetSTT(SegmentedSTTService):
         self._overflow = False
         self.telemetry = telemetry
         self._segment_turns = {}
+        self.engine = engine
 
     def can_generate_metrics(self):
         return True
@@ -145,7 +150,10 @@ class ParakeetSTT(SegmentedSTTService):
         try:
             if self.status:
                 await self.status("transcribing")
-            text = await transcribe_pcm(self.config, audio, timings=request.metrics if request else None)
+            kwargs = {"timings": request.metrics if request else None}
+            if self.engine is not None:
+                kwargs["engine"] = self.engine
+            text = await transcribe_pcm(self.config, audio, **kwargs)
             if text:
                 status = "ok"
                 if request:

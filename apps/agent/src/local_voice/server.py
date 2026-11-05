@@ -21,6 +21,7 @@ from .llm import keep_ollama_warm, prepare_ollama
 from .pipeline import build_worker, run_worker
 from .tts import PhononEngine
 from .stt import transcribe_pcm
+from .resident_stt import ResidentParakeet
 from .telemetry import JsonlSink, SessionMetrics, configure_tracing, close_tracing, timestamp
 
 
@@ -54,12 +55,18 @@ def create_app(config=None, *, initialize=True):
     active = {"connection": None, "task": None, "worker": None, "telemetry": None}
     sink = None
     engine = PhononEngine(config.phonon_model)
+    stt_engine = ResidentParakeet(config) if config.stt_backend == "parakeet" and config.parakeet_mode == "resident" else None
 
     async def warmup():
         try:
             config.validate()
+            stt_details = {}
+            if stt_engine:
+                info = await stt_engine.load()
+                stt_details = {"stt_worker_startup_ms": info["startup_ms"], "stt_model_load_ms": info["model_load_ms"]}
             await engine.load()
             details = await prepare_ollama(config)
+            details.update(stt_details)
             # Ready must include genuine GPU STT and PCM synthesis, not just files.
             pcm = bytearray()
             async for chunk in engine.stream("Ready."):
@@ -67,8 +74,8 @@ def create_app(config=None, *, initialize=True):
             samples = np.frombuffer(pcm, dtype="<i2").astype(np.float32) / 32768
             normalized = (soxr.resample(samples, 24000, 16000) * 32767).astype("<i2").tobytes()
             started = time.monotonic()
-            if not await transcribe_pcm(config, normalized):
-                raise ValueError("Selected STT readiness check returned no speech")
+            if not await transcribe_pcm(config, normalized, **({"engine": stt_engine} if stt_engine else {})):
+                raise ValueError("Parakeet readiness check returned no speech")
             details["stt_preflight_seconds"] = round(time.monotonic() - started, 3)
             state.update(ready=True, phase="ready", **details)
             if sink:
@@ -76,7 +83,8 @@ def create_app(config=None, *, initialize=True):
                            "session_id": None, "turn_id": None, "request_id": None, "stage": "startup",
                            "model": None, "status": "ready", "metrics": {
                                "warmup_ms": details["warmup_seconds"] * 1000,
-                               "stt_preflight_ms": details["stt_preflight_seconds"] * 1000}})
+                               "stt_preflight_ms": details["stt_preflight_seconds"] * 1000,
+                               **stt_details}})
             logger.info("Models warmed and ready; no conversation recording enabled")
             await keep_ollama_warm(config, state)
         except Exception as error:
@@ -109,6 +117,8 @@ def create_app(config=None, *, initialize=True):
             if active["task"]:
                 await asyncio.gather(active["task"], return_exceptions=True)
             await engine.close()
+            if stt_engine:
+                await stt_engine.close()
             if active["telemetry"]:
                 active["telemetry"].close("disconnected")
             await asyncio.to_thread(close_tracing, sink)
@@ -135,12 +145,20 @@ def create_app(config=None, *, initialize=True):
 
     @app.get("/health")
     async def health():
-        return {**state, "telemetry": sink.health() if sink else {"active": False}, "models": {"stt": config.stt_model_id, "stt_device": config.stt_device, "llm": config.ollama_model, "tts": "Phonon 31M English CPU"}}
+        runtime_state = {}
+        if stt_engine and state["ready"] and not stt_engine.ready:
+            stt_engine.request_recovery()
+            runtime_state = {"ready": False, "phase": "warming" if stt_engine.recovery_task and not stt_engine.recovery_task.done() else "error",
+                             "error": "The local transcription worker is unavailable; checking readiness."}
+        return {**state, "stt_runtime": config.parakeet_mode,
+                "ready": state["ready"] and (stt_engine.ready if stt_engine else True),
+                **runtime_state,
+                "telemetry": sink.health() if sink else {"active": False}, "models": {"stt": config.stt_model_id, "stt_device": config.stt_device, "llm": config.ollama_model, "tts": "Phonon 31M English CPU"}}
 
     async def attached(connection):
         telemetry = SessionMetrics(sink, config.vad_stop_seconds) if sink else None
         try:
-            worker = build_worker(connection, config, engine, telemetry)
+            worker = build_worker(connection, config, engine, telemetry, **({"stt_engine": stt_engine} if stt_engine else {}))
         except BaseException:
             if telemetry:
                 telemetry.close("error")
