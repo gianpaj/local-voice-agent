@@ -6,6 +6,23 @@ An English-only voice playground. Talk through **your browser's microphone and s
 
 Optional CPU ASR comparison: [Needle + Whistle](docs/whistle.md). Parakeet remains the default; this experiment is a model-quality tradeoff to measure, not a promised equivalent.
 
+Measured native optimization: [resident Parakeet](docs/native-inference.md)
+keeps the same checkpoint/precision in a supervised CUDA worker. The controlled
+comparison measured **487.6 → 52.3 ms median STT**, with **35/35 exact output
+matches**. CLI remains the portable default/rollback; this tested host uses
+resident mode in its private local configuration. [Measured results](docs/native-inference-results-2026-11-05.md).
+
+Interactive component comparison: open **`/performance`** on the running app,
+or generate the standalone offline HTML from the [curated results snapshot](reports/data/performance-2026-11-05.json):
+
+```bash
+pnpm report reports/data/performance-2026-11-05.json
+```
+
+The report includes STT quality/latency, native mel/encoder/decoder timings,
+LLM/TTS observations, browser acceptance and the isolated Rustvani experiment,
+with per-fixture drill-down and JSON/CSV downloads. [Report guide](reports/README.md).
+
 ## Quick start
 
 Requires Linux, an NVIDIA GPU/CUDA-capable `transcribe.cpp`, Python 3.12 via [uv](https://docs.astral.sh/uv/), Node 24, pnpm 11.16.0, existing named model weights, and loopback Ollama. Tested with a 16 GB RTX 4060 Ti.

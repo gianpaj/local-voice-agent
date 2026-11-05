@@ -44,12 +44,42 @@ Parent supplied corrected observability base `76358a24db86e26859875e9784f4de1dec
 - 40 backend tests pass; independent read-only lifecycle/ABI review reports no outstanding blocking issues. No timing rerun was needed for cleanup/readiness-only fixes; actual benchmark/lifecycle checks exercised the corresponding native path, and new edge cases have deterministic subprocess regressions.
 - Detailed measured conditions/results: [native inference results](../../docs/native-inference-results-2026-11-05.md). Parent still owns browser/deployment acceptance, optional local default switch and push. OpenBLAS/TTS-thread/model/runtime changes remain unadopted rather than presented as unmeasured improvements.
 
-## Evidence still required
+## 2026-11-05 — parent integration, adoption and report
 
-- Corrected telemetry baseline and model/build hashes.
-- Public/labeled English corpus sources, references, transcript parity/WER and number/entity checks.
-- Native shared no-BLAS build/ABI/CUDA verification; warm-versus-cold measurements.
-- Worker fault/cancel/restart tests and no stale output or leaked process/VRAM.
-- Full-pipeline residency/RAM/VRAM, browser ten-turn/barge-in/Stop/reconnect evidence.
-- Optional BLAS and TTS-thread experiments; preserve unchanged defaults if no repeatable gain.
-- Adoption decision, rollback instructions and parent-reviewed commits.
+- Parent composed Whistle selection with resident mode, without warming unused
+  Parakeet. Combined configuration/lifecycle tests pass: 50 backend + 10 offline
+  analysis/report checks, TypeScript and production Next build.
+- Copied the exact measured native core and complete GGML/bindings into a stable
+  model-free runtime bundle outside worktrees. Hash retained; actual process
+  maps show every transcribe/GGML library from that bundle. Child-only library
+  search avoids global linker changes; static CLI unchanged.
+- Ten actual Chromium English turns through private HTTPS all completed, with
+  40 stage records and 10 turn records. Separate story interruption/reconnect
+  passed; no stale reply resumed. Busy409, mic sender replacement, Stop and
+  server disconnect/reconnect passed. Logs flushed with zero drops/errors.
+- Ten-turn server-clock generated-audio TTFA median 472.3 ms (excludes configured
+  600 ms endpointing and browser/acoustic delay); STT median84.7 ms, LLM first
+  answer227.0 ms, TTS firstPCM16.4 ms. These marginal medians are not additive.
+  Sampled device-wide peak9,398MiB. Different prompts/history from the earlier
+  validation mean this is acceptance evidence, not a controlled browser A/B.
+- Decision: host uses resident Parakeet; portable/default/rollback stays CLI.
+  Whistle remains optional after accuracy/tail regressions; Rustvani works as
+  a two-run headless prototype, not a production/browser replacement.
+- Built offline interactive HTML with 11 comparison cases across five components,
+  per-fixture quality/configuration evidence, native-stage timings, explicit
+  limitations and JSON/CSV downloads. Actual desktop/mobile/filter/download/
+  null/mixed-boundary/offline checks passed. Curated metadata snapshot committed
+  under reports/data; private raw logs/audio/models remain outside Git.
+- OpenBLAS, TTS threading, new LLM quantization/speculation and VAD reductions
+  remain unadopted without separate controlled evidence. Future tool calling
+  needs structured calls, complete history groups and adequate argument budgets;
+  it was not implemented by this optimization task.
+
+## Remaining validation / later experiments
+
+- Intended separate remote device, physical microphone/speaker, echo and acoustic
+  onset remain unverified by host-side Chromium checks.
+- A larger labeled English accent/noise/name/number corpus is needed before
+  generalizing recognition-quality results beyond these fixed fixtures.
+- Optional BLAS/TTS-thread/tool-calling experiments need their own measured
+  quality and latency acceptance; do not combine them with residency gains.

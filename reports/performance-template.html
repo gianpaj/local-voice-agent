@@ -15,6 +15,7 @@
 <p id="overview" class="lead"></p><div class="actions"><button id="download-json">Download comparison JSON</button><button id="download-csv">Download metrics CSV</button></div>
 <div class="summary" id="summary"></div>
 <div id="global-notes" class="notice"></div>
+<details><summary>Test environment and next decisions</summary><div id="environment"></div><div id="next-decisions"></div></details>
 <nav class="tabs" id="tabs" aria-label="Component filter"></nav>
 <div class="controls"><input id="search" type="search" aria-label="Search comparisons" placeholder="Find a model, engine or configuration…"><select id="group" aria-label="Comparable experiment group"></select><select id="metric" aria-label="Measurement"></select></div>
 <div class="layout">
@@ -45,6 +46,7 @@ function download(name,content,type){const a=el('a');const url=URL.createObjectU
 $('overview').textContent=data.summary||'Measured local voice experiments, with model quality, failure counts and timing boundaries kept visible.';
 const measured=all.filter(r=>Object.values(r.metrics||{}).some(numeric));for(const [value,text] of [[all.length,'configurations documented'],[new Set(all.map(r=>r.component)).size,'components covered'],[measured.length,'configurations with measurements'],[all.filter(r=>r.decision==='adopt').length,'changes adopted']]){const card=el('div',undefined,'stat');card.append(el('b',value),el('span',text));$('summary').append(card);}
 $('global-notes').append(el('strong','Read this comparison correctly.'));list(data.caveats||['Small samples are not service-level guarantees. Check corpus, timing boundary and quality before ranking speed.'],$('global-notes'));
+keyvalues(data.environment||{},$('environment'));list(data.next_decisions||[],$('next-decisions'));
 for(const [key,name]of [['all','All'],['stt','Speech recognition'],['llm','Language model'],['tts','Voice synthesis'],['pipeline','Full conversation'],['framework','Framework']]){const b=el('button',name);b.dataset.component=key;b.setAttribute('aria-pressed',String(state.component===key));b.onclick=()=>{state.component=key;state.group='';for(const n of $('tabs').children)n.setAttribute('aria-pressed',String(n===b));controls();draw();};$('tabs').append(b);}
 for(const [key,definition]of Object.entries(definitions)){$('definitions').append(el('h3',definition.label||key),el('p',definition.description||'', 'subtle'));}
 for(const entry of data.timeline||[]){const p=el('p');p.append(el('code',entry.commit||'uncommitted'),document.createTextNode(' · '+entry.label));$('timeline').append(p);}

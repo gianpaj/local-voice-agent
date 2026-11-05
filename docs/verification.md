@@ -95,3 +95,23 @@ Actual Chromium through the private production HTTPS origin used temporary publi
 - The metadata log was inspected for test speech/sentinel content and correlation consistency. Sanitized trace rows were present; stage/turn summaries are not double-counted by the analyzer. Runtime artifacts remain ignored under `.local/`, not in Git.
 
 Physical/remote-device audio, acoustic onset and broad speech quality remain outside these checks. Subsequent native-inference/Whistle/Rustvani experiments must preserve this verified baseline and report their own evidence separately. Private GitHub publication is authorized and already exists; earlier “not published” notes above describe the initial implementation stage, not current repository status.
+
+
+## 2026-11-05 — native optimization and comparison report acceptance
+
+See [measured native results](native-inference-results-2026-11-05.md) for the
+controlled same-checkpoint comparison, native lifecycle checks and final
+browser acceptance. The integrated implementation passes 50 backend tests,
+10 offline analysis/report tests, TypeScript checking and production build.
+Ten browser turns plus a separate two-turn interruption/reconnect check passed
+with nonzero decoded audio and zero retained-log drops/write errors. Resident
+Parakeet is enabled only in this host's private configuration; source default
+and rollback remain CLI. Whistle is optional; Rustvani remains isolated.
+
+The reviewed [curated comparison snapshot](../reports/data/performance-2026-11-05.json)
+contains 11 configurations spanning STT, LLM, TTS, full conversation and
+frameworks. Generated HTML was checked in Chromium for offline operation,
+component/group/search filters, per-fixture details, mixed-boundary chart
+protection, missing/null values, JSON/CSV downloads and mobile layout. The
+private `/performance` endpoint serves the artifact, with no-store headers.
+No physical acoustic or separate remote-device audio claim is added.

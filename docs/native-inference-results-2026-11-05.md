@@ -43,6 +43,48 @@ The implementation remains optional with CLI as the committed default. Parent ma
 
 OpenBLAS was not installed/built/adopted in this comparison: development headers were absent, and combining a kernel change with model residency would confound the primary result. A separately linked local BLAS candidate remains a later measured experiment, now guided by the approximately 18 ms median decoder time rather than an assumed whole-pipeline multiplier. No TTS-thread change, GPU-TTS migration or speculative-decoding/runtime migration was adopted without comparative evidence.
 
+## Parent integration acceptance
+
+The integrated optional Whistle/resident-Parakeet configuration passes **50
+backend tests**, plus **10 offline analysis/report tests**, TypeScript checking
+and a production Next.js build. Selecting Whistle does not load or require the
+unused resident Parakeet runtime.
+
+The exact measured shared library and matching GGML/bindings were installed in
+a stable local runtime bundle, not left dependent on a disposable worktree.
+The core SHA-256 remains unchanged; `/proc` mapping inspection verified all
+transcribe/GGML libraries came from the stable bundle. No global linker,
+OpenClaw or Ollama changes were needed.
+
+Real Chromium through the private HTTPS origin passed **10/10 English turns**
+(10 STT, 10 LLM and 20 sentence-level TTS requests, all successful), busy-client
+409 handling, microphone sender replacement, Stop cleanup and server-side
+disconnect/reconnect. A separate two-turn story interruption discarded the old
+reply and reconnected successfully. All 12 turns had timing records; the
+interrupted turn was retained as interrupted, not erased or called successful.
+Telemetry shutdown flushed valid JSONL with zero dropped records/write errors.
+
+For the ten-turn acceptance session, server-monotonic VAD-stop → first generated
+PCM had median **472.3 ms**. STT request median was **84.7 ms**, LLM first-answer
+median **227.0 ms**, and TTS first-PCM median **16.4 ms**. These marginal medians
+must not be added. Sampled total GPU memory reached **9,398 MiB**. Browser receipt
+event intervals are a different boundary and were not substituted for these
+server measurements. The 600 ms configured endpointing silence, browser
+playout, network and acoustic onset are excluded from generated-audio TTFA.
+
+Decision: **enable resident Parakeet on this tested host**, keep CLI as the
+portable source default and one-setting rollback, keep Whistle optional, and
+keep Pipecat rather than adopting the Rustvani prototype. No model/voice,
+quantization, LLM context, reasoning policy, sampling or VAD change was made.
+This was a browser on the GPU host through private HTTPS; separate physical
+remote-device audio/networking remains unverified.
+
+The standalone HTML report was exercised in Chromium: component/group/search
+filters, public-fixture expansion, mixed-boundary chart blocking, numeric/null
+display, JSON/CSV downloads, desktop/mobile layout and zero network requests
+when opened offline. The private app's `/performance` route returns that same
+generated artifact; reviewed metadata is also retained in the repository.
+
 ## Retained evidence and reproduction
 
 Use [the native runtime guide](native-inference.md) and the pinned alongside-build helper. Run `scripts/benchmark-native-stt.py` with the shared seven-fixture manifest and five repeats. Metadata-only `summary.json`/`attempts.jsonl`, checkpoint/library/PCM hashes, sampled resources and `lifecycle.json` are retained in ignored `.local/benchmarks/native-parakeet/` on the implementation worktree. They contain no dialogue, recordings or transcript text. Parent can copy sanitized report data into its requested analysis artifact; do not commit private corpus files or local model paths.

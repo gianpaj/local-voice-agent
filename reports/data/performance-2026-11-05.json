@@ -1,0 +1,2469 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-11-05T01:30:30.837627+00:00",
+  "summary": "Keep Pipecat; keep the same models. Resident Parakeet reduced median STT from 487.6 to 52.3 ms (35/35 exact paired outputs). Whistle is a smaller optional CPU alternative with recognition errors here; Rustvani is a working isolated prototype, not the production replacement.",
+  "caveats": [
+    "Compare within an experiment group, not across unrelated corpora or timing boundaries.",
+    "Six English speech fixtures plus silence and five repeats are a smoke corpus, not a broad quality study.",
+    "Generated PCM is not audible speaker onset; missing measurements stay null.",
+    "All models remain local and below 8 GB of weights each. Runtime RAM/VRAM is a different budget."
+  ],
+  "metric_definitions": {
+    "latency_p50_ms": {
+      "label": "STT adapter median",
+      "unit": "ms",
+      "direction": "lower",
+      "description": "Completed PCM utterance to transcription result; includes a fresh process/model load in CLI mode, but not in an already-loaded resident worker. Silence fast paths excluded."
+    },
+    "latency_p95_ms": {
+      "label": "STT adapter p95",
+      "unit": "ms",
+      "direction": "lower",
+      "description": "Descriptive interpolated 95th percentile of successful speech requests in this small fixed corpus. Check failure counts separately; not a production service guarantee."
+    },
+    "wer_pct": {
+      "label": "Word error rate",
+      "unit": "%",
+      "direction": "lower",
+      "description": "Word edits / reference words over successful speech attempts, with Unicode case/punctuation folding but no number rewriting. Formatting differences can count as errors; entity checks add a semantic view."
+    },
+    "cer_pct": {
+      "label": "Character error rate",
+      "unit": "%",
+      "direction": "lower",
+      "description": "Character edits / reference characters under the same normalization. Lower is better; a tiny English corpus does not establish broad accent/noise quality."
+    },
+    "probe_accuracy_pct": {
+      "label": "Name / number probe accuracy",
+      "unit": "%",
+      "direction": "higher",
+      "description": "Matched named-entity/number probes, allowing documented spoken/written number alternatives. Missing probes are not scored as zero."
+    },
+    "first_answer_p50_ms": {
+      "label": "LLM first answer median",
+      "unit": "ms",
+      "direction": "lower",
+      "description": "LLM request to first actual answer-text token/frame, not an empty chunk, internal thinking token or tool result. Prompts/history must match before comparing engines."
+    },
+    "first_pcm_p50_ms": {
+      "label": "TTS first generated PCM median",
+      "unit": "ms",
+      "direction": "lower",
+      "description": "TTS synthesis request to first PCM chunk; may contain leading silence. This is not browser playback or physical speaker onset."
+    },
+    "agent_ttfa_p50_ms": {
+      "label": "Agent generated-audio TTFA median",
+      "unit": "ms",
+      "direction": "lower",
+      "description": "Inline VAD stop notification to first generated TTS PCM. Excludes the earlier configured 600 ms endpointing wait, network, browser playout and speaker hardware."
+    },
+    "server_speaking_p50_ms": {
+      "label": "Server speaking-event median",
+      "unit": "ms",
+      "direction": "lower",
+      "description": "Inline VAD stop to server BotStartedSpeaking event, kept separate from first generated PCM and from acoustic onset."
+    },
+    "headless_first_pcm_p50_ms": {
+      "label": "Headless completed-input \u2192 PCM median",
+      "unit": "ms",
+      "direction": "lower",
+      "description": "Rustvani experiment: injected completed utterance to PCM sink, with full LLM-reply buffering. No VAD, browser transport or barge-in. NOT comparable to streaming browser TTFA."
+    },
+    "browser_playback_ms": {
+      "label": "Browser / acoustic onset",
+      "unit": "ms",
+      "direction": "lower",
+      "description": "Not measured. Decoded audio energy proves received non-silent audio, not the time a human heard it."
+    },
+    "runtime_rss_mib": {
+      "label": "Sampled process-tree RSS",
+      "unit": "MiB",
+      "direction": "lower",
+      "description": "Sampled RSS of the experiment process tree; excludes the preexisting Ollama daemon. Sampling can miss peaks; not total host RAM."
+    },
+    "checkpoint_mib": {
+      "label": "Checkpoint size",
+      "unit": "MiB",
+      "direction": "lower",
+      "description": "Bytes on disk / 2^20. NOT runtime RAM or VRAM. All selected model files are under the user's 8 GB per-model limit."
+    },
+    "native_mel_p50_ms": {
+      "label": "Native mel median",
+      "unit": "ms",
+      "direction": "lower",
+      "description": "Native feature extraction counter for successful resident speech requests. Zero/unreported counters remain missing; marginal medians must not be added together."
+    },
+    "native_encode_p50_ms": {
+      "label": "Native encoder median",
+      "unit": "ms",
+      "direction": "lower",
+      "description": "CUDA encoder counter for successful resident speech requests, with the same precision and checkpoint. First inference can include kernel warmup."
+    },
+    "native_decode_p50_ms": {
+      "label": "Native decoder median",
+      "unit": "ms",
+      "direction": "lower",
+      "description": "Host decoder counter for successful resident speech requests. No OpenBLAS was linked in this comparison."
+    },
+    "total_p50_ms": {
+      "label": "Request lifetime median",
+      "unit": "ms",
+      "direction": "lower",
+      "description": "Per-stage request lifetime through completion or cancellation cleanup. Check per-sample outcomes; TTS can include streaming backpressure."
+    },
+    "rtf_p50": {
+      "label": "Real-time factor median",
+      "unit": "\u00d7",
+      "direction": "lower",
+      "description": "Processing seconds / generated or submitted audio seconds. Below 1 is faster than real time; does not measure browser delivery."
+    }
+  },
+  "comparisons": [
+    {
+      "id": "native-parakeet-cli",
+      "component": "stt",
+      "label": "Parakeet / fresh CLI CUDA",
+      "model": "Parakeet TDT 0.6B v3 Q8_0",
+      "engine": "transcribe.cpp 0.4.1 / CUDA, no host BLAS",
+      "mode": "fresh process + model load (OS cache may be warm)",
+      "boundary": "16 kHz completed PCM \u2192 adapter result; non-silent utterances",
+      "comparison_group": "Parakeet: same checkpoint, CLI vs resident",
+      "decision": "baseline",
+      "metrics": {
+        "latency_p50_ms": 487.6140269989264,
+        "latency_p95_ms": 538.4567384506227,
+        "wer_pct": 0.0,
+        "cer_pct": 0.0,
+        "probe_accuracy_pct": 100.0,
+        "checkpoint_mib": 705.2503356933594
+      },
+      "outcomes": {
+        "attempts": 35,
+        "failed": 0,
+        "statuses": {
+          "ok": 35
+        },
+        "speech_attempts_scored": 30,
+        "silence_false_positives": 0
+      },
+      "quality": {
+        "model_substitution": false,
+        "same_settings_within_model": true,
+        "parity": {
+          "pairs": 35,
+          "both_succeeded": 35,
+          "exact_matches": 35,
+          "normalized_matches": 35
+        },
+        "normalization": "Unicode word tokens, case/punctuation folded; numbers not rewritten",
+        "scope": "6 English speech fixtures plus digital silence; repeats are not independent speakers"
+      },
+      "configuration": {
+        "backend": "cuda",
+        "timestamps": "none",
+        "stt_threads": 4,
+        "model_or_quantization_changed": false,
+        "repeats": 5,
+        "normalization": "Unicode word tokens, case/punctuation folded; numbers not rewritten",
+        "silence_mode": "adapter fast path, not raw model decoding",
+        "resource_sampling": "device-wide nvidia-smi every approximately 0.5s; worker RSS from /proc"
+      },
+      "methodology": "Five alternating-order paired repetitions of seven identical public/synthetic PCM fixtures. Timed runs serialized with other experiments. Latency excludes silence; all attempts/outcomes remain visible.",
+      "notes": [
+        "Same checkpoint and precision; residency removes per-utterance process/CUDA/model initialization."
+      ],
+      "limitations": [
+        "Small English corpus; no meeting/noise/accent quality guarantee.",
+        "Silence is handled by the shared adapter fast path, not raw-model decoding.",
+        "Checkpoint size is not runtime memory.",
+        "Device-wide peak includes simultaneous resident allocation and CLI model loading; not a per-mode VRAM comparison."
+      ],
+      "samples": [
+        {
+          "id": "librispeech-1272-128104-0000",
+          "kind": "public-natural-speech",
+          "pcm_sha256": "156e1e1821700d4c4ad31a63e6d901a5088d5ee155fafd02a9d0d2de37f771e6",
+          "audio_seconds": 5.855,
+          "attempts": 5,
+          "outcomes": {
+            "ok": 5
+          },
+          "speech_attempts_scored": 5,
+          "wer_successful_only": 0.0,
+          "cer_successful_only": 0.0,
+          "probe_accuracy_successful_only": 1.0,
+          "silence_false_positives": 0,
+          "latency_successful_speech_ms": {
+            "p50": 490.0819489994319,
+            "p95": 497.5349336047657
+          }
+        },
+        {
+          "id": "librispeech-1272-128104-0001",
+          "kind": "public-natural-speech",
+          "pcm_sha256": "bca0b38f0be340f804ab1d522f4d2a1b339f3cb237913347d1af0847ae48160e",
+          "audio_seconds": 4.815,
+          "attempts": 5,
+          "outcomes": {
+            "ok": 5
+          },
+          "speech_attempts_scored": 5,
+          "wer_successful_only": 0.0,
+          "cer_successful_only": 0.0,
+          "probe_accuracy_successful_only": 1.0,
+          "silence_false_positives": 0,
+          "latency_successful_speech_ms": {
+            "p50": 483.60599599254783,
+            "p95": 490.7328026019968
+          }
+        },
+        {
+          "id": "librispeech-1272-128104-0002",
+          "kind": "public-natural-speech",
+          "pcm_sha256": "f683cb79705da5840f7e920921f2f5b61d396b3bb8b24db57703745785f5ec55",
+          "audio_seconds": 12.485,
+          "attempts": 5,
+          "outcomes": {
+            "ok": 5
+          },
+          "speech_attempts_scored": 5,
+          "wer_successful_only": 0.0,
+          "cer_successful_only": 0.0,
+          "probe_accuracy_successful_only": null,
+          "silence_false_positives": 0,
+          "latency_successful_speech_ms": {
+            "p50": 538.3271699975012,
+            "p95": 538.7016281980323
+          }
+        },
+        {
+          "id": "jfk",
+          "kind": "public-natural-speech",
+          "pcm_sha256": "a29462b8ebd467318000e683b9117ade46230d3255ed2024e7db894abd9b38c9",
+          "audio_seconds": 11.0,
+          "attempts": 5,
+          "outcomes": {
+            "ok": 5
+          },
+          "speech_attempts_scored": 5,
+          "wer_successful_only": 0.0,
+          "cer_successful_only": 0.0,
+          "probe_accuracy_successful_only": null,
+          "silence_false_positives": 0,
+          "latency_successful_speech_ms": {
+            "p50": 520.6934869929682,
+            "p95": 528.2992117921822
+          }
+        },
+        {
+          "id": "silence",
+          "kind": "digital-silence",
+          "pcm_sha256": "4f7988030a00d082fe445e00a2ac5dab502300ff1b80e8592dd569867b60ef74",
+          "audio_seconds": 2.0,
+          "attempts": 5,
+          "outcomes": {
+            "ok": 5
+          },
+          "speech_attempts_scored": 0,
+          "wer_successful_only": null,
+          "cer_successful_only": null,
+          "probe_accuracy_successful_only": null,
+          "silence_false_positives": 0,
+          "latency_successful_speech_ms": null
+        },
+        {
+          "id": "synthetic-names",
+          "kind": "synthetic-phonon-31m-english",
+          "pcm_sha256": "cdbf312c7d002c5b05a8106a54da75309ee91e3197247bc43996346e020bdf9e",
+          "audio_seconds": 3.68,
+          "attempts": 5,
+          "outcomes": {
+            "ok": 5
+          },
+          "speech_attempts_scored": 5,
+          "wer_successful_only": 0.0,
+          "cer_successful_only": 0.0,
+          "probe_accuracy_successful_only": 1.0,
+          "silence_false_positives": 0,
+          "latency_successful_speech_ms": {
+            "p50": 477.26016301021446,
+            "p95": 494.5077047916129
+          }
+        },
+        {
+          "id": "synthetic-numbers",
+          "kind": "synthetic-phonon-31m-english",
+          "pcm_sha256": "c367af256a565100b48cf8a455ad7b47d50c60b5f61f887e77f031b6416d7f60",
+          "audio_seconds": 3.84,
+          "attempts": 5,
+          "outcomes": {
+            "ok": 5
+          },
+          "speech_attempts_scored": 5,
+          "wer_successful_only": 0.0,
+          "cer_successful_only": 0.0,
+          "probe_accuracy_successful_only": 1.0,
+          "silence_false_positives": 0,
+          "latency_successful_speech_ms": {
+            "p50": 480.3432100015925,
+            "p95": 484.6521611994831
+          }
+        }
+      ],
+      "evidence": {
+        "manifest_sha256": "8093f7755604f4f7b633c2f62d3f1d9acc0b5c1fb0da20b8e8aab2bb0a097685",
+        "identity": {
+          "checkpoint_sha256": "5859f77944efcd8eafa23a6350731960b2b55b2203df51f319665c807d802cc7",
+          "checkpoint_bytes": 739508576,
+          "cli_sha256": "e1e28985688333f976f591d36a500d6c74194ee33fad7eb6f61c638dca706d48",
+          "library_sha256": "0ec39295b76204063d448e270a5ef9cd53f94e85acb2af81d99334ca75857453",
+          "manifest_sha256": "8093f7755604f4f7b633c2f62d3f1d9acc0b5c1fb0da20b8e8aab2bb0a097685"
+        },
+        "resident_worker_startup": null,
+        "shared_experiment_resources_not_per_mode": {
+          "peak_device_vram_mib": 10299,
+          "ollama_before": [
+            {
+              "name": "local-voice-qwen:latest",
+              "size": 8649499264,
+              "size_vram": 8649499264,
+              "context_length": 4096
+            },
+            {
+              "name": "nomic-embed-text:latest",
+              "size": 595142656,
+              "size_vram": 595142656,
+              "context_length": 2048
+            }
+          ],
+          "ollama_after": [
+            {
+              "name": "local-voice-qwen:latest",
+              "size": 8649499264,
+              "size_vram": 8649499264,
+              "context_length": 4096
+            },
+            {
+              "name": "nomic-embed-text:latest",
+              "size": 595142656,
+              "size_vram": 595142656,
+              "context_length": 2048
+            }
+          ]
+        },
+        "resident_worker_sampled_peak_rss_bytes": null,
+        "created_at": "2026-11-05T01:16:20.013964+00:00"
+      },
+      "sources": [
+        {
+          "label": "Matching Parakeet export",
+          "url": "https://huggingface.co/handy-computer/parakeet-tdt-0.6b-v3-gguf"
+        },
+        {
+          "label": "Needle runtime",
+          "url": "https://github.com/cactus-compute/needle"
+        }
+      ]
+    },
+    {
+      "id": "native-parakeet-resident",
+      "component": "stt",
+      "label": "Parakeet / resident CUDA",
+      "model": "Parakeet TDT 0.6B v3 Q8_0",
+      "engine": "transcribe.cpp 0.4.1 / CUDA, no host BLAS",
+      "mode": "resident model",
+      "boundary": "16 kHz completed PCM \u2192 adapter result; non-silent utterances",
+      "comparison_group": "Parakeet: same checkpoint, CLI vs resident",
+      "decision": "adopt",
+      "metrics": {
+        "latency_p50_ms": 52.26461600250332,
+        "latency_p95_ms": 113.40284800317022,
+        "wer_pct": 0.0,
+        "cer_pct": 0.0,
+        "probe_accuracy_pct": 100.0,
+        "checkpoint_mib": 705.2503356933594,
+        "native_mel_p50_ms": 1.4710000157356262,
+        "native_encode_p50_ms": 31.403499603271484,
+        "native_decode_p50_ms": 18.1564998626709
+      },
+      "outcomes": {
+        "attempts": 35,
+        "failed": 0,
+        "statuses": {
+          "ok": 35
+        },
+        "speech_attempts_scored": 30,
+        "silence_false_positives": 0
+      },
+      "quality": {
+        "model_substitution": false,
+        "same_settings_within_model": true,
+        "parity": {
+          "pairs": 35,
+          "both_succeeded": 35,
+          "exact_matches": 35,
+          "normalized_matches": 35
+        },
+        "normalization": "Unicode word tokens, case/punctuation folded; numbers not rewritten",
+        "scope": "6 English speech fixtures plus digital silence; repeats are not independent speakers"
+      },
+      "configuration": {
+        "backend": "cuda",
+        "timestamps": "none",
+        "stt_threads": 4,
+        "model_or_quantization_changed": false,
+        "repeats": 5,
+        "normalization": "Unicode word tokens, case/punctuation folded; numbers not rewritten",
+        "silence_mode": "adapter fast path, not raw model decoding",
+        "resource_sampling": "device-wide nvidia-smi every approximately 0.5s; worker RSS from /proc"
+      },
+      "methodology": "Five alternating-order paired repetitions of seven identical public/synthetic PCM fixtures. Timed runs serialized with other experiments. Latency excludes silence; all attempts/outcomes remain visible.",
+      "notes": [
+        "Same checkpoint and precision; residency removes per-utterance process/CUDA/model initialization.",
+        "Enabled on the tested host after 10-turn browser and separate interruption/reconnect acceptance. Source default stays CLI."
+      ],
+      "limitations": [
+        "Small English corpus; no meeting/noise/accent quality guarantee.",
+        "Silence is handled by the shared adapter fast path, not raw-model decoding.",
+        "Checkpoint size is not runtime memory.",
+        "Device-wide peak includes simultaneous resident allocation and CLI model loading; not a per-mode VRAM comparison."
+      ],
+      "samples": [
+        {
+          "id": "librispeech-1272-128104-0000",
+          "kind": "public-natural-speech",
+          "pcm_sha256": "156e1e1821700d4c4ad31a63e6d901a5088d5ee155fafd02a9d0d2de37f771e6",
+          "audio_seconds": 5.855,
+          "attempts": 5,
+          "outcomes": {
+            "ok": 5
+          },
+          "speech_attempts_scored": 5,
+          "wer_successful_only": 0.0,
+          "cer_successful_only": 0.0,
+          "probe_accuracy_successful_only": 1.0,
+          "silence_false_positives": 0,
+          "latency_successful_speech_ms": {
+            "p50": 57.012870005564764,
+            "p95": 140.45248119800817
+          }
+        },
+        {
+          "id": "librispeech-1272-128104-0001",
+          "kind": "public-natural-speech",
+          "pcm_sha256": "bca0b38f0be340f804ab1d522f4d2a1b339f3cb237913347d1af0847ae48160e",
+          "audio_seconds": 4.815,
+          "attempts": 5,
+          "outcomes": {
+            "ok": 5
+          },
+          "speech_attempts_scored": 5,
+          "wer_successful_only": 0.0,
+          "cer_successful_only": 0.0,
+          "probe_accuracy_successful_only": 1.0,
+          "silence_false_positives": 0,
+          "latency_successful_speech_ms": {
+            "p50": 45.551581992185675,
+            "p95": 48.110646606073715
+          }
+        },
+        {
+          "id": "librispeech-1272-128104-0002",
+          "kind": "public-natural-speech",
+          "pcm_sha256": "f683cb79705da5840f7e920921f2f5b61d396b3bb8b24db57703745785f5ec55",
+          "audio_seconds": 12.485,
+          "attempts": 5,
+          "outcomes": {
+            "ok": 5
+          },
+          "speech_attempts_scored": 5,
+          "wer_successful_only": 0.0,
+          "cer_successful_only": 0.0,
+          "probe_accuracy_successful_only": null,
+          "silence_false_positives": 0,
+          "latency_successful_speech_ms": {
+            "p50": 112.03189300431404,
+            "p95": 113.58702800353058
+          }
+        },
+        {
+          "id": "jfk",
+          "kind": "public-natural-speech",
+          "pcm_sha256": "a29462b8ebd467318000e683b9117ade46230d3255ed2024e7db894abd9b38c9",
+          "audio_seconds": 11.0,
+          "attempts": 5,
+          "outcomes": {
+            "ok": 5
+          },
+          "speech_attempts_scored": 5,
+          "wer_successful_only": 0.0,
+          "cer_successful_only": 0.0,
+          "probe_accuracy_successful_only": null,
+          "silence_false_positives": 0,
+          "latency_successful_speech_ms": {
+            "p50": 92.28092299599666,
+            "p95": 97.00383320159744
+          }
+        },
+        {
+          "id": "silence",
+          "kind": "digital-silence",
+          "pcm_sha256": "4f7988030a00d082fe445e00a2ac5dab502300ff1b80e8592dd569867b60ef74",
+          "audio_seconds": 2.0,
+          "attempts": 5,
+          "outcomes": {
+            "ok": 5
+          },
+          "speech_attempts_scored": 0,
+          "wer_successful_only": null,
+          "cer_successful_only": null,
+          "probe_accuracy_successful_only": null,
+          "silence_false_positives": 0,
+          "latency_successful_speech_ms": null
+        },
+        {
+          "id": "synthetic-names",
+          "kind": "synthetic-phonon-31m-english",
+          "pcm_sha256": "cdbf312c7d002c5b05a8106a54da75309ee91e3197247bc43996346e020bdf9e",
+          "audio_seconds": 3.68,
+          "attempts": 5,
+          "outcomes": {
+            "ok": 5
+          },
+          "speech_attempts_scored": 5,
+          "wer_successful_only": 0.0,
+          "cer_successful_only": 0.0,
+          "probe_accuracy_successful_only": 1.0,
+          "silence_false_positives": 0,
+          "latency_successful_speech_ms": {
+            "p50": 41.42025701003149,
+            "p95": 42.208084199228324
+          }
+        },
+        {
+          "id": "synthetic-numbers",
+          "kind": "synthetic-phonon-31m-english",
+          "pcm_sha256": "c367af256a565100b48cf8a455ad7b47d50c60b5f61f887e77f031b6416d7f60",
+          "audio_seconds": 3.84,
+          "attempts": 5,
+          "outcomes": {
+            "ok": 5
+          },
+          "speech_attempts_scored": 5,
+          "wer_successful_only": 0.0,
+          "cer_successful_only": 0.0,
+          "probe_accuracy_successful_only": 1.0,
+          "silence_false_positives": 0,
+          "latency_successful_speech_ms": {
+            "p50": 43.99410399491899,
+            "p95": 46.21539760264568
+          }
+        }
+      ],
+      "evidence": {
+        "manifest_sha256": "8093f7755604f4f7b633c2f62d3f1d9acc0b5c1fb0da20b8e8aab2bb0a097685",
+        "identity": {
+          "checkpoint_sha256": "5859f77944efcd8eafa23a6350731960b2b55b2203df51f319665c807d802cc7",
+          "checkpoint_bytes": 739508576,
+          "cli_sha256": "e1e28985688333f976f591d36a500d6c74194ee33fad7eb6f61c638dca706d48",
+          "library_sha256": "0ec39295b76204063d448e270a5ef9cd53f94e85acb2af81d99334ca75857453",
+          "manifest_sha256": "8093f7755604f4f7b633c2f62d3f1d9acc0b5c1fb0da20b8e8aab2bb0a097685"
+        },
+        "resident_worker_startup": {
+          "startup_ms": 341.5545839961851,
+          "version": "0.4.1",
+          "commit": "5700f127",
+          "generation": 1,
+          "model_load_ms": 243.45517599431332
+        },
+        "shared_experiment_resources_not_per_mode": {
+          "peak_device_vram_mib": 10299,
+          "ollama_before": [
+            {
+              "name": "local-voice-qwen:latest",
+              "size": 8649499264,
+              "size_vram": 8649499264,
+              "context_length": 4096
+            },
+            {
+              "name": "nomic-embed-text:latest",
+              "size": 595142656,
+              "size_vram": 595142656,
+              "context_length": 2048
+            }
+          ],
+          "ollama_after": [
+            {
+              "name": "local-voice-qwen:latest",
+              "size": 8649499264,
+              "size_vram": 8649499264,
+              "context_length": 4096
+            },
+            {
+              "name": "nomic-embed-text:latest",
+              "size": 595142656,
+              "size_vram": 595142656,
+              "context_length": 2048
+            }
+          ]
+        },
+        "resident_worker_sampled_peak_rss_bytes": 536350720,
+        "created_at": "2026-11-05T01:16:20.013964+00:00",
+        "attempts": {
+          "artifact_sha256": "a35b3182d4a4d6136a269d8faf4af92670027a5538120f9a4ef2191e168af2fa",
+          "artifact": "attempts.jsonl"
+        },
+        "runtime_bundle_core_sha256": "0ec39295b76204063d448e270a5ef9cd53f94e85acb2af81d99334ca75857453"
+      },
+      "sources": [
+        {
+          "label": "Matching Parakeet export",
+          "url": "https://huggingface.co/handy-computer/parakeet-tdt-0.6b-v3-gguf"
+        },
+        {
+          "label": "Needle runtime",
+          "url": "https://github.com/cactus-compute/needle"
+        }
+      ]
+    },
+    {
+      "id": "substitution-parakeet",
+      "component": "stt",
+      "label": "Parakeet / fresh CLI CUDA",
+      "model": "Parakeet TDT 0.6B v3 Q8_0",
+      "engine": "transcribe.cpp 0.4.1 / CUDA, no host BLAS",
+      "mode": "fresh process + model load (OS cache may be warm)",
+      "boundary": "16 kHz completed PCM \u2192 adapter result; non-silent utterances",
+      "comparison_group": "ASR substitution: same public corpus",
+      "decision": "baseline",
+      "metrics": {
+        "latency_p50_ms": 493.8029085024027,
+        "latency_p95_ms": 549.7938594991865,
+        "wer_pct": 0.0,
+        "cer_pct": 0.0,
+        "probe_accuracy_pct": 100.0,
+        "checkpoint_mib": 705.2503356933594
+      },
+      "outcomes": {
+        "attempts": 35,
+        "failed": 0,
+        "statuses": {
+          "ok": 35
+        },
+        "speech_attempts_scored": 30,
+        "silence_false_positives": 0
+      },
+      "quality": {
+        "model_substitution": true,
+        "same_settings_within_model": true,
+        "parity": null,
+        "normalization": "Unicode word tokens, case/punctuation folded; numbers are not rewritten",
+        "scope": "6 English speech fixtures plus digital silence; repeats are not independent speakers"
+      },
+      "configuration": {
+        "language": "en",
+        "stt_threads": 4,
+        "whistle_device": "cpu",
+        "whistle_audio_depth": "default-full",
+        "parakeet_device": "cuda",
+        "parakeet_timestamps": "none",
+        "per_model_settings_constant": true,
+        "model_substitution": true
+      },
+      "methodology": "Five alternating-order paired repetitions of seven identical public/synthetic PCM fixtures. Timed runs serialized with other experiments. Latency excludes silence; all attempts/outcomes remain visible.",
+      "notes": [
+        "This is the original quality reference, not a resident throughput measurement."
+      ],
+      "limitations": [
+        "Small English corpus; no meeting/noise/accent quality guarantee.",
+        "Silence is handled by the shared adapter fast path, not raw-model decoding.",
+        "Checkpoint size is not runtime memory.",
+        "Different model: this is not a lossless kernel optimization. Runtime memory peaks were not measured."
+      ],
+      "samples": [
+        {
+          "id": "librispeech-1272-128104-0000",
+          "kind": "public-natural-speech",
+          "pcm_sha256": "156e1e1821700d4c4ad31a63e6d901a5088d5ee155fafd02a9d0d2de37f771e6",
+          "audio_seconds": 5.855,
+          "attempts": 5,
+          "outcomes": {
+            "ok": 5
+          },
+          "speech_attempts_scored": 5,
+          "wer_successful_only": 0.0,
+          "cer_successful_only": 0.0,
+          "probe_accuracy_successful_only": 1.0,
+          "silence_false_positives": 0,
+          "latency_successful_speech_ms": {
+            "p50": 495.5071870062966,
+            "p95": 518.3669531979831
+          }
+        },
+        {
+          "id": "librispeech-1272-128104-0001",
+          "kind": "public-natural-speech",
+          "pcm_sha256": "bca0b38f0be340f804ab1d522f4d2a1b339f3cb237913347d1af0847ae48160e",
+          "audio_seconds": 4.815,
+          "attempts": 5,
+          "outcomes": {
+            "ok": 5
+          },
+          "speech_attempts_scored": 5,
+          "wer_successful_only": 0.0,
+          "cer_successful_only": 0.0,
+          "probe_accuracy_successful_only": 1.0,
+          "silence_false_positives": 0,
+          "latency_successful_speech_ms": {
+            "p50": 486.8108660011785,
+            "p95": 498.07936480501667
+          }
+        },
+        {
+          "id": "librispeech-1272-128104-0002",
+          "kind": "public-natural-speech",
+          "pcm_sha256": "f683cb79705da5840f7e920921f2f5b61d396b3bb8b24db57703745785f5ec55",
+          "audio_seconds": 12.485,
+          "attempts": 5,
+          "outcomes": {
+            "ok": 5
+          },
+          "speech_attempts_scored": 5,
+          "wer_successful_only": 0.0,
+          "cer_successful_only": 0.0,
+          "probe_accuracy_successful_only": null,
+          "silence_false_positives": 0,
+          "latency_successful_speech_ms": {
+            "p50": 549.5490709872684,
+            "p95": 553.4147857979406
+          }
+        },
+        {
+          "id": "jfk",
+          "kind": "public-natural-speech",
+          "pcm_sha256": "a29462b8ebd467318000e683b9117ade46230d3255ed2024e7db894abd9b38c9",
+          "audio_seconds": 11.0,
+          "attempts": 5,
+          "outcomes": {
+            "ok": 5
+          },
+          "speech_attempts_scored": 5,
+          "wer_successful_only": 0.0,
+          "cer_successful_only": 0.0,
+          "probe_accuracy_successful_only": null,
+          "silence_false_positives": 0,
+          "latency_successful_speech_ms": {
+            "p50": 523.7512780004181,
+            "p95": 541.1375595984282
+          }
+        },
+        {
+          "id": "silence",
+          "kind": "digital-silence",
+          "pcm_sha256": "4f7988030a00d082fe445e00a2ac5dab502300ff1b80e8592dd569867b60ef74",
+          "audio_seconds": 2.0,
+          "attempts": 5,
+          "outcomes": {
+            "ok": 5
+          },
+          "speech_attempts_scored": 0,
+          "wer_successful_only": null,
+          "cer_successful_only": null,
+          "probe_accuracy_successful_only": null,
+          "silence_false_positives": 0,
+          "latency_successful_speech_ms": null
+        },
+        {
+          "id": "synthetic-names",
+          "kind": "synthetic-phonon-31m-english",
+          "pcm_sha256": "cdbf312c7d002c5b05a8106a54da75309ee91e3197247bc43996346e020bdf9e",
+          "audio_seconds": 3.68,
+          "attempts": 5,
+          "outcomes": {
+            "ok": 5
+          },
+          "speech_attempts_scored": 5,
+          "wer_successful_only": 0.0,
+          "cer_successful_only": 0.0,
+          "probe_accuracy_successful_only": 1.0,
+          "silence_false_positives": 0,
+          "latency_successful_speech_ms": {
+            "p50": 485.3244569967501,
+            "p95": 488.8313766103238
+          }
+        },
+        {
+          "id": "synthetic-numbers",
+          "kind": "synthetic-phonon-31m-english",
+          "pcm_sha256": "c367af256a565100b48cf8a455ad7b47d50c60b5f61f887e77f031b6416d7f60",
+          "audio_seconds": 3.84,
+          "attempts": 5,
+          "outcomes": {
+            "ok": 5
+          },
+          "speech_attempts_scored": 5,
+          "wer_successful_only": 0.0,
+          "cer_successful_only": 0.0,
+          "probe_accuracy_successful_only": 1.0,
+          "silence_false_positives": 0,
+          "latency_successful_speech_ms": {
+            "p50": 481.4000420010416,
+            "p95": 489.27996359416284
+          }
+        }
+      ],
+      "evidence": {
+        "manifest_sha256": "8093f7755604f4f7b633c2f62d3f1d9acc0b5c1fb0da20b8e8aab2bb0a097685",
+        "identity": {
+          "parakeet_sha256": "5859f77944efcd8eafa23a6350731960b2b55b2203df51f319665c807d802cc7",
+          "parakeet_bytes": 739508576,
+          "whistle_sha256": "b6e02f048568ac5d01a2042556c658061e699acbc0aa2a1439f52f3d461dffeb",
+          "whistle_bytes": 16919407,
+          "needle_executable_sha256": "77cd35ee75c53df8532b397e11ed7cf94a45d89a9f14f50881fd9c68ba54a2d0",
+          "parakeet_executable_sha256": "e1e28985688333f976f591d36a500d6c74194ee33fad7eb6f61c638dca706d48"
+        },
+        "resident_worker_startup": null,
+        "shared_experiment_resources_not_per_mode": {},
+        "resident_worker_sampled_peak_rss_bytes": null,
+        "created_at": "2026-11-05T01:05:47.029704+00:00"
+      },
+      "sources": [
+        {
+          "label": "Matching Parakeet export",
+          "url": "https://huggingface.co/handy-computer/parakeet-tdt-0.6b-v3-gguf"
+        },
+        {
+          "label": "Needle runtime",
+          "url": "https://github.com/cactus-compute/needle"
+        }
+      ]
+    },
+    {
+      "id": "substitution-whistle",
+      "component": "stt",
+      "label": "Whistle / Needle CPU",
+      "model": "Whistle",
+      "engine": "Needle native 3.3.1",
+      "mode": "fresh process + model load (OS cache may be warm)",
+      "boundary": "16 kHz completed PCM \u2192 adapter result; non-silent utterances",
+      "comparison_group": "ASR substitution: same public corpus",
+      "decision": "opt_in",
+      "metrics": {
+        "latency_p50_ms": 263.0231424991507,
+        "latency_p95_ms": 1451.7672873465926,
+        "wer_pct": 8.571428571428571,
+        "cer_pct": 5.484460694698354,
+        "probe_accuracy_pct": 77.77777777777779,
+        "checkpoint_mib": 16.13560390472412
+      },
+      "outcomes": {
+        "attempts": 35,
+        "failed": 0,
+        "statuses": {
+          "ok": 35
+        },
+        "speech_attempts_scored": 30,
+        "silence_false_positives": 0
+      },
+      "quality": {
+        "model_substitution": true,
+        "same_settings_within_model": true,
+        "parity": null,
+        "normalization": "Unicode word tokens, case/punctuation folded; numbers are not rewritten",
+        "scope": "6 English speech fixtures plus digital silence; repeats are not independent speakers"
+      },
+      "configuration": {
+        "language": "en",
+        "stt_threads": 4,
+        "whistle_device": "cpu",
+        "whistle_audio_depth": "default-full",
+        "parakeet_device": "cuda",
+        "parakeet_timestamps": "none",
+        "per_model_settings_constant": true,
+        "model_substitution": true
+      },
+      "methodology": "Five alternating-order paired repetitions of seven identical public/synthetic PCM fixtures. Timed runs serialized with other experiments. Latency excludes silence; all attempts/outcomes remain visible.",
+      "notes": [
+        "Whistle is faster on several short clips, but has worse tail latency and recognition errors here. Keep Parakeet as default; Whistle is a small optional CPU backend."
+      ],
+      "limitations": [
+        "Small English corpus; no meeting/noise/accent quality guarantee.",
+        "Silence is handled by the shared adapter fast path, not raw-model decoding.",
+        "Checkpoint size is not runtime memory.",
+        "Different model: this is not a lossless kernel optimization. Runtime memory peaks were not measured."
+      ],
+      "samples": [
+        {
+          "id": "librispeech-1272-128104-0000",
+          "kind": "public-natural-speech",
+          "pcm_sha256": "156e1e1821700d4c4ad31a63e6d901a5088d5ee155fafd02a9d0d2de37f771e6",
+          "audio_seconds": 5.855,
+          "attempts": 5,
+          "outcomes": {
+            "ok": 5
+          },
+          "speech_attempts_scored": 5,
+          "wer_successful_only": 0.11764705882352941,
+          "cer_successful_only": 0.056179775280898875,
+          "probe_accuracy_successful_only": 0.0,
+          "silence_false_positives": 0,
+          "latency_successful_speech_ms": {
+            "p50": 714.6060300001409,
+            "p95": 719.1815999947721
+          }
+        },
+        {
+          "id": "librispeech-1272-128104-0001",
+          "kind": "public-natural-speech",
+          "pcm_sha256": "bca0b38f0be340f804ab1d522f4d2a1b339f3cb237913347d1af0847ae48160e",
+          "audio_seconds": 4.815,
+          "attempts": 5,
+          "outcomes": {
+            "ok": 5
+          },
+          "speech_attempts_scored": 5,
+          "wer_successful_only": 0.18181818181818182,
+          "cer_successful_only": 0.1111111111111111,
+          "probe_accuracy_successful_only": 0.0,
+          "silence_false_positives": 0,
+          "latency_successful_speech_ms": {
+            "p50": 120.51553599303588,
+            "p95": 126.48095080221538
+          }
+        },
+        {
+          "id": "librispeech-1272-128104-0002",
+          "kind": "public-natural-speech",
+          "pcm_sha256": "f683cb79705da5840f7e920921f2f5b61d396b3bb8b24db57703745785f5ec55",
+          "audio_seconds": 12.485,
+          "attempts": 5,
+          "outcomes": {
+            "ok": 5
+          },
+          "speech_attempts_scored": 5,
+          "wer_successful_only": 0.0625,
+          "cer_successful_only": 0.01744186046511628,
+          "probe_accuracy_successful_only": null,
+          "silence_false_positives": 0,
+          "latency_successful_speech_ms": {
+            "p50": 1450.8042389934417,
+            "p95": 1457.764007197693
+          }
+        },
+        {
+          "id": "jfk",
+          "kind": "public-natural-speech",
+          "pcm_sha256": "a29462b8ebd467318000e683b9117ade46230d3255ed2024e7db894abd9b38c9",
+          "audio_seconds": 11.0,
+          "attempts": 5,
+          "outcomes": {
+            "ok": 5
+          },
+          "speech_attempts_scored": 5,
+          "wer_successful_only": 0.0,
+          "cer_successful_only": 0.0,
+          "probe_accuracy_successful_only": null,
+          "silence_false_positives": 0,
+          "latency_successful_speech_ms": {
+            "p50": 1242.516814992996,
+            "p95": 1245.0890787993558
+          }
+        },
+        {
+          "id": "silence",
+          "kind": "digital-silence",
+          "pcm_sha256": "4f7988030a00d082fe445e00a2ac5dab502300ff1b80e8592dd569867b60ef74",
+          "audio_seconds": 2.0,
+          "attempts": 5,
+          "outcomes": {
+            "ok": 5
+          },
+          "speech_attempts_scored": 0,
+          "wer_successful_only": null,
+          "cer_successful_only": null,
+          "probe_accuracy_successful_only": null,
+          "silence_false_positives": 0,
+          "latency_successful_speech_ms": null
+        },
+        {
+          "id": "synthetic-names",
+          "kind": "synthetic-phonon-31m-english",
+          "pcm_sha256": "cdbf312c7d002c5b05a8106a54da75309ee91e3197247bc43996346e020bdf9e",
+          "audio_seconds": 3.68,
+          "attempts": 5,
+          "outcomes": {
+            "ok": 5
+          },
+          "speech_attempts_scored": 5,
+          "wer_successful_only": 0.0,
+          "cer_successful_only": 0.0,
+          "probe_accuracy_successful_only": 1.0,
+          "silence_false_positives": 0,
+          "latency_successful_speech_ms": {
+            "p50": 102.57308400468901,
+            "p95": 103.75319420418236
+          }
+        },
+        {
+          "id": "synthetic-numbers",
+          "kind": "synthetic-phonon-31m-english",
+          "pcm_sha256": "c367af256a565100b48cf8a455ad7b47d50c60b5f61f887e77f031b6416d7f60",
+          "audio_seconds": 3.84,
+          "attempts": 5,
+          "outcomes": {
+            "ok": 5
+          },
+          "speech_attempts_scored": 5,
+          "wer_successful_only": 0.23076923076923078,
+          "cer_successful_only": 0.23076923076923078,
+          "probe_accuracy_successful_only": 1.0,
+          "silence_false_positives": 0,
+          "latency_successful_speech_ms": {
+            "p50": 104.83624099288136,
+            "p95": 112.99950319516938
+          }
+        }
+      ],
+      "evidence": {
+        "manifest_sha256": "8093f7755604f4f7b633c2f62d3f1d9acc0b5c1fb0da20b8e8aab2bb0a097685",
+        "identity": {
+          "parakeet_sha256": "5859f77944efcd8eafa23a6350731960b2b55b2203df51f319665c807d802cc7",
+          "parakeet_bytes": 739508576,
+          "whistle_sha256": "b6e02f048568ac5d01a2042556c658061e699acbc0aa2a1439f52f3d461dffeb",
+          "whistle_bytes": 16919407,
+          "needle_executable_sha256": "77cd35ee75c53df8532b397e11ed7cf94a45d89a9f14f50881fd9c68ba54a2d0",
+          "parakeet_executable_sha256": "e1e28985688333f976f591d36a500d6c74194ee33fad7eb6f61c638dca706d48"
+        },
+        "resident_worker_startup": null,
+        "shared_experiment_resources_not_per_mode": {},
+        "resident_worker_sampled_peak_rss_bytes": null,
+        "created_at": "2026-11-05T01:05:47.029704+00:00"
+      },
+      "sources": [
+        {
+          "label": "Matching Parakeet export",
+          "url": "https://huggingface.co/handy-computer/parakeet-tdt-0.6b-v3-gguf"
+        },
+        {
+          "label": "Needle runtime",
+          "url": "https://github.com/cactus-compute/needle"
+        }
+      ]
+    },
+    {
+      "id": "rustvani-headless",
+      "component": "framework",
+      "label": "Rustvani isolated prototype",
+      "model": "Same Parakeet + Qwen + Phonon",
+      "engine": "Rustvani 0.4.0-dev.27 + private Python model bridge",
+      "mode": "headless, full-reply buffered TTS",
+      "boundary": "Injected completed utterance \u2192 PCM sink; no browser or VAD",
+      "comparison_group": "Rustvani feasibility only",
+      "decision": "not_adopted",
+      "metrics": {
+        "headless_first_pcm_p50_ms": 1329.4889039999998,
+        "first_answer_p50_ms": 182.19628099905094,
+        "first_pcm_p50_ms": 23.25859099801164,
+        "browser_playback_ms": null,
+        "runtime_rss_mib": 733.7578125
+      },
+      "quality": {
+        "same_model_settings": true,
+        "model_quality_improvement_claimed": false,
+        "framework_speedup_claimed": false,
+        "received_nonzero_audio": true
+      },
+      "outcomes": {
+        "attempts": 2,
+        "failed": 0,
+        "forced_shutdowns": 0
+      },
+      "configuration": {
+        "llm": {
+          "context": 4096,
+          "history": "single-turn",
+          "max_tokens": 128,
+          "model": "local-voice-qwen",
+          "reasoning_effort": "none",
+          "system_prompt": "project-baseline",
+          "temperature": 0.5
+        },
+        "stt": {
+          "backend": "cuda",
+          "checkpoint_format": "GGUF-Q8_0",
+          "input_rate": 16000,
+          "runtime": "existing-transcribe-cli",
+          "threads": 4,
+          "timestamps": "none"
+        },
+        "tts": {
+          "buffering": "full_reply",
+          "device": "cpu",
+          "model": "phonon-31m-en",
+          "quantization": "q8_0",
+          "runtime": "ptts",
+          "sample_rate": 24000,
+          "threads": 4,
+          "version": "0.5.0"
+        }
+      },
+      "methodology": "Two actual public-utterance round trips through the Rust framework, existing local model services and a bounded stdio bridge. Warm Phonon and Ollama; STT still uses the fresh CLI.",
+      "notes": [
+        "Actual framework handoffs were tens of microseconds in these two runs; not evidence that rewriting orchestration will improve model latency.",
+        "Keep Pipecat in production. Rustvani is feasible, but not a drop-in browser replacement.",
+        "Tool-calling registry exists upstream, but sequential execution, deadlines/schema enforcement and browser transport need further validation."
+      ],
+      "limitations": [
+        "Only two runs, no comparative Pipecat headless control.",
+        "Full LLM reply buffered before TTS: unlike the production streaming pipeline.",
+        "Browser transport, history, barge-in, reconnect and tool execution not exercised.",
+        "RSS excludes existing Ollama; sampled total GPU is device-wide and can miss peaks.",
+        "Upstream default logs/providers and tool-loop semantics require further integration work."
+      ],
+      "samples": [
+        {
+          "audio_duration_ms": 7440.0,
+          "audio_energy_sum": 1110.5850470419973,
+          "audio_input_duration_ms": 5855.0,
+          "audio_samples": 178560,
+          "bridge_shutdown_forced": false,
+          "browser_playback_measured": false,
+          "injected_utterance_to_first_pcm_sink_ms": 1429.4499099999998,
+          "llm_model_adapter_ms": 889.6053489879705,
+          "llm_model_first_answer_token_ms": 192.1489109954564,
+          "llm_to_tts_framework_handoff_ms": 0.007529999999860593,
+          "pipeline_shutdown_forced": false,
+          "stt_model_adapter_ms": 501.52902099944185,
+          "stt_to_llm_framework_handoff_ms": 0.05103000000008251,
+          "tts_model_adapter_ms": 389.93052700243425,
+          "tts_model_first_pcm_ms": 25.790963001782075,
+          "vad_included": false,
+          "id": "librispeech-1272-128104-0000",
+          "fixture_sha256": "bf964d77ca0de8e384e98ddf741f630548e91f97201a4ad991522cd59366e533",
+          "model_settings": {
+            "llm": {
+              "context": 4096,
+              "history": "single-turn",
+              "max_tokens": 128,
+              "model": "local-voice-qwen",
+              "reasoning_effort": "none",
+              "system_prompt": "project-baseline",
+              "temperature": 0.5
+            },
+            "stt": {
+              "backend": "cuda",
+              "checkpoint_format": "GGUF-Q8_0",
+              "input_rate": 16000,
+              "runtime": "existing-transcribe-cli",
+              "threads": 4,
+              "timestamps": "none"
+            },
+            "tts": {
+              "buffering": "full_reply",
+              "device": "cpu",
+              "model": "phonon-31m-en",
+              "quantization": "q8_0",
+              "runtime": "ptts",
+              "sample_rate": 24000,
+              "threads": 4,
+              "version": "0.5.0"
+            }
+          },
+          "resource_observations": {
+            "experiment_process_tree_sampled_peak_rss_mib": 733.7578125,
+            "rss_sample_interval_ms": 100,
+            "includes_existing_ollama_rss": false,
+            "gpu_total_sampled_peak_mib": 9406,
+            "gpu_sample_interval_ms": 1000,
+            "gpu_includes_all_processes": true
+          }
+        },
+        {
+          "audio_duration_ms": 6000.0,
+          "audio_energy_sum": 817.7970652040094,
+          "audio_input_duration_ms": 11000.0,
+          "audio_samples": 144000,
+          "bridge_shutdown_forced": false,
+          "browser_playback_measured": false,
+          "injected_utterance_to_first_pcm_sink_ms": 1229.5278979999998,
+          "llm_model_adapter_ms": 679.4948969909456,
+          "llm_model_first_answer_token_ms": 172.2436510026455,
+          "llm_to_tts_framework_handoff_ms": 0.005670000000009168,
+          "pipeline_shutdown_forced": false,
+          "stt_model_adapter_ms": 517.2917050076649,
+          "stt_to_llm_framework_handoff_ms": 0.04675999999994929,
+          "tts_model_adapter_ms": 296.08883398759644,
+          "tts_model_first_pcm_ms": 20.726218994241208,
+          "vad_included": false,
+          "id": "jfk",
+          "fixture_sha256": "4d968ac99a1d0d4bc42ae8dd1552f4235e7b952a8121b39797f3dc2ca16123e9",
+          "model_settings": {
+            "llm": {
+              "context": 4096,
+              "history": "single-turn",
+              "max_tokens": 128,
+              "model": "local-voice-qwen",
+              "reasoning_effort": "none",
+              "system_prompt": "project-baseline",
+              "temperature": 0.5
+            },
+            "stt": {
+              "backend": "cuda",
+              "checkpoint_format": "GGUF-Q8_0",
+              "input_rate": 16000,
+              "runtime": "existing-transcribe-cli",
+              "threads": 4,
+              "timestamps": "none"
+            },
+            "tts": {
+              "buffering": "full_reply",
+              "device": "cpu",
+              "model": "phonon-31m-en",
+              "quantization": "q8_0",
+              "runtime": "ptts",
+              "sample_rate": 24000,
+              "threads": 4,
+              "version": "0.5.0"
+            }
+          },
+          "resource_observations": {
+            "experiment_process_tree_sampled_peak_rss_mib": 730.24609375,
+            "rss_sample_interval_ms": 100,
+            "includes_existing_ollama_rss": false,
+            "gpu_total_sampled_peak_mib": 9430,
+            "gpu_sample_interval_ms": 1000,
+            "gpu_includes_all_processes": true
+          }
+        }
+      ],
+      "evidence": {
+        "revision": "b134ad055c754efaa690fec72f530d5390fd6180",
+        "raw_text_audio_saved": false
+      },
+      "sources": [
+        {
+          "label": "Pinned Rustvani framework",
+          "url": "https://github.com/Allenmylath/rustvani/tree/b134ad055c754efaa690fec72f530d5390fd6180"
+        }
+      ]
+    },
+    {
+      "id": "browser-baseline-llm",
+      "component": "llm",
+      "label": "Qwen / actual answer tokens",
+      "model": "local-voice-qwen (Qwen3.5 9B Q4_K_M)",
+      "engine": "Pipecat 1.15.0",
+      "mode": "warm, real Chromium over private HTTPS",
+      "boundary": "LLM request to first actual answer-text token/frame, not an empty chunk, internal thinking token or tool result. Prompts/history must match before comparing engines.",
+      "comparison_group": "Browser baseline / llm",
+      "decision": "baseline",
+      "metrics": {
+        "first_answer_p50_ms": 170.19347500172444,
+        "browser_playback_ms": null,
+        "total_p50_ms": 360.41280000063125
+      },
+      "outcomes": {
+        "attempts": 5,
+        "failed": 0,
+        "statuses": {
+          "ok": 5
+        },
+        "missing_first_observation": 0
+      },
+      "quality": {
+        "model_or_voice_changed": false,
+        "purpose": "Timing semantics, real decoded audio, interruption/reconnect checks; not a controlled model-quality benchmark."
+      },
+      "configuration": {
+        "stt_mode": "cli",
+        "stt_backend": "parakeet",
+        "stt_threads": 4,
+        "phonon_threads": 4,
+        "llm_context": 4096,
+        "llm_max_output_tokens": 128,
+        "reasoning_effort": "none",
+        "vad_stop_seconds": 0.6
+      },
+      "methodology": "Explicitly selected corrected browser validation sessions only. Historical initial buggy measurements are excluded. Counts include interrupted/cancelled outcomes; medians use available numeric observations, with missing observations counted. Browser groups have different prompts/history and are not a controlled speedup comparison.",
+      "notes": [
+        "No LLM checkpoint, quantization, context, voice, TTS sample rate or reasoning policy was reduced for speed."
+      ],
+      "limitations": [
+        "Small browser validation sample, not a stable performance baseline; prompts/history vary.",
+        "Interrupted and successful requests remain explicitly identified per sample.",
+        "Chrome ran on the GPU host through the private HTTPS origin; a separate remote device has not been tested.",
+        "No acoustic onset measurement or tool calling test."
+      ],
+      "samples": [
+        {
+          "id": "e99e2a1c-f704-4b00-9323-e54bd87eb11a",
+          "session_id": "9a703ff6-84e4-493e-9ccd-ce361e6010c4",
+          "status": "ok",
+          "first_answer_token_ms": 217.19174699683208,
+          "service_ttfb_ms": 216.841459274292,
+          "service_ttfat_ms": 216.9322967529297,
+          "service_thinking_ms": 0.09083747863769531,
+          "prompt_tokens": 63,
+          "completion_tokens": 7,
+          "total_tokens": 70,
+          "reasoning_tokens": null,
+          "total_ms": 360.41280000063125
+        },
+        {
+          "id": "5a798b7b-219d-445a-85db-60d2ccba5dd0",
+          "session_id": "9a703ff6-84e4-493e-9ccd-ce361e6010c4",
+          "status": "ok",
+          "first_answer_token_ms": 166.15584900137037,
+          "service_ttfb_ms": 165.81010818481445,
+          "service_ttfat_ms": 165.9069061279297,
+          "service_thinking_ms": 0.09679794311523438,
+          "prompt_tokens": 86,
+          "completion_tokens": 31,
+          "total_tokens": 117,
+          "reasoning_tokens": null,
+          "total_ms": 867.8791690035723
+        },
+        {
+          "id": "2783e463-c523-49aa-9c83-d6064e65e213",
+          "session_id": "9a703ff6-84e4-493e-9ccd-ce361e6010c4",
+          "status": "ok",
+          "first_answer_token_ms": 170.19347500172444,
+          "service_ttfb_ms": 169.91543769836426,
+          "service_ttfat_ms": 169.97337341308594,
+          "service_thinking_ms": 0.05793571472167969,
+          "prompt_tokens": 110,
+          "completion_tokens": 8,
+          "total_tokens": 118,
+          "reasoning_tokens": null,
+          "total_ms": 335.98627500759903
+        },
+        {
+          "id": "0cc7c5d8-4fe2-4fcd-8ae4-70b597dc29ec",
+          "session_id": "ac9ba24a-5d46-49d9-a49d-74a2dbbc38af",
+          "status": "ok",
+          "first_answer_token_ms": 219.34219299873803,
+          "service_ttfb_ms": 219.0113067626953,
+          "service_ttfat_ms": 219.09308433532715,
+          "service_thinking_ms": 0.08177757263183594,
+          "prompt_tokens": 66,
+          "completion_tokens": 52,
+          "total_tokens": 118,
+          "reasoning_tokens": null,
+          "total_ms": 1408.3295529999305
+        },
+        {
+          "id": "21bffc9a-5c2f-4cdf-a3b9-df0d365314a9",
+          "session_id": "ac9ba24a-5d46-49d9-a49d-74a2dbbc38af",
+          "status": "ok",
+          "first_answer_token_ms": 158.2095269986894,
+          "service_ttfb_ms": 157.89365768432617,
+          "service_ttfat_ms": 157.96494483947754,
+          "service_thinking_ms": 0.07128715515136719,
+          "prompt_tokens": 77,
+          "completion_tokens": 3,
+          "total_tokens": 80,
+          "reasoning_tokens": null,
+          "total_ms": 207.8334050020203
+        }
+      ],
+      "evidence": {
+        "selected_sessions": [
+          "9a703ff6-84e4-493e-9ccd-ce361e6010c4",
+          "ac9ba24a-5d46-49d9-a49d-74a2dbbc38af"
+        ],
+        "read_counts": {
+          "lines": 94,
+          "excluded_records": 51
+        }
+      },
+      "sources": [
+        {
+          "label": "Pipecat tracing utilities",
+          "url": "https://docs.pipecat.ai/api-reference/server/utilities/opentelemetry"
+        },
+        {
+          "label": "Phonon model",
+          "url": "https://huggingface.co/gradium/phonon-31m-en"
+        }
+      ]
+    },
+    {
+      "id": "browser-baseline-tts",
+      "component": "tts",
+      "label": "Phonon / resident Rust CPU",
+      "model": "Phonon 31M English Q8_0",
+      "engine": "Pipecat 1.15.0",
+      "mode": "warm, real Chromium over private HTTPS",
+      "boundary": "TTS synthesis request to first PCM chunk; may contain leading silence. This is not browser playback or physical speaker onset.",
+      "comparison_group": "Browser baseline / tts",
+      "decision": "baseline",
+      "metrics": {
+        "first_pcm_p50_ms": 17.3240020085359,
+        "browser_playback_ms": null,
+        "total_p50_ms": 199.06653600628488,
+        "rtf_p50": 0.054495578021080036
+      },
+      "outcomes": {
+        "attempts": 7,
+        "failed": 0,
+        "statuses": {
+          "ok": 7
+        },
+        "missing_first_observation": 0
+      },
+      "quality": {
+        "model_or_voice_changed": false,
+        "purpose": "Timing semantics, real decoded audio, interruption/reconnect checks; not a controlled model-quality benchmark."
+      },
+      "configuration": {
+        "stt_mode": "cli",
+        "stt_backend": "parakeet",
+        "stt_threads": 4,
+        "phonon_threads": 4,
+        "llm_context": 4096,
+        "llm_max_output_tokens": 128,
+        "reasoning_effort": "none",
+        "vad_stop_seconds": 0.6
+      },
+      "methodology": "Explicitly selected corrected browser validation sessions only. Historical initial buggy measurements are excluded. Counts include interrupted/cancelled outcomes; medians use available numeric observations, with missing observations counted. Browser groups have different prompts/history and are not a controlled speedup comparison.",
+      "notes": [
+        "No LLM checkpoint, quantization, context, voice, TTS sample rate or reasoning policy was reduced for speed."
+      ],
+      "limitations": [
+        "Small browser validation sample, not a stable performance baseline; prompts/history vary.",
+        "Interrupted and successful requests remain explicitly identified per sample.",
+        "Chrome ran on the GPU host through the private HTTPS origin; a separate remote device has not been tested.",
+        "No acoustic onset measurement or tool calling test."
+      ],
+      "samples": [
+        {
+          "id": "7aaff9d0-f25f-4524-91e9-6ba046ec604b",
+          "session_id": "9a703ff6-84e4-493e-9ccd-ce361e6010c4",
+          "status": "ok",
+          "first_pcm_ms": 17.3240020085359,
+          "audio_seconds": 2.16,
+          "total_ms": 125.47263099986594,
+          "rtf": 0.05808918101845645
+        },
+        {
+          "id": "04b5f0f4-0afa-4bd9-be6d-5fb2e424ae94",
+          "session_id": "9a703ff6-84e4-493e-9ccd-ce361e6010c4",
+          "status": "ok",
+          "first_pcm_ms": 16.192302995477803,
+          "audio_seconds": 3.3600000000000003,
+          "total_ms": 199.06653600628488,
+          "rtf": 0.05924599285901335
+        },
+        {
+          "id": "2f418d0b-e1db-4e06-ac61-330c4f6f4c03",
+          "session_id": "9a703ff6-84e4-493e-9ccd-ce361e6010c4",
+          "status": "ok",
+          "first_pcm_ms": 26.235382989398204,
+          "audio_seconds": 5.680000000000001,
+          "total_ms": 287.2551350010326,
+          "rtf": 0.050573087148069115
+        },
+        {
+          "id": "a8430229-b3dc-49a5-9c04-8df626506e3b",
+          "session_id": "9a703ff6-84e4-493e-9ccd-ce361e6010c4",
+          "status": "ok",
+          "first_pcm_ms": 17.113492998760194,
+          "audio_seconds": 2.3200000000000003,
+          "total_ms": 126.4297410089057,
+          "rtf": 0.054495578021080036
+        },
+        {
+          "id": "90624a22-4124-49b4-8e2c-a8c1c1f717a1",
+          "session_id": "ac9ba24a-5d46-49d9-a49d-74a2dbbc38af",
+          "status": "ok",
+          "first_pcm_ms": 21.753567998530343,
+          "audio_seconds": 6.720000000000001,
+          "total_ms": 379.9656060000416,
+          "rtf": 0.05654250089286333
+        },
+        {
+          "id": "807d081a-6313-4dec-9611-3724dead9586",
+          "session_id": "ac9ba24a-5d46-49d9-a49d-74a2dbbc38af",
+          "status": "ok",
+          "first_pcm_ms": 20.92508799978532,
+          "audio_seconds": 6.800000000000001,
+          "total_ms": 346.1390619922895,
+          "rtf": 0.050902803234160215
+        },
+        {
+          "id": "7d9610ee-4056-4103-ab77-813189be6f23",
+          "session_id": "ac9ba24a-5d46-49d9-a49d-74a2dbbc38af",
+          "status": "ok",
+          "first_pcm_ms": 11.098768998635933,
+          "audio_seconds": 1.28,
+          "total_ms": 67.61649899999611,
+          "rtf": 0.05282538984374696
+        }
+      ],
+      "evidence": {
+        "selected_sessions": [
+          "9a703ff6-84e4-493e-9ccd-ce361e6010c4",
+          "ac9ba24a-5d46-49d9-a49d-74a2dbbc38af"
+        ],
+        "read_counts": {
+          "lines": 94,
+          "excluded_records": 51
+        }
+      },
+      "sources": [
+        {
+          "label": "Pipecat tracing utilities",
+          "url": "https://docs.pipecat.ai/api-reference/server/utilities/opentelemetry"
+        },
+        {
+          "label": "Phonon model",
+          "url": "https://huggingface.co/gradium/phonon-31m-en"
+        }
+      ]
+    },
+    {
+      "id": "browser-baseline-pipeline",
+      "component": "pipeline",
+      "label": "Pipecat / streaming browser baseline",
+      "model": "Parakeet CLI \u2192 Qwen \u2192 Phonon",
+      "engine": "Pipecat 1.15.0",
+      "mode": "warm, real Chromium over private HTTPS",
+      "boundary": "Inline VAD stop notification to first generated TTS PCM. Excludes the earlier configured 600 ms endpointing wait, network, browser playout and speaker hardware.",
+      "comparison_group": "Browser baseline / pipeline",
+      "decision": "baseline",
+      "metrics": {
+        "agent_ttfa_p50_ms": 907.0197690016357,
+        "browser_playback_ms": null,
+        "server_speaking_p50_ms": 908.3378969953628
+      },
+      "outcomes": {
+        "attempts": 5,
+        "failed": 0,
+        "statuses": {
+          "ok": 3,
+          "interrupted": 2
+        },
+        "missing_first_observation": 0
+      },
+      "quality": {
+        "model_or_voice_changed": false,
+        "purpose": "Timing semantics, real decoded audio, interruption/reconnect checks; not a controlled model-quality benchmark."
+      },
+      "configuration": {
+        "stt_mode": "cli",
+        "stt_backend": "parakeet",
+        "stt_threads": 4,
+        "phonon_threads": 4,
+        "llm_context": 4096,
+        "llm_max_output_tokens": 128,
+        "reasoning_effort": "none",
+        "vad_stop_seconds": 0.6
+      },
+      "methodology": "Explicitly selected corrected browser validation sessions only. Historical initial buggy measurements are excluded. Counts include interrupted/cancelled outcomes; medians use available numeric observations, with missing observations counted. Browser groups have different prompts/history and are not a controlled speedup comparison.",
+      "notes": [
+        "No LLM checkpoint, quantization, context, voice, TTS sample rate or reasoning policy was reduced for speed."
+      ],
+      "limitations": [
+        "Small browser validation sample, not a stable performance baseline; prompts/history vary.",
+        "Interrupted and successful requests remain explicitly identified per sample.",
+        "Chrome ran on the GPU host through the private HTTPS origin; a separate remote device has not been tested.",
+        "No acoustic onset measurement or tool calling test."
+      ],
+      "samples": [
+        {
+          "id": "a5686066-3225-4904-8405-57d2da471313",
+          "session_id": "9a703ff6-84e4-493e-9ccd-ce361e6010c4",
+          "status": "ok",
+          "agent_ttfa_ms": 907.0197690016357,
+          "server_speaking_ms": 908.3378969953628,
+          "endpointing_config_ms": 600.0,
+          "endpointing_observed_ms": null,
+          "endpointing_vad_reported_ms": 600.0,
+          "turn_duration_ms": 7205.59964099084,
+          "browser_playback_ms": null,
+          "acoustic_ttfa_ms": null
+        },
+        {
+          "id": "6e253df7-e40d-4f5f-b345-b61eea0be153",
+          "session_id": "9a703ff6-84e4-493e-9ccd-ce361e6010c4",
+          "status": "interrupted",
+          "agent_ttfa_ms": 938.1373759970302,
+          "server_speaking_ms": 939.1601950046606,
+          "endpointing_config_ms": 600.0,
+          "endpointing_observed_ms": null,
+          "endpointing_vad_reported_ms": 600.0,
+          "turn_duration_ms": 10980.092136000167,
+          "browser_playback_ms": null,
+          "acoustic_ttfa_ms": null
+        },
+        {
+          "id": "0c3f4866-657a-418d-82f3-2c8bcecc7924",
+          "session_id": "9a703ff6-84e4-493e-9ccd-ce361e6010c4",
+          "status": "ok",
+          "agent_ttfa_ms": 855.7566319941543,
+          "server_speaking_ms": 856.7009609978413,
+          "endpointing_config_ms": 600.0,
+          "endpointing_observed_ms": null,
+          "endpointing_vad_reported_ms": 600.0,
+          "turn_duration_ms": 7114.151094996487,
+          "browser_playback_ms": null,
+          "acoustic_ttfa_ms": null
+        },
+        {
+          "id": "c375f2c9-3c0f-4d5d-8987-6e74bd4dfca9",
+          "session_id": "ac9ba24a-5d46-49d9-a49d-74a2dbbc38af",
+          "status": "interrupted",
+          "agent_ttfa_ms": 1336.641376998159,
+          "server_speaking_ms": 1338.7163449951913,
+          "endpointing_config_ms": 600.0,
+          "endpointing_observed_ms": null,
+          "endpointing_vad_reported_ms": 600.0,
+          "turn_duration_ms": 4959.883365998394,
+          "browser_playback_ms": null,
+          "acoustic_ttfa_ms": null
+        },
+        {
+          "id": "66164412-3e71-4cfd-ad8c-e3a35d4462c0",
+          "session_id": "ac9ba24a-5d46-49d9-a49d-74a2dbbc38af",
+          "status": "ok",
+          "agent_ttfa_ms": 737.0475369971246,
+          "server_speaking_ms": 737.8729960037163,
+          "endpointing_config_ms": 600.0,
+          "endpointing_observed_ms": null,
+          "endpointing_vad_reported_ms": 600.0,
+          "turn_duration_ms": 6330.788951003342,
+          "browser_playback_ms": null,
+          "acoustic_ttfa_ms": null
+        }
+      ],
+      "evidence": {
+        "selected_sessions": [
+          "9a703ff6-84e4-493e-9ccd-ce361e6010c4",
+          "ac9ba24a-5d46-49d9-a49d-74a2dbbc38af"
+        ],
+        "read_counts": {
+          "lines": 94,
+          "excluded_records": 51
+        }
+      },
+      "sources": [
+        {
+          "label": "Pipecat tracing utilities",
+          "url": "https://docs.pipecat.ai/api-reference/server/utilities/opentelemetry"
+        },
+        {
+          "label": "Phonon model",
+          "url": "https://huggingface.co/gradium/phonon-31m-en"
+        }
+      ]
+    },
+    {
+      "id": "browser-integrated acceptance-llm",
+      "component": "llm",
+      "label": "Qwen / actual answer tokens / resident STT",
+      "model": "local-voice-qwen (Qwen3.5 9B Q4_K_M)",
+      "engine": "Pipecat 1.15.0",
+      "mode": "warm, real Chromium over private HTTPS",
+      "boundary": "LLM request to first actual answer-text token/frame, not an empty chunk, internal thinking token or tool result. Prompts/history must match before comparing engines.",
+      "comparison_group": "Browser integrated acceptance / llm",
+      "decision": "validated",
+      "metrics": {
+        "first_answer_p50_ms": 227.03629349416588,
+        "browser_playback_ms": null,
+        "total_p50_ms": 639.4625984976301
+      },
+      "outcomes": {
+        "attempts": 10,
+        "failed": 0,
+        "statuses": {
+          "ok": 10
+        },
+        "missing_first_observation": 0
+      },
+      "quality": {
+        "model_or_voice_changed": false,
+        "purpose": "Timing semantics, real decoded audio, interruption/reconnect checks; not a controlled model-quality benchmark."
+      },
+      "configuration": {
+        "stt_mode": "resident",
+        "stt_backend": "parakeet",
+        "stt_threads": 4,
+        "phonon_threads": 4,
+        "llm_context": 4096,
+        "llm_max_output_tokens": 128,
+        "reasoning_effort": "none",
+        "vad_stop_seconds": 0.6
+      },
+      "methodology": "Explicitly selected corrected browser validation sessions only. Historical initial buggy measurements are excluded. Counts include interrupted/cancelled outcomes; medians use available numeric observations, with missing observations counted. Browser groups have different prompts/history and are not a controlled speedup comparison.",
+      "notes": [
+        "No LLM checkpoint, quantization, context, voice, TTS sample rate or reasoning policy was reduced for speed."
+      ],
+      "limitations": [
+        "Small browser validation sample, not a stable performance baseline; prompts/history vary.",
+        "Interrupted and successful requests remain explicitly identified per sample.",
+        "Chrome ran on the GPU host through the private HTTPS origin; a separate remote device has not been tested.",
+        "No acoustic onset measurement or tool calling test."
+      ],
+      "samples": [
+        {
+          "id": "3faf59ae-480f-4bab-a116-e25110ccd5b2",
+          "session_id": "e237928e-a8b5-45db-8bc9-2f9a8f27f796",
+          "status": "ok",
+          "first_answer_token_ms": 225.33755499171093,
+          "service_ttfb_ms": 224.029541015625,
+          "service_ttfat_ms": 224.13063049316406,
+          "service_thinking_ms": 0.1010894775390625,
+          "prompt_tokens": 63,
+          "completion_tokens": 14,
+          "total_tokens": 77,
+          "reasoning_tokens": null,
+          "total_ms": 541.4632960018935
+        },
+        {
+          "id": "b3d16cb1-0e5c-49e3-80e1-1b6147a58f61",
+          "session_id": "e237928e-a8b5-45db-8bc9-2f9a8f27f796",
+          "status": "ok",
+          "first_answer_token_ms": 166.65672599629033,
+          "service_ttfb_ms": 166.3527488708496,
+          "service_ttfat_ms": 166.41902923583984,
+          "service_thinking_ms": 0.06628036499023438,
+          "prompt_tokens": 93,
+          "completion_tokens": 22,
+          "total_tokens": 115,
+          "reasoning_tokens": null,
+          "total_ms": 657.8525340009946
+        },
+        {
+          "id": "8a17009c-a76f-46e9-a36e-ac8d67108e17",
+          "session_id": "e237928e-a8b5-45db-8bc9-2f9a8f27f796",
+          "status": "ok",
+          "first_answer_token_ms": 178.83251400780864,
+          "service_ttfb_ms": 178.53713035583496,
+          "service_ttfat_ms": 178.59363555908203,
+          "service_thinking_ms": 0.05650520324707031,
+          "prompt_tokens": 128,
+          "completion_tokens": 20,
+          "total_tokens": 148,
+          "reasoning_tokens": null,
+          "total_ms": 621.2900730024558
+        },
+        {
+          "id": "41e54d5f-1027-4c1c-a34c-98189f55b50a",
+          "session_id": "e237928e-a8b5-45db-8bc9-2f9a8f27f796",
+          "status": "ok",
+          "first_answer_token_ms": 203.0312479910208,
+          "service_ttfb_ms": 202.7301788330078,
+          "service_ttfat_ms": 202.8062343597412,
+          "service_thinking_ms": 0.07605552673339844,
+          "prompt_tokens": 164,
+          "completion_tokens": 23,
+          "total_tokens": 187,
+          "reasoning_tokens": null,
+          "total_ms": 713.2922960008727
+        },
+        {
+          "id": "bfbecb2a-3969-40aa-bc8d-ac859b08e309",
+          "session_id": "e237928e-a8b5-45db-8bc9-2f9a8f27f796",
+          "status": "ok",
+          "first_answer_token_ms": 216.61147399572656,
+          "service_ttfb_ms": 216.29762649536133,
+          "service_ttfat_ms": 216.3674831390381,
+          "service_thinking_ms": 0.06985664367675781,
+          "prompt_tokens": 204,
+          "completion_tokens": 14,
+          "total_tokens": 218,
+          "reasoning_tokens": null,
+          "total_ms": 521.4738770009717
+        },
+        {
+          "id": "43be8960-4641-4bbc-9876-b378e52807ec",
+          "session_id": "e237928e-a8b5-45db-8bc9-2f9a8f27f796",
+          "status": "ok",
+          "first_answer_token_ms": 229.70861100475304,
+          "service_ttfb_ms": 229.39348220825195,
+          "service_ttfat_ms": 229.45713996887207,
+          "service_thinking_ms": 0.06365776062011719,
+          "prompt_tokens": 231,
+          "completion_tokens": 19,
+          "total_tokens": 250,
+          "reasoning_tokens": null,
+          "total_ms": 651.8146409944165
+        },
+        {
+          "id": "c968f40d-a47e-44b4-8976-8a1e0b3ab320",
+          "session_id": "e237928e-a8b5-45db-8bc9-2f9a8f27f796",
+          "status": "ok",
+          "first_answer_token_ms": 231.92187800304964,
+          "service_ttfb_ms": 231.60147666931152,
+          "service_ttfat_ms": 231.67896270751953,
+          "service_thinking_ms": 0.07748603820800781,
+          "prompt_tokens": 237,
+          "completion_tokens": 19,
+          "total_tokens": 256,
+          "reasoning_tokens": null,
+          "total_ms": 651.7904899956193
+        },
+        {
+          "id": "da4f77d7-9260-47f7-bc7e-be15f19fabda",
+          "session_id": "e237928e-a8b5-45db-8bc9-2f9a8f27f796",
+          "status": "ok",
+          "first_answer_token_ms": 230.06673099007457,
+          "service_ttfb_ms": 229.73394393920898,
+          "service_ttfat_ms": 229.80570793151855,
+          "service_thinking_ms": 0.07176399230957031,
+          "prompt_tokens": 233,
+          "completion_tokens": 17,
+          "total_tokens": 250,
+          "reasoning_tokens": null,
+          "total_ms": 601.995203003753
+        },
+        {
+          "id": "4a31cbbb-6291-4d9e-9ac1-1c207e2703a8",
+          "session_id": "e237928e-a8b5-45db-8bc9-2f9a8f27f796",
+          "status": "ok",
+          "first_answer_token_ms": 232.48113800946157,
+          "service_ttfb_ms": 232.1455478668213,
+          "service_ttfat_ms": 232.23233222961426,
+          "service_thinking_ms": 0.08678436279296875,
+          "prompt_tokens": 230,
+          "completion_tokens": 24,
+          "total_tokens": 254,
+          "reasoning_tokens": null,
+          "total_ms": 767.8377999982331
+        },
+        {
+          "id": "219143db-bfc2-4e8c-a6f6-f6bf433a1ceb",
+          "session_id": "e237928e-a8b5-45db-8bc9-2f9a8f27f796",
+          "status": "ok",
+          "first_answer_token_ms": 228.73503199662082,
+          "service_ttfb_ms": 228.4080982208252,
+          "service_ttfat_ms": 228.4843921661377,
+          "service_thinking_ms": 0.0762939453125,
+          "prompt_tokens": 230,
+          "completion_tokens": 18,
+          "total_tokens": 248,
+          "reasoning_tokens": null,
+          "total_ms": 627.1347069996409
+        }
+      ],
+      "evidence": {
+        "selected_sessions": [
+          "e237928e-a8b5-45db-8bc9-2f9a8f27f796"
+        ],
+        "read_counts": {
+          "lines": 166,
+          "excluded_records": 94
+        }
+      },
+      "sources": [
+        {
+          "label": "Pipecat tracing utilities",
+          "url": "https://docs.pipecat.ai/api-reference/server/utilities/opentelemetry"
+        },
+        {
+          "label": "Phonon model",
+          "url": "https://huggingface.co/gradium/phonon-31m-en"
+        }
+      ]
+    },
+    {
+      "id": "browser-integrated acceptance-tts",
+      "component": "tts",
+      "label": "Phonon / resident Rust CPU / resident STT",
+      "model": "Phonon 31M English Q8_0",
+      "engine": "Pipecat 1.15.0",
+      "mode": "warm, real Chromium over private HTTPS",
+      "boundary": "TTS synthesis request to first PCM chunk; may contain leading silence. This is not browser playback or physical speaker onset.",
+      "comparison_group": "Browser integrated acceptance / tts",
+      "decision": "validated",
+      "metrics": {
+        "first_pcm_p50_ms": 16.448973001388367,
+        "browser_playback_ms": null,
+        "total_p50_ms": 154.47421350108925,
+        "rtf_p50": 0.0560111267095163
+      },
+      "outcomes": {
+        "attempts": 20,
+        "failed": 0,
+        "statuses": {
+          "ok": 20
+        },
+        "missing_first_observation": 0
+      },
+      "quality": {
+        "model_or_voice_changed": false,
+        "purpose": "Timing semantics, real decoded audio, interruption/reconnect checks; not a controlled model-quality benchmark."
+      },
+      "configuration": {
+        "stt_mode": "resident",
+        "stt_backend": "parakeet",
+        "stt_threads": 4,
+        "phonon_threads": 4,
+        "llm_context": 4096,
+        "llm_max_output_tokens": 128,
+        "reasoning_effort": "none",
+        "vad_stop_seconds": 0.6
+      },
+      "methodology": "Explicitly selected corrected browser validation sessions only. Historical initial buggy measurements are excluded. Counts include interrupted/cancelled outcomes; medians use available numeric observations, with missing observations counted. Browser groups have different prompts/history and are not a controlled speedup comparison.",
+      "notes": [
+        "No LLM checkpoint, quantization, context, voice, TTS sample rate or reasoning policy was reduced for speed."
+      ],
+      "limitations": [
+        "Small browser validation sample, not a stable performance baseline; prompts/history vary.",
+        "Interrupted and successful requests remain explicitly identified per sample.",
+        "Chrome ran on the GPU host through the private HTTPS origin; a separate remote device has not been tested.",
+        "No acoustic onset measurement or tool calling test."
+      ],
+      "samples": [
+        {
+          "id": "20f11b89-cefd-4115-b44f-d91e69b9c56c",
+          "session_id": "e237928e-a8b5-45db-8bc9-2f9a8f27f796",
+          "status": "ok",
+          "first_pcm_ms": 16.29141300509218,
+          "audio_seconds": 2.4,
+          "total_ms": 159.50604400131851,
+          "rtf": 0.06646085166721605
+        },
+        {
+          "id": "7ea2d1cc-7779-41d8-b79e-8a32e45fe31b",
+          "session_id": "e237928e-a8b5-45db-8bc9-2f9a8f27f796",
+          "status": "ok",
+          "first_pcm_ms": 16.41989299969282,
+          "audio_seconds": 2.32,
+          "total_ms": 131.7700030049309,
+          "rtf": 0.0567974150883323
+        },
+        {
+          "id": "370e821a-7ecc-45c5-80e1-c8374d79d064",
+          "session_id": "e237928e-a8b5-45db-8bc9-2f9a8f27f796",
+          "status": "ok",
+          "first_pcm_ms": 16.396503007854335,
+          "audio_seconds": 2.72,
+          "total_ms": 172.35535000509117,
+          "rtf": 0.06336593750187175
+        },
+        {
+          "id": "7cc8e46a-86c9-46c2-891f-c3a235de3a2f",
+          "session_id": "e237928e-a8b5-45db-8bc9-2f9a8f27f796",
+          "status": "ok",
+          "first_pcm_ms": 21.61712700035423,
+          "audio_seconds": 3.68,
+          "total_ms": 195.5490260006627,
+          "rtf": 0.05313832228278877
+        },
+        {
+          "id": "dd022d5a-8e6b-466e-bf04-ab02943f50a6",
+          "session_id": "e237928e-a8b5-45db-8bc9-2f9a8f27f796",
+          "status": "ok",
+          "first_pcm_ms": 16.344473013305105,
+          "audio_seconds": 2.16,
+          "total_ms": 127.74865698884241,
+          "rtf": 0.059142896754093705
+        },
+        {
+          "id": "385ae31a-4994-4799-9dac-ced116106342",
+          "session_id": "e237928e-a8b5-45db-8bc9-2f9a8f27f796",
+          "status": "ok",
+          "first_pcm_ms": 20.6309479981428,
+          "audio_seconds": 4.0,
+          "total_ms": 200.18777099903673,
+          "rtf": 0.05004694274975918
+        },
+        {
+          "id": "b3bd777e-295b-4b8b-b03a-ca9f0ae4791f",
+          "session_id": "e237928e-a8b5-45db-8bc9-2f9a8f27f796",
+          "status": "ok",
+          "first_pcm_ms": 11.527968003065325,
+          "audio_seconds": 2.48,
+          "total_ms": 144.18596000177786,
+          "rtf": 0.05813950000071688
+        },
+        {
+          "id": "844109bb-057f-4998-8d27-8ad8e1c0ee34",
+          "session_id": "e237928e-a8b5-45db-8bc9-2f9a8f27f796",
+          "status": "ok",
+          "first_pcm_ms": 16.62180299172178,
+          "audio_seconds": 4.5600000000000005,
+          "total_ms": 229.42393099947367,
+          "rtf": 0.05031226557006001
+        },
+        {
+          "id": "6382a114-1ec0-46a4-af12-374f6ce92083",
+          "session_id": "e237928e-a8b5-45db-8bc9-2f9a8f27f796",
+          "status": "ok",
+          "first_pcm_ms": 16.51221299835015,
+          "audio_seconds": 2.3200000000000003,
+          "total_ms": 155.69204700295813,
+          "rtf": 0.06710864094955091
+        },
+        {
+          "id": "c1df175d-e2ff-4546-a2c8-8f76ed7ee012",
+          "session_id": "e237928e-a8b5-45db-8bc9-2f9a8f27f796",
+          "status": "ok",
+          "first_pcm_ms": 16.533421992789954,
+          "audio_seconds": 2.64,
+          "total_ms": 148.6087149969535,
+          "rtf": 0.05629117992308844
+        },
+        {
+          "id": "568319ea-9cb5-45f6-8086-9f0ac3018eb9",
+          "session_id": "e237928e-a8b5-45db-8bc9-2f9a8f27f796",
+          "status": "ok",
+          "first_pcm_ms": 16.174962991499342,
+          "audio_seconds": 2.64,
+          "total_ms": 144.23391000309493,
+          "rtf": 0.05463405681935414
+        },
+        {
+          "id": "ea2baf8b-d109-48e0-bc17-f3a86285a561",
+          "session_id": "e237928e-a8b5-45db-8bc9-2f9a8f27f796",
+          "status": "ok",
+          "first_pcm_ms": 16.805063001811504,
+          "audio_seconds": 3.44,
+          "total_ms": 175.2723070094362,
+          "rtf": 0.0509512520376268
+        },
+        {
+          "id": "7934055c-3fa8-435f-aad8-59ce995bb10d",
+          "session_id": "e237928e-a8b5-45db-8bc9-2f9a8f27f796",
+          "status": "ok",
+          "first_pcm_ms": 16.274153007543646,
+          "audio_seconds": 2.16,
+          "total_ms": 130.66466400050558,
+          "rtf": 0.060492900000234065
+        },
+        {
+          "id": "16d420e7-e454-40fe-ae43-398a84d9cbc5",
+          "session_id": "e237928e-a8b5-45db-8bc9-2f9a8f27f796",
+          "status": "ok",
+          "first_pcm_ms": 16.478053003083915,
+          "audio_seconds": 3.2,
+          "total_ms": 159.3695940100588,
+          "rtf": 0.04980299812814337
+        },
+        {
+          "id": "0c3db41c-135b-4c00-b869-cb6e254f2e0c",
+          "session_id": "e237928e-a8b5-45db-8bc9-2f9a8f27f796",
+          "status": "ok",
+          "first_pcm_ms": 10.625319002429023,
+          "audio_seconds": 2.4,
+          "total_ms": 138.7776350020431,
+          "rtf": 0.057824014584184624
+        },
+        {
+          "id": "0c5015f3-23e0-4c4c-bff2-84c802f6f025",
+          "session_id": "e237928e-a8b5-45db-8bc9-2f9a8f27f796",
+          "status": "ok",
+          "first_pcm_ms": 17.245822004042566,
+          "audio_seconds": 3.04,
+          "total_ms": 153.25637999922037,
+          "rtf": 0.05041328289448038
+        },
+        {
+          "id": "e566e2c0-2275-4b81-bcdb-a5fb590c302d",
+          "session_id": "e237928e-a8b5-45db-8bc9-2f9a8f27f796",
+          "status": "ok",
+          "first_pcm_ms": 16.50991299538873,
+          "audio_seconds": 3.3600000000000003,
+          "total_ms": 170.95473200606648,
+          "rtf": 0.050879384525615017
+        },
+        {
+          "id": "78bb9494-39a2-4468-bb89-bc027204c400",
+          "session_id": "e237928e-a8b5-45db-8bc9-2f9a8f27f796",
+          "status": "ok",
+          "first_pcm_ms": 15.890693000983447,
+          "audio_seconds": 3.92,
+          "total_ms": 216.98282400029711,
+          "rtf": 0.05535276122456559
+        },
+        {
+          "id": "0d5d5f16-4803-4ad4-a2f8-611502220f61",
+          "session_id": "e237928e-a8b5-45db-8bc9-2f9a8f27f796",
+          "status": "ok",
+          "first_pcm_ms": 16.188772991881706,
+          "audio_seconds": 2.64,
+          "total_ms": 147.2656569967512,
+          "rtf": 0.05578244583210273
+        },
+        {
+          "id": "ce539b29-a576-4113-93ff-71ded3cb08c9",
+          "session_id": "e237928e-a8b5-45db-8bc9-2f9a8f27f796",
+          "status": "ok",
+          "first_pcm_ms": 16.54427200264763,
+          "audio_seconds": 2.2399999999999998,
+          "total_ms": 125.97716899472289,
+          "rtf": 0.05623980758692987
+        }
+      ],
+      "evidence": {
+        "selected_sessions": [
+          "e237928e-a8b5-45db-8bc9-2f9a8f27f796"
+        ],
+        "read_counts": {
+          "lines": 166,
+          "excluded_records": 94
+        }
+      },
+      "sources": [
+        {
+          "label": "Pipecat tracing utilities",
+          "url": "https://docs.pipecat.ai/api-reference/server/utilities/opentelemetry"
+        },
+        {
+          "label": "Phonon model",
+          "url": "https://huggingface.co/gradium/phonon-31m-en"
+        }
+      ]
+    },
+    {
+      "id": "browser-integrated acceptance-pipeline",
+      "component": "pipeline",
+      "label": "Pipecat / streaming browser integrated acceptance / resident STT",
+      "model": "Parakeet resident \u2192 Qwen \u2192 Phonon",
+      "engine": "Pipecat 1.15.0",
+      "mode": "warm, real Chromium over private HTTPS",
+      "boundary": "Inline VAD stop notification to first generated TTS PCM. Excludes the earlier configured 600 ms endpointing wait, network, browser playout and speaker hardware.",
+      "comparison_group": "Browser integrated acceptance / pipeline",
+      "decision": "validated",
+      "metrics": {
+        "agent_ttfa_p50_ms": 472.3039975069696,
+        "browser_playback_ms": null,
+        "server_speaking_p50_ms": 473.9397255034419
+      },
+      "outcomes": {
+        "attempts": 10,
+        "failed": 0,
+        "statuses": {
+          "ok": 10
+        },
+        "missing_first_observation": 0
+      },
+      "quality": {
+        "model_or_voice_changed": false,
+        "purpose": "Timing semantics, real decoded audio, interruption/reconnect checks; not a controlled model-quality benchmark."
+      },
+      "configuration": {
+        "stt_mode": "resident",
+        "stt_backend": "parakeet",
+        "stt_threads": 4,
+        "phonon_threads": 4,
+        "llm_context": 4096,
+        "llm_max_output_tokens": 128,
+        "reasoning_effort": "none",
+        "vad_stop_seconds": 0.6
+      },
+      "methodology": "Explicitly selected corrected browser validation sessions only. Historical initial buggy measurements are excluded. Counts include interrupted/cancelled outcomes; medians use available numeric observations, with missing observations counted. Browser groups have different prompts/history and are not a controlled speedup comparison.",
+      "notes": [
+        "No LLM checkpoint, quantization, context, voice, TTS sample rate or reasoning policy was reduced for speed."
+      ],
+      "limitations": [
+        "Small browser validation sample, not a stable performance baseline; prompts/history vary.",
+        "Interrupted and successful requests remain explicitly identified per sample.",
+        "Chrome ran on the GPU host through the private HTTPS origin; a separate remote device has not been tested.",
+        "No acoustic onset measurement or tool calling test."
+      ],
+      "samples": [
+        {
+          "id": "d9484452-d528-49f4-aea1-f32a271f8ccd",
+          "session_id": "e237928e-a8b5-45db-8bc9-2f9a8f27f796",
+          "status": "ok",
+          "agent_ttfa_ms": 477.33711200999096,
+          "server_speaking_ms": 479.2442600009963,
+          "endpointing_config_ms": 600.0,
+          "endpointing_observed_ms": null,
+          "endpointing_vad_reported_ms": 600.0,
+          "turn_duration_ms": 9338.817012001527,
+          "browser_playback_ms": null,
+          "acoustic_ttfa_ms": null
+        },
+        {
+          "id": "a18c9c71-c0b5-413c-b0ed-d02f521fe6d4",
+          "session_id": "e237928e-a8b5-45db-8bc9-2f9a8f27f796",
+          "status": "ok",
+          "agent_ttfa_ms": 457.70740299485624,
+          "server_speaking_ms": 459.45710099476855,
+          "endpointing_config_ms": 600.0,
+          "endpointing_observed_ms": null,
+          "endpointing_vad_reported_ms": 600.0,
+          "turn_duration_ms": 10979.69795500103,
+          "browser_playback_ms": null,
+          "acoustic_ttfa_ms": null
+        },
+        {
+          "id": "bcf0fd0f-3908-4e6b-aa76-e06349c3dc3d",
+          "session_id": "e237928e-a8b5-45db-8bc9-2f9a8f27f796",
+          "status": "ok",
+          "agent_ttfa_ms": 443.00093899073545,
+          "server_speaking_ms": 444.05940698925406,
+          "endpointing_config_ms": 600.0,
+          "endpointing_observed_ms": null,
+          "endpointing_vad_reported_ms": 600.0,
+          "turn_duration_ms": 10538.698767995811,
+          "browser_playback_ms": null,
+          "acoustic_ttfa_ms": null
+        },
+        {
+          "id": "f5431e25-1dea-4f56-8f6e-bd1a52a5b41f",
+          "session_id": "e237928e-a8b5-45db-8bc9-2f9a8f27f796",
+          "status": "ok",
+          "agent_ttfa_ms": 464.6106859872816,
+          "server_speaking_ms": 465.53785499418154,
+          "endpointing_config_ms": 600.0,
+          "endpointing_observed_ms": null,
+          "endpointing_vad_reported_ms": 600.0,
+          "turn_duration_ms": 11000.023045999114,
+          "browser_playback_ms": null,
+          "acoustic_ttfa_ms": null
+        },
+        {
+          "id": "3ff39a9c-e39c-48bb-8fd2-db8b162d3f0f",
+          "session_id": "e237928e-a8b5-45db-8bc9-2f9a8f27f796",
+          "status": "ok",
+          "agent_ttfa_ms": 463.3624870039057,
+          "server_speaking_ms": 464.6159660042031,
+          "endpointing_config_ms": 600.0,
+          "endpointing_observed_ms": null,
+          "endpointing_vad_reported_ms": 600.0,
+          "turn_duration_ms": 9677.986042996054,
+          "browser_playback_ms": null,
+          "acoustic_ttfa_ms": null
+        },
+        {
+          "id": "47084104-6f71-4e9d-82c9-72b0e0dd52ac",
+          "session_id": "e237928e-a8b5-45db-8bc9-2f9a8f27f796",
+          "status": "ok",
+          "agent_ttfa_ms": 516.4022910030326,
+          "server_speaking_ms": 517.3907999997027,
+          "endpointing_config_ms": 600.0,
+          "endpointing_observed_ms": null,
+          "endpointing_vad_reported_ms": 600.0,
+          "turn_duration_ms": 10428.070893001859,
+          "browser_playback_ms": null,
+          "acoustic_ttfa_ms": null
+        },
+        {
+          "id": "52455dec-8fa6-4453-b0da-3eb3c4a834f5",
+          "session_id": "e237928e-a8b5-45db-8bc9-2f9a8f27f796",
+          "status": "ok",
+          "agent_ttfa_ms": 499.58405901270453,
+          "server_speaking_ms": 501.0370570089435,
+          "endpointing_config_ms": 600.0,
+          "endpointing_observed_ms": null,
+          "endpointing_vad_reported_ms": 600.0,
+          "turn_duration_ms": 9898.583718997543,
+          "browser_playback_ms": null,
+          "acoustic_ttfa_ms": null
+        },
+        {
+          "id": "64ac5c63-a274-4ca2-a7bd-81cc549f1c3b",
+          "session_id": "e237928e-a8b5-45db-8bc9-2f9a8f27f796",
+          "status": "ok",
+          "agent_ttfa_ms": 467.27088300394826,
+          "server_speaking_ms": 468.63519100588746,
+          "endpointing_config_ms": 600.0,
+          "endpointing_observed_ms": null,
+          "endpointing_vad_reported_ms": 600.0,
+          "turn_duration_ms": 10189.191547004157,
+          "browser_playback_ms": null,
+          "acoustic_ttfa_ms": null
+        },
+        {
+          "id": "85e901db-a0fc-4bcc-af67-356148256dd0",
+          "session_id": "e237928e-a8b5-45db-8bc9-2f9a8f27f796",
+          "status": "ok",
+          "agent_ttfa_ms": 563.4252229938284,
+          "server_speaking_ms": 564.496972001507,
+          "endpointing_config_ms": 600.0,
+          "endpointing_observed_ms": null,
+          "endpointing_vad_reported_ms": 600.0,
+          "turn_duration_ms": 10979.916684009368,
+          "browser_playback_ms": null,
+          "acoustic_ttfa_ms": null
+        },
+        {
+          "id": "cddf7c83-b92a-49e7-ae51-a6db2f7735cf",
+          "session_id": "e237928e-a8b5-45db-8bc9-2f9a8f27f796",
+          "status": "ok",
+          "agent_ttfa_ms": 565.6352799996966,
+          "server_speaking_ms": 566.6425689996686,
+          "endpointing_config_ms": 600.0,
+          "endpointing_observed_ms": null,
+          "endpointing_vad_reported_ms": 600.0,
+          "turn_duration_ms": 9958.065030004946,
+          "browser_playback_ms": null,
+          "acoustic_ttfa_ms": null
+        }
+      ],
+      "evidence": {
+        "selected_sessions": [
+          "e237928e-a8b5-45db-8bc9-2f9a8f27f796"
+        ],
+        "read_counts": {
+          "lines": 166,
+          "excluded_records": 94
+        },
+        "browser_checks": {
+          "ten_turn": {
+            "turns": 10,
+            "assistant_segments": 20,
+            "gpu_peak_mib": 9398,
+            "vad_complete_to_bot_started_seconds": [
+              0.424,
+              0.411,
+              0.4,
+              0.398,
+              0.399,
+              0.452,
+              0.436,
+              0.403,
+              0.499,
+              0.501
+            ],
+            "median_seconds": 0.4175,
+            "decoded_audio_energy": 2.452833342098696,
+            "second_offer_status": 409,
+            "stop_clears_and_closes": true,
+            "microphone_sender_replaced": true,
+            "remote_disconnect_releases_media_and_reconnects": true
+          },
+          "barge_in": {
+            "turns": 2,
+            "assistant_segments": 2,
+            "gpu_peak_mib": 9398,
+            "vad_complete_to_bot_started_seconds": [
+              0.625,
+              0.253
+            ],
+            "median_seconds": 0.439,
+            "decoded_audio_energy": 0.1957787389677556,
+            "second_offer_status": 409,
+            "stop_clears_and_closes": true,
+            "microphone_sender_replaced": true,
+            "barge_in_drops_old_reply": true,
+            "remote_disconnect_releases_media_and_reconnects": true
+          }
+        }
+      },
+      "sources": [
+        {
+          "label": "Pipecat tracing utilities",
+          "url": "https://docs.pipecat.ai/api-reference/server/utilities/opentelemetry"
+        },
+        {
+          "label": "Phonon model",
+          "url": "https://huggingface.co/gradium/phonon-31m-en"
+        }
+      ]
+    }
+  ],
+  "evidence_inputs": {
+    "whistle": {
+      "artifact_sha256": "b2cd2144c3e29b38baab07e3b05abc2b943cfae53ceccbcc10ac0ee33b069e4d",
+      "artifact": "summary.json"
+    },
+    "rustvani": {
+      "artifact_sha256": "2d07db6a84d756c826c863a75e2a7079224f9ab9d7a83fd0b641c39217a3114c",
+      "artifact": "summary.json"
+    },
+    "native": {
+      "artifact_sha256": "2fb6f765c5f415ce583c553beff7c55249beaf5216b6be2dc2fed397da0640fc",
+      "artifact": "summary.json"
+    }
+  },
+  "timeline": [
+    {
+      "commit": "3f5a90c",
+      "label": "feat(report): add offline interactive performance drill-down"
+    },
+    {
+      "commit": "c91a8bd",
+      "label": "feat(stt): add opt-in native Whistle CPU backend"
+    },
+    {
+      "commit": "2eff8f5",
+      "label": "test(stt): add paired public-corpus comparison harness"
+    },
+    {
+      "commit": "8bffe2e",
+      "label": "test(stt): retain per-fixture comparison evidence"
+    },
+    {
+      "commit": "bc83066",
+      "label": "docs(stt): record Whistle quality and latency comparison"
+    },
+    {
+      "commit": "929d0ed",
+      "label": "fix(metrics): keep STT measurements numeric"
+    },
+    {
+      "commit": "c5d6954",
+      "label": "docs(rustvani): plan isolated native pipeline comparison"
+    },
+    {
+      "commit": "e53cae4",
+      "label": "feat(rustvani): add isolated same-model pipeline experiment"
+    },
+    {
+      "commit": "ad57614",
+      "label": "docs(rustvani): record real same-model feasibility results"
+    },
+    {
+      "commit": "0ddbdb5",
+      "label": "fix(metrics): separate STT runtime configurations in retained analysis"
+    },
+    {
+      "commit": "9122f0a",
+      "label": "feat(report): compile measured component comparisons and verify offline UI"
+    },
+    {
+      "commit": "5bd5c13",
+      "label": "build(stt): prepare pinned native Parakeet runtime"
+    },
+    {
+      "commit": "4a4f228",
+      "label": "perf(stt): reuse resident Parakeet inference worker"
+    },
+    {
+      "commit": "6a69cf2",
+      "label": "test(perf): add paired resident STT benchmark"
+    },
+    {
+      "commit": "ff539fe",
+      "label": "fix(stt): bound native cleanup and runtime readiness"
+    },
+    {
+      "commit": "1f2123a",
+      "label": "docs(perf): record same-checkpoint native STT results"
+    },
+    {
+      "commit": "98e915f",
+      "label": "fix(stt): integrate optional engines and install stable native runtime"
+    },
+    {
+      "commit": "6a40d88",
+      "label": "feat(report): expose native stage timings and integrated browser evidence"
+    },
+    {
+      "commit": "1fe1274",
+      "label": "fix(metrics): encode trace boolean flags as numeric counters"
+    }
+  ],
+  "environment": {
+    "gpu": "RTX 4060 Ti / 16,380 MiB VRAM",
+    "cpu": "Ryzen 5 7600X / 6 cores",
+    "ram": "approximately 30 GiB",
+    "pipecat": "1.15.0",
+    "transcribe_cpp": "0.4.1 / pinned revision 5700f127e38dd53c4735ea23ef743b4b538eacd4",
+    "ollama": "0.24.0 / unchanged",
+    "phonon_ptts": "0.5.0 / Rust CPU Q8_0 / 4 threads / 24 kHz",
+    "browser_scope": "Chromium on GPU host through private HTTPS; separate remote device unverified"
+  },
+  "next_decisions": [
+    "Adopt resident Parakeet on this verified host; CLI stays the portable default and rollback. No model or decoding-quality changes.",
+    "Keep Phonon Rust CPU and Ollama Qwen unchanged: no measured evidence yet for a quality-preserving TTS/model migration.",
+    "Optional next experiment: separately measure a local OpenBLAS decoder build. Do not mix kernel and residency changes in one claimed gain.",
+    "Before tool calling: preserve complete call/result history groups, use native structured calls, budget enough tokens for valid arguments, and measure valid-arguments/tool execution/post-tool answer latency. Tool calling is not implemented or tested by this work.",
+    "Keep endpointing at 600 ms until a cutoff-quality corpus supports changing it. Generated audio latency is not acoustic latency."
+  ]
+}
