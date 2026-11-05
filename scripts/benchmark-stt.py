@@ -8,6 +8,7 @@ import argparse
 import asyncio
 from collections import Counter
 from dataclasses import replace
+from datetime import datetime, timezone
 import hashlib
 import json
 from pathlib import Path
@@ -157,14 +158,26 @@ async def benchmark(args):
                     output.write(json.dumps(record, allow_nan=False) + "\n")
                     output.flush()
     report = {"timing_mode": "fresh-process/model-load per non-silent utterance; OS caches may be warm",
+              "created_at": datetime.now(timezone.utc).isoformat(),
+              "comparison": "different ASR model; not a quality-preserving kernel optimization",
               "silence_mode": "shared adapter fast path, not raw model silence decoding",
               "normalization": "Unicode word tokens, case/punctuation folded; numbers are not rewritten",
               "manifest_sha256": sha(args.manifest), "repeats": args.repeats,
+              "settings": {"language": "en", "stt_threads": config.stt_threads,
+                           "whistle_device": "cpu", "whistle_audio_depth": "default-full",
+                           "parakeet_device": "cuda", "parakeet_timestamps": "none",
+                           "checkpoint_or_decode_changed": False},
               "models": {"parakeet_sha256": sha(config.parakeet_model),
+                         "parakeet_bytes": config.parakeet_model.stat().st_size,
                          "whistle_sha256": sha(config.whistle_model),
+                         "whistle_bytes": config.whistle_model.stat().st_size,
                          "needle_executable_sha256": sha(config.needle_bin),
                          "parakeet_executable_sha256": sha(config.parakeet_bin)},
-              "summary": summary(records)}
+              "summary": summary(records),
+              "cases": [{"case_id": case["id"], "fixture_kind": case.get("kind", "unspecified"),
+                         "pcm_sha256": case["pcm_sha256"], "audio_seconds": len(case["pcm"]) / 32000,
+                         "models": summary([r for r in records if r["case_id"] == case["id"]])}
+                        for case in cases]}
     (args.output / "summary.json").write_text(json.dumps(report, indent=2, allow_nan=False) + "\n")
     print(json.dumps(report, indent=2, allow_nan=False))
     if any(r["status"] != "ok" for r in records):
