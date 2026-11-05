@@ -7,7 +7,7 @@
 - Follow docs/superpowers/specs and the implementation plan. User explicitly authorized writing the plan and starting implementation, without another approval pause.
 
 ## Git workflow
-- Local repository created at user request. No remote exists intentionally; do not invent a canonical remote, create a GitHub repository, or publish.
+- The user authorized private publication to `gianpaj/local-voice-agent` on 2026-11-05. Use the verified `origin` remote for that repository; do not change its visibility or publish elsewhere without authorization.
 - Never commit to main or push main; use feature branches and conventional commits. No PRs.
 - Editing agents use parent-prepared isolated worktrees and verify starting HEAD before edits. Parent integrates finished commits.
 - Preserve user changes and avoid destructive cleanup.
@@ -22,4 +22,4 @@
 
 ## Delivery
 - Report work/test evidence through parent; no direct Telegram/external messages from workers.
-- Commit implementation on your assigned feature branch, do not push (no origin).
+- Commit implementation on your assigned feature branch. Push only within the user's authorized scope; never push main or create a PR automatically.
