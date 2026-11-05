@@ -127,7 +127,9 @@ class PhononTTS(TTSService):
                         request.metrics["first_pcm_ms"] = (time.monotonic() - started) * 1000
                         self.telemetry.generated_pcm(request)
                     request.metrics["audio_seconds"] += len(data) / 48000
-                yield TTSAudioRawFrame(data, 24000, 1, context_id=context_id)
+                frame = TTSAudioRawFrame(data, 24000, 1, context_id=context_id)
+                frame.local_voice_turn = request.turn if request else None
+                yield frame
             if self.engine.generation != expected_generation:
                 status = "cancelled"
         except (asyncio.CancelledError, GeneratorExit):

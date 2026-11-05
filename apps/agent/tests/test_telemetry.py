@@ -11,7 +11,7 @@ import pytest
 from opentelemetry import trace
 from opentelemetry.trace import Status, StatusCode
 from pipecat.frames.frames import (BotStartedSpeakingFrame, BotStoppedSpeakingFrame,
-    LLMTextFrame, MetricsFrame, VADUserStartedSpeakingFrame, VADUserStoppedSpeakingFrame)
+    LLMTextFrame, MetricsFrame, TTSAudioRawFrame, VADUserStartedSpeakingFrame, VADUserStoppedSpeakingFrame)
 from pipecat.metrics.metrics import LLMTokenUsage, LLMUsageMetricsData, TTFBMetricsData, TTFATMetricsData
 from pipecat.processors.frame_processor import FrameDirection
 
@@ -59,6 +59,7 @@ async def test_vad_ttfa_and_server_speaking_are_separate_and_missing_stays_null(
     session, sink, path = telemetry
     observer = CascadeObserver(session)
     async def pushed(frame):
+        session.stamp_server_event(frame)
         await observer.on_push_frame(SimpleNamespace(frame=frame))
     # Speech ownership is established inline by the STT processor, not by a
     # queued observer event. This test isolates only the audio/server boundaries.
@@ -71,6 +72,9 @@ async def test_vad_ttfa_and_server_speaking_are_separate_and_missing_stays_null(
     session.response_turn = turn
     await asyncio.sleep(0.002)
     session.generated_pcm(request)
+    audio = TTSAudioRawFrame(b"\1\0" * 24, 24000, 1)
+    audio.local_voice_turn = turn
+    session.note_output_frame(audio)
     await asyncio.sleep(0.002)
     await pushed(BotStartedSpeakingFrame())
     request.finish("ok")
@@ -241,9 +245,15 @@ async def test_cancelled_tts_is_not_successful_turn_or_span(telemetry):
     session.response_turn = turn
     request = session.request("tts", "phonon", turn=turn)
     observer = CascadeObserver(session)
-    await observer.on_push_frame(SimpleNamespace(frame=BotStartedSpeakingFrame()))
+    audio = TTSAudioRawFrame(b"\1\0" * 24, 24000, 1)
+    audio.local_voice_turn = turn
+    session.note_output_frame(audio)
+    start, stop = BotStartedSpeakingFrame(), BotStoppedSpeakingFrame()
+    session.stamp_server_event(start)
+    await observer.on_push_frame(SimpleNamespace(frame=start))
     request.finish("cancelled")
-    await observer.on_push_frame(SimpleNamespace(frame=BotStoppedSpeakingFrame()))
+    session.stamp_server_event(stop)
+    await observer.on_push_frame(SimpleNamespace(frame=stop))
     session.close()
     await observer.cleanup()
     sink.flush()
@@ -253,3 +263,71 @@ async def test_cancelled_tts_is_not_successful_turn_or_span(telemetry):
     assert request_span["status"] == "cancelled"
     turn_span = next(r for r in items if r["record_type"] == "span" and r["stage"] == "turn")
     assert turn_span["status"] == "cancelled"
+
+
+async def test_delayed_server_observer_uses_original_event_clock_and_pcm_owner(telemetry):
+    session, sink, path = telemetry
+    observer = CascadeObserver(session)
+    old = session.start_turn()
+    old.vad_stopped = time.monotonic()
+    request = session.request("tts", "phonon", turn=old)
+    old_pcm = TTSAudioRawFrame(b"\1\0" * 24, 24000, 1)
+    old_pcm.local_voice_turn = old
+    session.note_output_frame(old_pcm)
+    start, sibling = BotStartedSpeakingFrame(), BotStartedSpeakingFrame()
+    start.broadcast_sibling_id = sibling.id
+    sibling.broadcast_sibling_id = start.id
+    session.stamp_server_event(start)
+    captured_at = start.local_voice_server_event[1]
+    session.stamp_server_event(sibling)
+    assert sibling.local_voice_server_event == start.local_voice_server_event
+    request.finish("ok")
+
+    # A new answer can become session.response_turn while observer messages
+    # from the old server audio event are still sitting in its proxy queue.
+    new = session.start_turn()
+    session.response_turn = new
+    new.vad_stopped = time.monotonic()
+    new_pcm = TTSAudioRawFrame(b"\1\0" * 24, 24000, 1)
+    new_pcm.local_voice_turn = new
+    session.note_output_frame(new_pcm)
+    stop = BotStoppedSpeakingFrame()
+    session.stamp_server_event(stop)
+    assert stop.local_voice_server_event[0] is old
+    await asyncio.sleep(0.005)
+    await observer.on_push_frame(SimpleNamespace(frame=start))
+    await observer.on_push_frame(SimpleNamespace(frame=sibling))
+    await observer.on_push_frame(SimpleNamespace(frame=stop))
+    assert old.bot_started == captured_at and new.bot_started is None
+    assert not new.response_completed
+    new_start = BotStartedSpeakingFrame()
+    session.stamp_server_event(new_start)
+    assert new_start.local_voice_server_event[0] is new
+    await observer.on_push_frame(SimpleNamespace(frame=new_start))
+    assert new.bot_started == new_start.local_voice_server_event[1]
+    session.close()
+    await observer.cleanup()
+    sink.flush()
+    old_record = next(r for r in records(path) if r["record_type"] == "turn" and r["turn_id"] == old.id)
+    assert old_record["metrics"]["server_speaking_ms"] == pytest.approx((captured_at - old.vad_stopped) * 1000)
+
+
+async def test_new_speech_after_inline_server_stop_finishes_old_turn_ok_without_timer(telemetry):
+    session, sink, path = telemetry
+    old = session.start_turn()
+    request = session.request("tts", "phonon", turn=old)
+    audio = TTSAudioRawFrame(b"\1\0" * 24, 24000, 1)
+    audio.local_voice_turn = old
+    session.note_output_frame(audio)
+    session.stamp_server_event(BotStartedSpeakingFrame())
+    request.finish("ok")
+    stop = BotStoppedSpeakingFrame()
+    session.stamp_server_event(stop)
+    assert old.response_completed
+    # Even the observer event has not run, never mind its 2.5-second timer.
+    new = session.start_turn()
+    assert old.status == "ok" and new is not old
+    session.close()
+    sink.flush()
+    result = next(r for r in records(path) if r["record_type"] == "turn" and r["turn_id"] == old.id)
+    assert result["status"] == "ok"

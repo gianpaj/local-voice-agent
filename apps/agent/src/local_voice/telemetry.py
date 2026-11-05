@@ -4,7 +4,7 @@ Times use the server's monotonic clock. A generated PCM chunk is NOT browser
 playback, and configured VAD silence is not a measured acoustic endpoint.
 """
 import asyncio
-from collections import OrderedDict
+from collections import OrderedDict, deque
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 import json
@@ -23,7 +23,7 @@ from opentelemetry.sdk.trace.export import SimpleSpanProcessor, SpanExporter, Sp
 from opentelemetry.trace import Status, StatusCode
 from pipecat.frames.frames import (
     BotStartedSpeakingFrame, BotStoppedSpeakingFrame, CancelFrame, EndFrame,
-    InterruptionFrame, VADUserStartedSpeakingFrame, VADUserStoppedSpeakingFrame,
+    InterruptionFrame, TTSAudioRawFrame,
 )
 from pipecat.observers.base_observer import BaseObserver
 
@@ -251,6 +251,9 @@ class SessionMetrics:
         self.current = self.response_turn = None
         self.turns = []
         self.closed = False
+        self._output_pending = deque(maxlen=16)
+        self._server_speaking_turn = None
+        self._last_server_event = None
         self.record("session", status="started", metrics={
             "sample_rate_in": 16000, "sample_rate_out": 24000, "llm_context_tokens": 4096,
             "llm_max_output_tokens": 128, "phonon_threads": 4,
@@ -294,6 +297,53 @@ class SessionMetrics:
         turn = request.turn
         if turn.status is None and turn.first_pcm is None:
             turn.first_pcm = time.monotonic()
+
+    def note_output_frame(self, frame):
+        """Inline transport input hook: remember the owner of queued PCM.
+
+        TTS tags the original audio frame before its audio-context queue. This
+        does not consult session.response_turn, which can already refer to the
+        next answer by the time an older server speaking event is observed.
+        """
+        if isinstance(frame, InterruptionFrame):
+            self._output_pending.clear()
+        elif isinstance(frame, TTSAudioRawFrame):
+            owner = getattr(frame, "local_voice_turn", None)
+            if owner and owner.status is None and owner is not self._server_speaking_turn:
+                if (not self._output_pending or self._output_pending[-1] is not owner) and len(self._output_pending) < 16:
+                    self._output_pending.append(owner)
+
+    def stamp_server_event(self, frame):
+        """Inline output push hook: capture event time and immutable ownership.
+
+        Pipecat broadcasts upstream/downstream siblings for the same event.
+        Both must retain the same stamp without advancing the pending owner.
+        """
+        if not isinstance(frame, (BotStartedSpeakingFrame, BotStoppedSpeakingFrame)):
+            return
+        previous = self._last_server_event
+        if previous and getattr(frame, "broadcast_sibling_id", None) == previous[0]:
+            stamp = previous[1]
+        else:
+            if isinstance(frame, BotStartedSpeakingFrame):
+                owner = self._server_speaking_turn
+                if owner is None and self._output_pending:
+                    owner = self._output_pending.popleft()
+                self._server_speaking_turn = owner
+            else:
+                owner = self._server_speaking_turn
+                self._server_speaking_turn = None
+            observed_at = time.monotonic()
+            stamp = (owner, observed_at)
+            if owner and owner.status is None:
+                if isinstance(frame, BotStartedSpeakingFrame):
+                    if owner.bot_started is None:
+                        owner.bot_started = observed_at
+                    owner.response_completed = False
+                elif owner.bot_started is not None and all(r.finished for r in owner.requests):
+                    owner.response_completed = True
+        frame.local_voice_server_event = stamp
+        self._last_server_event = (frame.id, stamp)
 
     def turn_outcome(self, turn, proposed="ok"):
         outcomes = {r.status for r in turn.requests if r.finished}
@@ -358,17 +408,18 @@ class CascadeObserver(BaseObserver):
         # enters the async queue. Worker observers run asynchronously and must
         # never choose a segment's owner or reset it after transcription starts.
         if isinstance(frame, BotStartedSpeakingFrame):
-            self._cancel_end()
-            turn = session.response_turn
-            if turn and turn.status is None and turn.bot_started is None:
-                turn.bot_started = time.monotonic()
+            turn, observed_at = getattr(frame, "local_voice_server_event", (None, None))
+            if turn and turn.status is None:
+                self._cancel_end()
+                if turn.bot_started is None:
+                    turn.bot_started = observed_at
                 turn.response_completed = False
         elif isinstance(frame, BotStoppedSpeakingFrame):
             # There can be several sentences/audio contexts per turn. Finalize
             # only once LLM/TTS have completed, otherwise a later sentence could
             # arrive after an early server-speaking stop.
-            turn = session.response_turn
-            if turn and turn.bot_started is not None and all(r.finished for r in turn.requests):
+            turn, _observed_at = getattr(frame, "local_voice_server_event", (None, None))
+            if turn and turn.status is None and turn.bot_started is not None and all(r.finished for r in turn.requests):
                 turn.response_completed = True
                 self._cancel_end()
                 self._end_timer = asyncio.get_running_loop().call_later(2.5, session.end_turn, turn, "ok")

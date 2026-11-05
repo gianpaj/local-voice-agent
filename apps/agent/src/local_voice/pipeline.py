@@ -41,6 +41,16 @@ def build_worker(connection, config, engine, telemetry=None):
             if isinstance(frame, LLMContextFrame):
                 frame.local_voice_turn = aggregation_turn
 
+        # These processor hooks are synchronous/awaited in pinned Pipecat1.15,
+        # unlike WorkerObserver's deferred proxy notifications.
+        @transport.output().event_handler("on_before_process_frame")
+        async def bind_output_audio(_processor, frame):
+            telemetry.note_output_frame(frame)
+
+        @transport.output().event_handler("on_before_push_frame")
+        async def stamp_server_speech(_processor, frame):
+            telemetry.stamp_server_event(frame)
+
     worker = None
 
     async def status(phase):
