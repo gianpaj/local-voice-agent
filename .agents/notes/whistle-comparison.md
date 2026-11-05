@@ -20,3 +20,11 @@
 ## Coordination
 
 Reading, implementation and fake tests are allowed now. No heavy inference/build until the parent grants the shared CPU/GPU benchmark window. Parent owns canonical deployment/service/routes, final integration and pushes.
+
+## Implementation and checks
+
+- Commit `2edf256`: additive optional backend, reused VAD/turn handling, native offline ASR adapter, matching health/UI labels, setup/rollback docs and fake-fault tests. No native build or new inference dependency.
+- Cherry-picked parent transport-event measurement fix `76358a2` as `6c11769` before benchmark work.
+- Locked per-worktree Python environment created without modifying canonical `.venv`; 31 Python tests pass after the parent fix. Six offline analysis/scoring unit tests pass. Fake tests cover Unicode/spaced paths, explicit English/full-depth flags, silence, malformed/oversized/nonzero output, timeout/cancellation, reaping and temporary audio deletion. These tests do not establish recognition quality.
+- Public fixture preparation uses the pinned `hf-internal-testing/librispeech_asr_dummy` revision `5be91486e11a2d616f4ec5db8d3fd248585ac07a` (first three labeled validation utterances) and the publisher's JFK sample. Artifacts normalized once to 16 kHz mono int16; hashes retained in ignored manifest. Natural samples are a small smoke corpus, not a representative evaluation set.
+- Paired benchmark harness alternates order, preserves per-attempt failures/quality scores, separates speech latency from silence fast path and keeps missing metrics null. Native CLI process time includes per-utterance model load; no claim of resident throughput.

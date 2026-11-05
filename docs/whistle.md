@@ -27,6 +27,19 @@ STT stage records retain the selected model, `stt_backend`, `stt_device`, thread
 
 Use the same normalized WAV bytes and labels for both models. Report WER/CER, names/numbers, silence false positives, failures and paired latency; do not select a smaller model on latency alone or describe a few clean synthetic samples as proof of conversational accuracy. Model substitutions do not preserve quality by construction. The comparison harness/evidence below is updated after a coordinated real-inference run.
 
+Explicit fixture preparation and comparison (requires both local runtimes and paths):
+
+```sh
+uv run --project apps/agent python scripts/prepare-stt-corpus.py --add-synthetic
+uv run --project apps/agent python scripts/benchmark-stt.py \
+  --manifest .local/corpus/stt-comparison/manifest.jsonl \
+  --output .local/benchmarks/whistle --repeats 5
+```
+
+Preparation explicitly downloads three public labeled LibriSpeech-subset samples and the public JFK sample; `--add-synthetic` additionally runs local Phonon for name/number controls. It also generates digital silence. **App setup/startup never acquires this corpus.** Raw corpus references/recordings stay in ignored `.local/`. The default benchmark report contains hashes, scores and timings, not transcript text; `--save-transcripts` is an explicit opt-in for inspecting this public test corpus locally. Do not use private recordings or commit reports.
+
+The harness alternates model order on each repeat, retains failures/timeouts, uses identical PCM, and hashes both selected model artifacts and executables outside timed intervals. Non-silent latency includes fresh process/model loading; warm OS caches are not cold disk startup. Silence exercises the shared fast path, not raw model decoding. p50/p95 exclude the silence fast path. WER/CER are case/punctuation folded but numeric renderings are not rewritten; separate allowed-rendering probes distinguish correct numbers/names from formatting differences. Successful-only WER is accompanied by scored/total coverage and failure counts, never missing-as-zero latency.
+
 ## Rollback
 
 Set `STT_BACKEND=parakeet`, retain the working `PARAKEET_BIN`/`PARAKEET_MODEL`, and restart normally. No OpenClaw/global Ollama/Tailscale setting is changed by this feature.
