@@ -1,0 +1,72 @@
+{
+  "reviewed_at": "2026-11-06T19:37:50.544673+00:00",
+  "since": "2026-11-06T19:00:00Z",
+  "turn_statuses": {
+    "ok": 11,
+    "interrupted": 3,
+    "disconnected": 2
+  },
+  "completed_turns": 11,
+  "metrics": {
+    "stt_total_ms": {
+      "count": 11,
+      "median_ms": 92.75391098344699,
+      "p95_ms": 136.71814200642984,
+      "max_ms": 139.2833940044511
+    },
+    "llm_first_answer_token_ms": {
+      "count": 11,
+      "median_ms": 206.15945899044164,
+      "p95_ms": 283.24392999638803,
+      "max_ms": 312.4207670043688
+    },
+    "tts_first_pcm_ms": {
+      "count": 27,
+      "median_ms": 16.489944013301283,
+      "p95_ms": 61.3487187103601,
+      "max_ms": 67.50417500734329
+    },
+    "agent_ttfa_ms": {
+      "count": 11,
+      "median_ms": 436.2163000041619,
+      "p95_ms": 2062.5026999914553,
+      "max_ms": 3453.4066219930537
+    }
+  },
+  "limits": [
+    "Mixed manual and browser smoke sessions, not a controlled benchmark",
+    "TTS samples are segments, not turns",
+    "Agent TTFA excludes earlier 600ms VAD silence and network/browser/acoustic onset"
+  ],
+  "schema_version": 1,
+  "application_commit": "5b1f12ae9f3f07bae96c9e0bbb76c0e920a08d8a",
+  "concurrent_browser_sessions": 1,
+  "hardware": {
+    "cpu": "AMD Ryzen 5 7600X",
+    "physical_cpu_cores": 6,
+    "logical_cpu_threads": 12,
+    "gpu": "NVIDIA GeForce RTX 4060 Ti",
+    "gpu_memory_mib": 16380,
+    "os_visible_ram_bytes": 31921995776,
+    "os": "Ubuntu 26.04 LTS",
+    "nvidia_driver": "595.91.07"
+  },
+  "configuration": {
+    "framework": "Pipecat 1.15.0 SmallWebRTC",
+    "stt": "Parakeet TDT 0.6B v3 Q8_0, resident CUDA",
+    "stt_threads": 4,
+    "llm": "Qwen3.5 9B Q4_K_M via Ollama",
+    "llm_context_tokens": 4096,
+    "llm_max_output_tokens": 128,
+    "tts": "Phonon 31M English Q8_0, CPU",
+    "tts_threads": 4,
+    "endpointing_config_ms": 600,
+    "models_warmed": true
+  },
+  "outlier_note": "The slowest completed turn included an approximately 2.9-second interval from STT completion to inferred LLM request start. Root cause is unconfirmed.",
+  "unmeasured": {
+    "browser_playback_ms": null,
+    "acoustic_ttfa_ms": null,
+    "multi_call_capacity": null
+  }
+}

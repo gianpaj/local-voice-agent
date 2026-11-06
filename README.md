@@ -46,6 +46,66 @@ On another tailnet device use private **Tailscale HTTPS**, not plain HTTP to an 
 
 Each downloaded model is below 8 GB. Qwen's **resident allocation is around 8.6 GB**; runtime memory is not checkpoint size. Phonon stays on CPU to leave GPU room for Qwen and Parakeet. See [acquisition and licenses](docs/models.md).
 
+## One concurrent call: measured performance
+
+**2026-11-06 — one active browser call at a time, with warmed local models.**
+This is an observed workload on the following computer, not a minimum-spec claim
+or a multi-call capacity benchmark.
+
+| Hardware / software | Configuration |
+| --- | --- |
+| CPU | AMD Ryzen 5 7600X — 6 cores / 12 threads |
+| GPU | NVIDIA GeForce RTX 4060 Ti — 16 GB VRAM (16,380 MiB reported) |
+| RAM | 29.7 GiB visible to the OS |
+| OS / GPU driver | Ubuntu 26.04 LTS / NVIDIA 595.91.07 |
+| Framework | Pipecat 1.15.0, SmallWebRTC |
+| STT | Resident Parakeet TDT 0.6B v3 Q8_0 on CUDA, four threads |
+| LLM | Ollama Qwen3.5 9B Q4_K_M; 4,096 context / 128 output tokens |
+| TTS | Phonon 31M English Q8_0 on CPU, four threads |
+
+The snapshot covers **11 completed turns** from mixed manual sessions and browser
+smoke tests since 19:00 UTC, reviewed at 19:37 UTC. Three interrupted turns and two
+disconnected turns are retained in the logs but excluded from this completed-turn
+table. A turn can produce multiple TTS segments, so segment counts differ.
+
+| Measured interval | Samples | Median | p95 | Maximum |
+| --- | ---: | ---: | ---: | ---: |
+| STT request → completed transcription | 11 requests | 92.8 ms | 136.7 ms | 139.3 ms |
+| LLM request → first answer token | 11 requests | 206.2 ms | 283.2 ms | 312.4 ms |
+| TTS request → first generated PCM chunk | 27 segments | 16.5 ms | 61.3 ms | 67.5 ms |
+| VAD stop notification → first generated response PCM | 11 turns | **436.2 ms** | 2,062.5 ms | 3,453.4 ms |
+
+**Interpretation:** the 436 ms median is server-side agent TTFA, not the time from
+the user's last word to hearing a reply. It excludes the earlier configured
+**600 ms silence-detection window**, network transit, browser buffering and speaker
+latency. Generated PCM can include leading silence; actual audible onset is not
+measured. Do not sum stage medians or p95s to infer end-to-end latency.
+
+The slowest turn included an approximately **2.9-second gap between STT completion
+and LLM request start**; its cause is not yet confirmed. With only 11 completed
+turns and mixed prompts/transports, p95 is descriptive, not a production SLO.
+Multi-call throughput, cold-start latency and remote acoustic latency are not
+established by this snapshot. [Machine-readable aggregate](reports/data/single-call-performance-2026-11-06.json).
+
+### Local timing logs
+
+Per-request timings, turn outcomes, model/configuration labels and sanitized
+OpenTelemetry spans are saved to **`.local/metrics/metrics.jsonl`**, without
+conversation text or audio. Files rotate at approximately **10 MB**, retaining
+five backups; `.local/` is ignored by Git. The reviewed writer reported **zero
+dropped records and zero write errors**. This aggregate contains no raw dialogue,
+recording, private machine paths or session identifiers.
+
+```bash
+pnpm metrics
+pnpm metrics --since 2026-11-06T19:00:00Z --format json
+pnpm metrics --format csv > .local/timings.csv
+```
+
+The analyzer excludes duplicate span representations and separates outcomes.
+Commands analyze the current retained logs; the linked aggregate freezes the
+numbers above. See [observability and exact timing boundaries](docs/observability.md).
+
 ## Checks
 
 ```bash
