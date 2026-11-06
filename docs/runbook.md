@@ -80,8 +80,9 @@ uv run --project apps/agent --group browser python scripts/browser-smoke.py \
   --url https://YOUR-HOST.trycloudflare.com --public-only-ice --turns 1
 ```
 
-This strips host candidates in both signaling directions and checks a successful
-public candidate pair plus non-silent decoded response audio. It still runs on the
+This strips private host candidates in both signaling directions and checks a
+successful public candidate address plus non-silent decoded response audio.
+Globally routable IPv6 host candidates are retained alongside STUN candidates. It still runs on the
 same host, so it is not an independent remote-device or all-networks guarantee.
 With STUN enabled, a normal/private smoke test can use `--lead-in-seconds 15` to
 allow address discovery before the fake microphone starts speaking.

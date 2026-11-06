@@ -3,7 +3,7 @@
 uv run --project apps/agent --group browser python scripts/browser-smoke.py --turns 10
 Use --executable /path/to/chrome if the Playwright browser is already installed elsewhere.
 This checks software audio, NOT physical/remote-device audio. --public-only-ice
-removes private candidates from signaling to test a public route, even on one host.
+removes private candidates from signaling to test a public address, even on one host.
 """
 import argparse
 import asyncio
@@ -38,7 +38,12 @@ window.AudioContext=class extends NativeAudioContext {
   constructor(...args){super(...args);window.__voiceTest.contexts.push(this);}
 };
 const nativeFetch=window.fetch.bind(window);
-const publicCandidate=line=>/\btyp (srflx|relay)\b/.test(line);
+const publicCandidate=line=>{
+  if(/\btyp (srflx|relay)\b/.test(line))return true;
+  const address=line.replace(/^a=/,'').split(/\s+/)[4]||'';
+  // Globally routable IPv6 host candidates are also valid public routes.
+  return /\btyp host\b/.test(line)&&/^[23][0-9a-f]{3}:/i.test(address);
+};
 const publicSdp=sdp=>sdp.split(/\r?\n/).filter(line=>!line.startsWith('a=candidate:')||publicCandidate(line)).join('\r\n');
 window.fetch=async (...args)=>{
   const input=args[0],url=typeof input==='string'?input:input.url||String(input);
@@ -112,7 +117,11 @@ async def main(args):
                 expected_ice = await page.evaluate("async()=>{const r=await fetch('/api/health');return (await r.json()).ice_servers||[]}")
                 start = page.get_by_role("button", name="Start talking")
                 await start.click(timeout=120_000)
-                await page.wait_for_function("!Array.from(document.querySelectorAll('button')).find(b=>b.textContent==='Mute mic')?.disabled && !!document.querySelector('audio').srcObject")
+                try:
+                    await page.wait_for_function("!Array.from(document.querySelectorAll('button')).find(b=>b.textContent==='Mute mic')?.disabled && !!document.querySelector('audio').srcObject")
+                except Exception:
+                    print(json.dumps(await page.evaluate("""async()=>({peers:await Promise.all(window.__voiceTest.peers.map(async p=>{const s=await p.getStats();return {state:p.connectionState,ice:p.iceConnectionState,candidates:[...s.values()].filter(x=>['local-candidate','remote-candidate'].includes(x.type)).map(x=>({direction:x.type,type:x.candidateType,protocol:x.protocol}))}})),errors:[...document.querySelectorAll('[role=alert]')].map(x=>x.textContent)})""")))
+                    raise
                 busy = await page.evaluate("""async()=>{const r=await fetch('/api/offer',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({sdp:'v=0',type:'offer'})});return r.status}""")
                 assert busy == 409, f"Second offer was not rejected: {busy}"
                 for _ in range(turns * 11 + lead_in):
@@ -129,7 +138,6 @@ async def main(args):
                 if args.public_only_ice:
                     for pair in result["selected"]:
                         remote = pair["remote"]
-                        assert remote["candidateType"] in {"srflx", "relay"}, "Selected a private host candidate"
                         assert ipaddress.ip_address(remote.get("address") or remote.get("ip")).is_global, "Selected a non-public address"
                 assert hosts == {urlparse(args.url).netloc}, f"Unexpected HTTP destination(s): {hosts}"
                 assert not errors, errors
@@ -195,6 +203,12 @@ async def main(args):
                     summary["remote_disconnect_releases_media_and_reconnects"] = True
                 print(json.dumps(summary, indent=2))
             finally:
+                # Failed ICE must release the single-session slot too.
+                if 'page' in locals() and not page.is_closed():
+                    try:
+                        await page.evaluate("""async()=>{for(const pc_id of window.__voiceTest?.pcIds||[])await fetch('/api/offer',{method:'DELETE',headers:{'content-type':'application/json'},body:JSON.stringify({pc_id})})}""")
+                    except Exception:
+                        pass
                 await browser.close()
 
 
@@ -204,7 +218,7 @@ if __name__ == "__main__":
     parser.add_argument("--executable")
     parser.add_argument("--turns", type=int, choices=range(1, 11), default=1)
     parser.add_argument("--barge-in", action="store_true", help="Interrupt a dragon story with 'say only okay'")
-    parser.add_argument("--public-only-ice", action="store_true", help="Remove host candidates from offers/answers; require a public remote ICE candidate")
+    parser.add_argument("--public-only-ice", action="store_true", help="Remove private host candidates from offers/answers; require a public remote address")
     parser.add_argument("--lead-in-seconds", type=int, choices=range(3, 61), default=3, help="Initial microphone silence for slower ICE discovery")
     parser.add_argument("--disconnect-reconnect", action="store_true", help="End the server peer, verify media cleanup, then Start again without reloading")
     asyncio.run(main(parser.parse_args()))
