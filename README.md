@@ -106,6 +106,14 @@ The analyzer excludes duplicate span representations and separates outcomes.
 Commands analyze the current retained logs; the linked aggregate freezes the
 numbers above. See [observability and exact timing boundaries](docs/observability.md).
 
+## Recorded two-agent conversation
+
+The runnable [Vicky ↔ John example](examples/two-agent-conversation/README.md)
+preserves the exact generator used for the two-minute recording: distinct Phonon
+voices, separate system prompts and accumulated histories, and PCM → Parakeet
+handoffs instead of passing the other agent's generated text directly. It saves
+audio, transcripts and timing evidence locally; it is not a multi-call benchmark.
+
 ## Checks
 
 ```bash
