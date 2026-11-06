@@ -30,6 +30,12 @@ class Config:
     parakeet_library: Path | None = None
     parakeet_bindings: Path | None = None
     parakeet_startup_timeout: float = 45
+    stun_url: str = ""
+
+    @property
+    def ice_servers(self):
+        """Public address discovery is explicitly opt-in; no TURN credentials."""
+        return [{"urls": self.stun_url}] if self.stun_url else []
 
     @property
     def stt_model_id(self):
@@ -69,6 +75,7 @@ class Config:
             parakeet_bindings=Path(os.environ["PARAKEET_BINDINGS"]).expanduser().resolve() if os.getenv("PARAKEET_BINDINGS") else None,
             parakeet_startup_timeout=float(os.getenv("PARAKEET_STARTUP_TIMEOUT", "45")),
             allowed_origins=tuple(x.strip() for x in os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000").split(",") if x.strip()),
+            stun_url=os.getenv("WEBRTC_STUN_URL", "").strip(),
         )
         result.validate()
         return result
@@ -89,6 +96,20 @@ class Config:
                 raise ValueError("Set PARAKEET_BINDINGS to the matching pinned Python bindings directory")
         if not 1024 <= self.metrics_max_bytes <= 1_000_000_000 or not 1 <= self.metrics_backups <= 100:
             raise ValueError("Metrics retention must be 1 KB–1 GB per file with 1–100 backups")
+        if self.stun_url:
+            try:
+                stun = urlparse("stun://" + self.stun_url.removeprefix("stun:"))
+                valid_stun = (
+                    self.stun_url.startswith("stun:") and len(self.stun_url) <= 200
+                    and not any(c.isspace() for c in self.stun_url)
+                    and bool(stun.hostname) and not stun.username and not stun.password
+                    and not stun.path and not stun.query and not stun.fragment
+                    and (stun.port is None or 1 <= stun.port <= 65535)
+                )
+            except ValueError:
+                valid_stun = False
+            if not valid_stun:
+                raise ValueError("WEBRTC_STUN_URL must be a bare stun:host[:port] URL without credentials")
         url = urlparse(self.ollama_url)
         if url.scheme != "http" or url.hostname not in {"localhost", "127.0.0.1", "::1"} or url.username or url.password:
             raise ValueError("OLLAMA_URL must be a plain HTTP loopback endpoint")

@@ -5,7 +5,7 @@
 - Next.js: `127.0.0.1:3000`.
 - Python HTTP/signaling: `127.0.0.1:7860`.
 - Existing Ollama: `127.0.0.1:11434`.
-- WebRTC: direct encrypted browser ↔ Python peer UDP. Both ICE-server lists are empty.
+- WebRTC: direct encrypted browser ↔ Python peer UDP. ICE servers are empty by default; optional public STUN is configured identically on both peers.
 
 `pnpm dev` starts only the first two, in separate process groups, with Next.js development/HMR enabled. For the shared Tailscale HTTPS handoff, run `pnpm build` once and then `pnpm start`; the same supervisor starts the Python agent and production Next.js without a development WebSocket. Rebuild after frontend changes. Ctrl+C or either child's exit terminates both. Occupied ports cause an explicit error, not a kill of an unrelated process. Ollama and OpenClaw are never stopped or reconfigured.
 
@@ -41,6 +41,53 @@ pnpm start
 The development server's HMR/cross-origin checks are not part of the shared app; do not widen development origins to make the handoff work.
 
 Serve carries the page and same-origin POST/PATCH signaling, **not WebRTC UDP audio**. Inspect the selected pair in `chrome://webrtc-internals` or WebRTC stats and test bidirectional media. If the page loads but audio fails, check candidate reachability, VPN/browser behavior and firewall. Do not silently introduce public STUN/TURN. Never use `tailscale serve reset` to remove just this app.
+
+## Temporary public testing with Cloudflare
+
+A Cloudflare Tunnel exposes the HTTPS page and signaling, **not WebRTC UDP media**.
+For a public test, opt in to public address discovery on both peers:
+
+```dotenv
+WEBRTC_STUN_URL=stun:stun.cloudflare.com:3478
+```
+
+The browser receives this non-secret setting from `/api/health`. It does not change
+local STT, LLM or TTS inference. STUN discovers public addresses; it is not a relay.
+Restrictive/symmetric NATs and networks blocking UDP may still require TURN, which
+this prototype does not configure. A page that loads is not proof that audio works.
+
+Build the production frontend, then run a separate tunnel (preserve any existing
+Cloudflare service and all Tailscale routes):
+
+```bash
+pnpm build
+systemd-run --user --unit=local-voice-cloudflare --collect \
+  cloudflared tunnel --no-autoupdate --url http://127.0.0.1:3000
+journalctl --user -u local-voice-cloudflare --no-pager
+```
+
+Add the **exact** resulting `https://...trycloudflare.com` origin to
+`ALLOWED_ORIGINS`, retaining the existing local/Tailscale origins, then restart
+only the voice app. Keep the agent and Ollama ports off the tunnel. The random URL
+is temporary and changes if the tunnel is recreated; it is not a permanent deployment.
+Anyone with this public URL can reach the demo. The existing single-session lock
+and five-minute inactivity timeout still apply: friends should test one at a time.
+
+Validate the actual public candidate/audio path before sharing:
+
+```bash
+uv run --project apps/agent --group browser python scripts/browser-smoke.py \
+  --url https://YOUR-HOST.trycloudflare.com --public-only-ice --turns 1
+```
+
+This strips host candidates in both signaling directions and checks a successful
+public candidate pair plus non-silent decoded response audio. It still runs on the
+same host, so it is not an independent remote-device or all-networks guarantee.
+With STUN enabled, a normal/private smoke test can use `--lead-in-seconds 15` to
+allow address discovery before the fake microphone starts speaking.
+
+Stop only this tunnel with `systemctl --user stop local-voice-cloudflare`.
+The voice app and Tailscale URL remain independent.
 
 ## Troubleshooting
 

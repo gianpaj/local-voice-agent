@@ -2,10 +2,12 @@
 
 uv run --project apps/agent --group browser python scripts/browser-smoke.py --turns 10
 Use --executable /path/to/chrome if the Playwright browser is already installed elsewhere.
-This checks software audio and loopback ICE, NOT physical/remote-device audio.
+This checks software audio, NOT physical/remote-device audio. --public-only-ice
+removes private candidates from signaling to test a public route, even on one host.
 """
 import argparse
 import asyncio
+import ipaddress
 import json
 from pathlib import Path
 import statistics
@@ -25,7 +27,7 @@ QUESTIONS = [
     "What planet do we live on?", "What is three times three?", "Name one ocean.",
     "Say goodbye in one sentence.",
 ]
-INSTRUMENT = """
+INSTRUMENT = r"""
 window.__voiceTest={events:[], peers:[], streams:[], contexts:[], pcIds:[]};
 const nativeGetUserMedia=navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
 navigator.mediaDevices.getUserMedia=async (...args)=>{
@@ -36,12 +38,24 @@ window.AudioContext=class extends NativeAudioContext {
   constructor(...args){super(...args);window.__voiceTest.contexts.push(this);}
 };
 const nativeFetch=window.fetch.bind(window);
+const publicCandidate=line=>/\btyp (srflx|relay)\b/.test(line);
+const publicSdp=sdp=>sdp.split(/\r?\n/).filter(line=>!line.startsWith('a=candidate:')||publicCandidate(line)).join('\r\n');
 window.fetch=async (...args)=>{
-  const response=await nativeFetch(...args);
   const input=args[0],url=typeof input==='string'?input:input.url||String(input);
   const method=String(args[1]?.method||input.method||'GET').toUpperCase();
+  if(window.__publicOnlyICE && url.endsWith('/api/offer') && args[1]?.body && ['POST','PATCH'].includes(method)){
+    const body=JSON.parse(args[1].body);
+    if(body.sdp)body.sdp=publicSdp(body.sdp);
+    if(body.candidates)body.candidates=body.candidates.filter(item=>publicCandidate(item.candidate||''));
+    args[1]={...args[1],body:JSON.stringify(body)};
+  }
+  let response=await nativeFetch(...args);
   if(url.endsWith('/api/offer') && method==='POST'){
-    try{const body=await response.clone().json();if(body.pc_id)window.__voiceTest.pcIds.push(body.pc_id);}catch{}
+    try{const body=await response.clone().json();if(body.pc_id)window.__voiceTest.pcIds.push(body.pc_id);
+      if(window.__publicOnlyICE && body.sdp){body.sdp=publicSdp(body.sdp);
+        const headers=new Headers(response.headers);headers.delete('content-length');headers.delete('content-encoding');
+        response=new Response(JSON.stringify(body),{status:response.status,headers});}
+    }catch{}
   }
   return response;
 };
@@ -56,10 +70,10 @@ window.RTCPeerConnection=class extends NativePeer {
 """
 
 
-async def fixture(path, turns, barge_in=False):
+async def fixture(path, turns, barge_in=False, lead_in=3):
     engine = PhononEngine(Config.from_env().phonon_model)
     await engine.load()
-    pcm = bytearray(48000 * 3)
+    pcm = bytearray(48000 * lead_in)
     try:
         phrases = ["Tell me a long story about a dragon.", "Stop, say only okay."] if barge_in else QUESTIONS[:turns]
         for index, phrase in enumerate(phrases):
@@ -81,7 +95,8 @@ async def main(args):
     with tempfile.TemporaryDirectory(prefix="local-voice-browser-") as directory:
         audio = Path(directory) / "public-questions.wav"
         turns = 2 if args.barge_in else args.turns
-        await fixture(audio, turns, args.barge_in)
+        lead_in = max(args.lead_in_seconds, 15 if args.public_only_ice else 3)
+        await fixture(audio, turns, args.barge_in, lead_in)
         async with async_playwright() as playwright:
             launch = {"headless": True, "args": ["--no-sandbox", "--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream", f"--use-file-for-fake-audio-capture={audio}"]}
             if args.executable:
@@ -89,26 +104,33 @@ async def main(args):
             browser = await playwright.chromium.launch(**launch)
             try:
                 page = await browser.new_page(permissions=["microphone"])
-                await page.add_init_script(INSTRUMENT)
+                await page.add_init_script(f"window.__publicOnlyICE={str(args.public_only_ice).lower()};\n" + INSTRUMENT)
                 hosts, errors, gpu = set(), [], []
                 page.on("request", lambda request: hosts.add(urlparse(request.url).netloc) if request.url.startswith("http") else None)
                 page.on("pageerror", lambda error: errors.append(str(error)))
                 await page.goto(args.url)
+                expected_ice = await page.evaluate("async()=>{const r=await fetch('/api/health');return (await r.json()).ice_servers||[]}")
                 start = page.get_by_role("button", name="Start talking")
                 await start.click(timeout=120_000)
                 await page.wait_for_function("!Array.from(document.querySelectorAll('button')).find(b=>b.textContent==='Mute mic')?.disabled && !!document.querySelector('audio').srcObject")
                 busy = await page.evaluate("""async()=>{const r=await fetch('/api/offer',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({sdp:'v=0',type:'offer'})});return r.status}""")
                 assert busy == 409, f"Second offer was not rejected: {busy}"
-                for _ in range(turns * 11 + 3):
+                for _ in range(turns * 11 + lead_in):
                     await asyncio.sleep(1)
                     sample = subprocess.run(["nvidia-smi", "--query-gpu=memory.used", "--format=csv,noheader,nounits"], capture_output=True, text=True, check=True)
                     gpu.append(int(sample.stdout.strip().splitlines()[0]))
-                result = await page.evaluate("""async()=>{const p=window.__voiceTest.peers[0],s=await p.getStats();let inbound=[],selected=[];s.forEach(x=>{if(x.type==='inbound-rtp'&&x.kind==='audio')inbound.push(x);if(x.type==='candidate-pair'&&x.nominated)selected.push(x)});return {events:window.__voiceTest.events,inbound,selected,ice:p.getConfiguration().iceServers}}""")
+                result = await page.evaluate("""async()=>{const p=window.__voiceTest.peers[0],s=await p.getStats();let inbound=[],selected=[];s.forEach(x=>{if(x.type==='inbound-rtp'&&x.kind==='audio')inbound.push(x);if(x.type==='candidate-pair'&&x.nominated&&x.state==='succeeded')selected.push({state:x.state,local:s.get(x.localCandidateId),remote:s.get(x.remoteCandidateId)})});return {events:window.__voiceTest.events,inbound,selected,ice:p.getConfiguration().iceServers}}""")
                 users = await page.locator(".message.user").count()
                 assistants = await page.locator(".message.assistant").count()
                 assert users == turns and assistants >= turns, f"Only {users} user turns / {assistants} assistant segments"
                 assert any(x.get("totalAudioEnergy", 0) > 0 for x in result["inbound"]), "No decoded non-silent assistant audio"
-                assert result["selected"] and result["ice"] == [], "ICE did not use a direct candidate pair"
+                assert result["selected"], "No successful nominated ICE pair"
+                assert [s["urls"] if isinstance(s["urls"], list) else [s["urls"]] for s in result["ice"]] == [s["urls"] if isinstance(s["urls"], list) else [s["urls"]] for s in expected_ice], "Client ICE configuration differs from server"
+                if args.public_only_ice:
+                    for pair in result["selected"]:
+                        remote = pair["remote"]
+                        assert remote["candidateType"] in {"srflx", "relay"}, "Selected a private host candidate"
+                        assert ipaddress.ip_address(remote.get("address") or remote.get("ip")).is_global, "Selected a non-public address"
                 assert hosts == {urlparse(args.url).netloc}, f"Unexpected HTTP destination(s): {hosts}"
                 assert not errors, errors
                 if args.barge_in:
@@ -161,6 +183,11 @@ async def main(args):
                 assert await page.locator(".message").count() == 0
                 assert await page.evaluate("window.__voiceTest.peers[0].connectionState") == "closed"
                 summary = {"turns": users, "assistant_segments": assistants, "http_destinations": sorted(hosts), "gpu_peak_mib": max(gpu), "vad_complete_to_bot_started_seconds": latencies, "median_seconds": statistics.median(latencies), "decoded_audio_energy": result["inbound"][0].get("totalAudioEnergy"), "second_offer_status": busy, "stop_clears_and_closes": True, "microphone_sender_replaced": replaced}
+                summary["ice_server_urls"] = [s["urls"] for s in expected_ice]
+                if args.public_only_ice:
+                    summary["public_only_ice"] = True
+                    summary["public_remote_candidate"] = True
+                    summary["remote_candidate_types"] = [p["remote"]["candidateType"] for p in result["selected"]]
                 if args.barge_in:
                     summary["barge_in_drops_old_reply"] = True
                 if args.disconnect_reconnect:
@@ -177,5 +204,7 @@ if __name__ == "__main__":
     parser.add_argument("--executable")
     parser.add_argument("--turns", type=int, choices=range(1, 11), default=1)
     parser.add_argument("--barge-in", action="store_true", help="Interrupt a dragon story with 'say only okay'")
+    parser.add_argument("--public-only-ice", action="store_true", help="Remove host candidates from offers/answers; require a public remote ICE candidate")
+    parser.add_argument("--lead-in-seconds", type=int, choices=range(3, 61), default=3, help="Initial microphone silence for slower ICE discovery")
     parser.add_argument("--disconnect-reconnect", action="store_true", help="End the server peer, verify media cleanup, then Start again without reloading")
     asyncio.run(main(parser.parse_args()))

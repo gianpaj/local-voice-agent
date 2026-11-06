@@ -4,7 +4,7 @@ import type { BotOutputData, PipecatClient } from "@pipecat-ai/client-js";
 import { BrowserMediaManager } from "./browser-media";
 
 type Line = { id: string; role: "user" | "assistant"; text: string; status?: string };
-type Health = { ready: boolean; busy: boolean; phase: string; error?: string; models?: { stt?: string } };
+type Health = { ready: boolean; busy: boolean; phase: string; error?: string; models?: { stt?: string }; ice_servers?: RTCIceServer[] };
 
 export default function VoiceAgent() {
   const [health, setHealth] = useState<Health>({ ready: false, busy: false, phase: "initializing" });
@@ -55,14 +55,14 @@ export default function VoiceAgent() {
     const ticket = ++operation.current;
     setError(""); setPlaybackBlocked(false); setLines([]); setConnecting(true); setPhase("connecting");
     try {
-      if (!window.isSecureContext || !navigator.mediaDevices) throw new Error("Microphone access needs HTTPS (Tailscale Serve) or localhost.");
+      if (!window.isSecureContext || !navigator.mediaDevices) throw new Error("Microphone access needs HTTPS or localhost.");
       const [{ PipecatClient, logger, LogLevel }, { SmallWebRTCTransport }] = await Promise.all([
         import("@pipecat-ai/client-js"), import("@pipecat-ai/small-webrtc-transport"),
       ]);
       logger.setLevel(LogLevel.WARN);
       const manager = new BrowserMediaManager(() => audio.current);
       media.current = manager;
-      const transport = new SmallWebRTCTransport({ iceServers: [], mediaManager: manager });
+      const transport = new SmallWebRTCTransport({ iceServers: health.ice_servers ?? [], mediaManager: manager });
       // The pinned transport's custom-manager hook needs explicit sender replacement.
       // Its runtime method is omitted from its published declaration; browser tests cover it.
       manager.replaceTrack = track => (transport as typeof transport & { getAudioTransceiver(): RTCRtpTransceiver }).getAudioTransceiver().sender.replaceTrack(track);
