@@ -15,6 +15,7 @@ from pipecat.transports.smallwebrtc.request_handler import (
     ConnectionMode, IceCandidate, SmallWebRTCPatchRequest,
     SmallWebRTCRequest, SmallWebRTCRequestHandler,
 )
+from pipecat.transports.smallwebrtc.connection import IceServer
 
 from .config import Config
 from .llm import keep_ollama_warm, prepare_ollama
@@ -49,7 +50,10 @@ class Patch(BaseModel):
 
 def create_app(config=None, *, initialize=True):
     config = config or Config.from_env()
-    handler = SmallWebRTCRequestHandler(ice_servers=[], connection_mode=ConnectionMode.SINGLE)
+    handler = SmallWebRTCRequestHandler(
+        ice_servers=[IceServer(**server) for server in config.ice_servers],
+        connection_mode=ConnectionMode.SINGLE,
+    )
     lock = asyncio.Lock()
     state = {"phase": "initializing", "ready": False, "busy": False, "error": None}
     active = {"connection": None, "task": None, "worker": None, "telemetry": None}
@@ -150,7 +154,8 @@ def create_app(config=None, *, initialize=True):
             stt_engine.request_recovery()
             runtime_state = {"ready": False, "phase": "warming" if stt_engine.recovery_task and not stt_engine.recovery_task.done() else "error",
                              "error": "The local transcription worker is unavailable; checking readiness."}
-        return {**state, "stt_runtime": config.parakeet_mode if config.stt_backend == "parakeet" else "cli",
+        return {**state, "ice_servers": config.ice_servers,
+                "stt_runtime": config.parakeet_mode if config.stt_backend == "parakeet" else "cli",
                 "ready": state["ready"] and (stt_engine.ready if stt_engine else True),
                 **runtime_state,
                 "telemetry": sink.health() if sink else {"active": False}, "models": {"stt": config.stt_model_id, "stt_device": config.stt_device, "llm": config.ollama_model, "tts": "Phonon 31M English CPU"}}

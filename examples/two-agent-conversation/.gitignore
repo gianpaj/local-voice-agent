@@ -1,0 +1,7 @@
+# Explicitly requested synthetic recording artifacts remain local.
+*.wav
+*.mp3
+*.log
+turns.json
+summary.json
+transcript.txt
