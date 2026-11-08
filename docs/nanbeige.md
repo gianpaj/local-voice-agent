@@ -44,6 +44,21 @@ the larger LLM checkpoint. Historical Qwen timings remain labeled as Qwen;
 they must not be presented as Nanbeige performance. Keep Qwen available for
 rollback and leave the voice service stopped after this change, as requested.
 
+## Benchmark comparison chart
+
+![Qwen versus Nanbeige: EQ rubric mean 4.30 vs 5.57 out of 20 across ten scenarios each; retail outcomes tied at 8 of 10. Custom text pilots, one trial per case.](assets/qwen-nanbeige-comparison.svg)
+
+Separate zero-based axes preserve the original scales; EQ and retail are not
+averaged into an overall score. All failures remain in the denominators.
+[PNG](assets/qwen-nanbeige-comparison.png) ·
+[Data snapshot and source hashes](assets/qwen-nanbeige-comparison.json) ·
+[Canonical data and regeneration script](https://github.com/gianpaj/ideas/blob/docs/voice-agent-evaluations-2026-11-07/expressive-voice-models/benchmarks/companion-support-2026-11-07/plot-comparison.py).
+
+The chart reflects the recorded **benchmark runtimes**, not the installed
+Nanbeige/Ollama voice configuration. This is a ten-case, one-trial custom text
+pilot; voice latency was not measured and the difference is not a claim of
+statistical superiority.
+
 ## Setup with existing weights
 
 Use the exact [quantizer artifact](https://huggingface.co/bartowski/Nanbeige_Nanbeige4.3-33B-GGUF):

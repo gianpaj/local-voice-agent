@@ -13,6 +13,11 @@ pilot does not prove better voice quality or latency. See [why we switched,
 evidence, setup, and rollback](docs/nanbeige.md#why-we-changed-llms--2026-11-08).
 Portable defaults remain Qwen; the local service was verified and left stopped.
 
+![Qwen versus Nanbeige: average EQ rubric 4.30 vs 5.57 out of 20; both pass 8 of 10 retail tasks. Custom text pilot on separate scales; not a voice-latency benchmark.](docs/assets/qwen-nanbeige-comparison.svg)
+
+EQ averages and retail outcomes are different metrics, not a combined score.
+[Detailed comparison and chart provenance](docs/nanbeige.md#benchmark-comparison-chart).
+
 Measured native optimization: [resident Parakeet](docs/native-inference.md)
 keeps the same checkpoint/precision in a supervised CUDA worker. The controlled
 comparison measured **487.6 → 52.3 ms median STT**, with **35/35 exact output

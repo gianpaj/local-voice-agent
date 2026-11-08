@@ -1,0 +1,48 @@
+{
+  "benchmark_date": "2026-11-07",
+  "scope": "Custom matched text pilot; not official leaderboard scores",
+  "eq": {
+    "metric": "Mean of six quality criteria, then mean of ten scenarios",
+    "scale": [
+      0,
+      20
+    ],
+    "cases_per_model": 10
+  },
+  "retail": {
+    "metric": "Verified passed task count",
+    "scale": [
+      0,
+      10
+    ],
+    "cases_per_model": 10,
+    "failures_retained": true
+  },
+  "models": [
+    {
+      "name": "Qwen3.5 9B",
+      "quantization": "Q4_K_M",
+      "runtime": "Ollama",
+      "eq_mean": 4.3,
+      "retail_passed": 8
+    },
+    {
+      "name": "Nanbeige4.3-33B",
+      "quantization": "IQ2_M",
+      "runtime": "llama.cpp",
+      "eq_mean": 5.566666666666666,
+      "retail_passed": 8
+    }
+  ],
+  "judge": "gpt-6.1-sol / xhigh via Codex CLI",
+  "trials_per_case": 1,
+  "voice_latency_measured": false,
+  "source_sha256": {
+    "results/qwen-eq10/codex-judge/summary.json": "45186a84bb2557e64cbbf4ce448093ab169f1d71f89804391a8dc2ba326b2e19",
+    "results/nanbeige-iq2m/eq10/codex-judge/summary.json": "70a6eb204659b6860c4cd232d3f2c63fbab494335930460c24ab79020e7d235c",
+    "results/qwen-eq10/codex-judge/scores.csv": "a5eabbaf4ac1fe5d752095c996913fe3623765201cfe5b2f43df607ec4397d38",
+    "results/nanbeige-iq2m/eq10/codex-judge/scores.csv": "ee436946dc6df0f996dd814df99c2563ca7f987dc77a936c14621d4316ec65fe",
+    "results/qwen-retail10/summary.json": "0f28eda63281e05299152cd194b413faaa6c25e6b647728dabddb3434cd471a7",
+    "results/nanbeige-iq2m/summary.json": "c80b9c9205ecf97e16571761855052d31974050b5f805e2fec80044056fc2238"
+  }
+}
