@@ -1,0 +1,16 @@
+{
+  "finished": 10,
+  "expected": 10,
+  "passed": 8,
+  "status": "completed",
+  "judge_and_customer": "gpt-6.1-sol / xhigh via Codex CLI",
+  "official_full_suite_score": false,
+  "candidate_budget_failures": 1,
+  "candidate_generation_calls": 116,
+  "candidate_calls_with_completed_timing": 115,
+  "median_candidate_decode_tokens_per_second": 43.02507281098468,
+  "peak_aggregate_gpu_mib": 10655,
+  "minimum_available_host_ram_gib": 10.263561248779297,
+  "timing_boundary": "Local Qwen generation only; no spoken audio or customer-simulator delay included.",
+  "terminal_error_present": false
+}

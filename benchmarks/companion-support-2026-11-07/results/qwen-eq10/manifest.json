@@ -1,0 +1,36 @@
+{
+  "started_at": "2026-11-07T19:07:48.514796+00:00",
+  "model": "local-voice-qwen:latest",
+  "context": 32768,
+  "think": false,
+  "official_full_suite_score": false,
+  "scenarios": [
+    "1",
+    "2",
+    "3",
+    "6",
+    "9",
+    "13",
+    "131",
+    "133",
+    "137",
+    "302"
+  ],
+  "fixture_sha256": "7b5c4590e8f214201d01109a8018aa5eca8d57fdf3bf0cca393994d8a597a70d",
+  "stage": "response_collection",
+  "judge": null,
+  "retries": 0,
+  "sampling": {
+    "temperature": 0.7,
+    "min_p": 0.1,
+    "top_p": 0.95,
+    "top_k": 20,
+    "presence_penalty": 0,
+    "repeat_penalty": 1.0,
+    "seed": 42
+  },
+  "generation_cap": 12000,
+  "per_call_deadline_seconds": 600,
+  "finished_at": "2026-11-07T19:29:56.333832+00:00",
+  "completed_scenarios": 10
+}

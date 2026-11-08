@@ -1,0 +1,21 @@
+{
+  "candidate": "Nanbeige4.3-33B IQ2_M",
+  "context": 32768,
+  "non_thinking": true,
+  "sampling": "Per-stage Qwen settings unchanged",
+  "eq_output_cap": 12000,
+  "retail_output_cap": 1024,
+  "eq_deadline": 600,
+  "retail_deadline": 180,
+  "judge": "Codex CLI gpt-6.1-sol / xhigh",
+  "runtime": "llama.cpp b12064 / 51fe42c5d CUDA",
+  "cache": "Q4_0 K/V",
+  "differences": [
+    "llama.cpp rather than Ollama; native model-specific chat template",
+    "Q4_0 KV cache to fit 16GB; Qwen cache/runtime is different",
+    "Tokenizer counts differ; fixed limits measured in each model own vocabulary"
+  ],
+  "eq_fixture_sha256": "7b5c4590e8f214201d01109a8018aa5eca8d57fdf3bf0cca393994d8a597a70d",
+  "retail_fixture_sha256": "535cb97f3aa8536104dd4022330152f23ad9f8355e5f37ca71fe0e080cbb358f",
+  "official_leaderboard_score": false
+}

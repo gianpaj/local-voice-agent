@@ -1,0 +1,548 @@
+{
+  "aggregation": "Completed calls only; nulls excluded independently per metric. EQ stage subgroups overlap EQ all.",
+  "cohorts": [
+    {
+      "attempts": 38,
+      "completed_timing": 38,
+      "failures": [],
+      "metrics": {
+        "cached_prompt_tokens": {
+          "mean": null,
+          "n": 0,
+          "p50": null,
+          "p95": null
+        },
+        "decode_tokens_per_second": {
+          "mean": 43.311986970223295,
+          "n": 38,
+          "p50": 43.286750910778736,
+          "p95": 44.024588044543734
+        },
+        "first_text_seconds": {
+          "mean": 1.2784736082126313,
+          "n": 38,
+          "p50": 1.0457858899899293,
+          "p95": 1.723977928739623
+        },
+        "fresh_prompt_tokens": {
+          "mean": null,
+          "n": 0,
+          "p50": null,
+          "p95": null
+        },
+        "output_tokens": {
+          "mean": 1414.2894736842106,
+          "n": 38,
+          "p50": 1426.0,
+          "p95": 1815.1999999999998
+        },
+        "reported_prompt_tokens": {
+          "mean": 3180.842105263158,
+          "n": 38,
+          "p50": 2725.0,
+          "p95": 6349.7
+        },
+        "server_decode_seconds": {
+          "mean": 32.6137888813421,
+          "n": 38,
+          "p50": 32.841490034,
+          "p95": 41.44271191269999
+        },
+        "server_prompt_seconds": {
+          "mean": 1.1731423859736843,
+          "n": 38,
+          "p50": 0.9375413345,
+          "p95": 1.61503301475
+        },
+        "wall_seconds": {
+          "mean": 34.287655758743455,
+          "n": 38,
+          "p50": 34.16468742550933,
+          "p95": 48.11639195323514
+        }
+      },
+      "missing_completed_timing": 0,
+      "model": "qwen",
+      "stage": "all",
+      "suite": "eq",
+      "text_bearing_calls": 38,
+      "tool_only_calls": 0
+    },
+    {
+      "attempts": 28,
+      "completed_timing": 28,
+      "failures": [],
+      "metrics": {
+        "cached_prompt_tokens": {
+          "mean": null,
+          "n": 0,
+          "p50": null,
+          "p95": null
+        },
+        "decode_tokens_per_second": {
+          "mean": 43.46448194956994,
+          "n": 28,
+          "p50": 43.52342595649182,
+          "p95": 44.040197777403336
+        },
+        "first_text_seconds": {
+          "mean": 1.283117420000573,
+          "n": 28,
+          "p50": 1.0185540439852048,
+          "p95": 1.7142303409986197
+        },
+        "fresh_prompt_tokens": {
+          "mean": null,
+          "n": 0,
+          "p50": null,
+          "p95": null
+        },
+        "output_tokens": {
+          "mean": 1530.9285714285713,
+          "n": 28,
+          "p50": 1503.5,
+          "p95": 1899.1999999999998
+        },
+        "reported_prompt_tokens": {
+          "mean": 2394.8928571428573,
+          "n": 28,
+          "p50": 2279.5,
+          "p95": 5106.049999999999
+        },
+        "server_decode_seconds": {
+          "mean": 35.20361399721428,
+          "n": 28,
+          "p50": 34.485980345499996,
+          "p95": 43.802702811699994
+        },
+        "server_prompt_seconds": {
+          "mean": 1.1787114996785715,
+          "n": 28,
+          "p50": 0.9149453985,
+          "p95": 1.6074097112499999
+        },
+        "wall_seconds": {
+          "mean": 36.91698787322093,
+          "n": 28,
+          "p50": 36.231025822489755,
+          "p95": 49.60185378720925
+        }
+      },
+      "missing_completed_timing": 0,
+      "model": "qwen",
+      "stage": "dialogue",
+      "suite": "eq",
+      "text_bearing_calls": 28,
+      "tool_only_calls": 0
+    },
+    {
+      "attempts": 10,
+      "completed_timing": 10,
+      "failures": [],
+      "metrics": {
+        "cached_prompt_tokens": {
+          "mean": null,
+          "n": 0,
+          "p50": null,
+          "p95": null
+        },
+        "decode_tokens_per_second": {
+          "mean": 42.88500102805269,
+          "n": 10,
+          "p50": 42.71746922543858,
+          "p95": 43.57414059314946
+        },
+        "first_text_seconds": {
+          "mean": 1.2654709352063946,
+          "n": 10,
+          "p50": 1.2758989465073682,
+          "p95": 1.6646285985654685
+        },
+        "fresh_prompt_tokens": {
+          "mean": null,
+          "n": 0,
+          "p50": null,
+          "p95": null
+        },
+        "output_tokens": {
+          "mean": 1087.7,
+          "n": 10,
+          "p50": 1097.0,
+          "p95": 1209.2499999999998
+        },
+        "reported_prompt_tokens": {
+          "mean": 5381.5,
+          "n": 10,
+          "p50": 5853.0,
+          "p95": 6982.849999999999
+        },
+        "server_decode_seconds": {
+          "mean": 25.3622785569,
+          "n": 10,
+          "p50": 25.4798181055,
+          "p95": 28.279117563649997
+        },
+        "server_prompt_seconds": {
+          "mean": 1.1575488676,
+          "n": 10,
+          "p50": 1.1673054315,
+          "p95": 1.55347793535
+        },
+        "wall_seconds": {
+          "mean": 26.92552583820652,
+          "n": 10,
+          "p50": 27.054814165021526,
+          "p95": 30.221806416672184
+        }
+      },
+      "missing_completed_timing": 0,
+      "model": "qwen",
+      "stage": "debrief",
+      "suite": "eq",
+      "text_bearing_calls": 10,
+      "tool_only_calls": 0
+    },
+    {
+      "attempts": 116,
+      "completed_timing": 115,
+      "failures": [
+        {
+          "call_id": "0155-19-agent_response",
+          "reason": "output_cap"
+        }
+      ],
+      "metrics": {
+        "cached_prompt_tokens": {
+          "mean": null,
+          "n": 0,
+          "p50": null,
+          "p95": null
+        },
+        "decode_tokens_per_second": {
+          "mean": 43.06614120148864,
+          "n": 115,
+          "p50": 43.02507281098468,
+          "p95": 44.013833252507645
+        },
+        "first_text_seconds": {
+          "mean": 0.7197799657276277,
+          "n": 99,
+          "p50": 0.6970910209929571,
+          "p95": 1.3605305980949196
+        },
+        "fresh_prompt_tokens": {
+          "mean": null,
+          "n": 0,
+          "p50": null,
+          "p95": null
+        },
+        "output_tokens": {
+          "mean": 165.22608695652173,
+          "n": 115,
+          "p50": 107.0,
+          "p95": 449.7999999999995
+        },
+        "reported_prompt_tokens": {
+          "mean": 6658.782608695652,
+          "n": 115,
+          "p50": 6110.0,
+          "p95": 10176.5
+        },
+        "server_decode_seconds": {
+          "mean": 3.8743286448347827,
+          "n": 115,
+          "p50": 2.483962638,
+          "p95": 10.568551003599989
+        },
+        "server_prompt_seconds": {
+          "mean": 0.5660891563565217,
+          "n": 115,
+          "p50": 0.564237041,
+          "p95": 1.2242900394999998
+        },
+        "wall_seconds": {
+          "mean": 4.6150248926679565,
+          "n": 115,
+          "p50": 3.1807482030126266,
+          "p95": 11.332565170683655
+        }
+      },
+      "missing_completed_timing": 1,
+      "model": "qwen",
+      "stage": "all",
+      "suite": "retail",
+      "text_bearing_calls": 99,
+      "tool_only_calls": 16
+    },
+    {
+      "attempts": 38,
+      "completed_timing": 38,
+      "failures": [],
+      "metrics": {
+        "cached_prompt_tokens": {
+          "mean": 2678.184210526316,
+          "n": 38,
+          "p50": 2200.5,
+          "p95": 5945.2
+        },
+        "decode_tokens_per_second": {
+          "mean": 20.319501002062616,
+          "n": 38,
+          "p50": 20.44610464701543,
+          "p95": 21.41840257703688
+        },
+        "first_text_seconds": {
+          "mean": 0.5732550451847553,
+          "n": 38,
+          "p50": 0.49170026250067167,
+          "p95": 0.9260472181951627
+        },
+        "fresh_prompt_tokens": {
+          "mean": 312.7105263157895,
+          "n": 38,
+          "p50": 280.0,
+          "p95": 571.9
+        },
+        "output_tokens": {
+          "mean": 1306.157894736842,
+          "n": 38,
+          "p50": 1303.5,
+          "p95": 1712.1499999999999
+        },
+        "reported_prompt_tokens": {
+          "mean": 2990.8947368421054,
+          "n": 38,
+          "p50": 2559.0,
+          "p95": 6063.2
+        },
+        "server_decode_seconds": {
+          "mean": 64.18737057894737,
+          "n": 38,
+          "p50": 65.65638200000001,
+          "p95": 80.99127029999998
+        },
+        "server_prompt_seconds": {
+          "mean": 0.4924547894736842,
+          "n": 38,
+          "p50": 0.471128,
+          "p95": 0.8427329
+        },
+        "wall_seconds": {
+          "mean": 64.76101400578811,
+          "n": 38,
+          "p50": 66.32959936198313,
+          "p95": 81.82505102761205
+        }
+      },
+      "missing_completed_timing": 0,
+      "model": "nanbeige",
+      "stage": "all",
+      "suite": "eq",
+      "text_bearing_calls": 38,
+      "tool_only_calls": 0
+    },
+    {
+      "attempts": 28,
+      "completed_timing": 28,
+      "failures": [],
+      "metrics": {
+        "cached_prompt_tokens": {
+          "mean": 1887.2857142857142,
+          "n": 28,
+          "p50": 1813.5,
+          "p95": 4318.15
+        },
+        "decode_tokens_per_second": {
+          "mean": 20.599108699797217,
+          "n": 28,
+          "p50": 20.633858567569625,
+          "p95": 21.419800605942655
+        },
+        "first_text_seconds": {
+          "mean": 0.6377794809273577,
+          "n": 28,
+          "p50": 0.5684540395159274,
+          "p95": 0.9346250521950423
+        },
+        "fresh_prompt_tokens": {
+          "mean": 382.25,
+          "n": 28,
+          "p50": 336.0,
+          "p95": 574.9
+        },
+        "output_tokens": {
+          "mean": 1353.0,
+          "n": 28,
+          "p50": 1350.0,
+          "p95": 1772.6499999999999
+        },
+        "reported_prompt_tokens": {
+          "mean": 2269.535714285714,
+          "n": 28,
+          "p50": 2094.5,
+          "p95": 4732.25
+        },
+        "server_decode_seconds": {
+          "mean": 65.62380350000001,
+          "n": 28,
+          "p50": 66.33375750000002,
+          "p95": 85.1854413
+        },
+        "server_prompt_seconds": {
+          "mean": 0.59658425,
+          "n": 28,
+          "p50": 0.5222549999999999,
+          "p95": 0.8652059
+        },
+        "wall_seconds": {
+          "mean": 66.26198649660884,
+          "n": 28,
+          "p50": 66.79355569049949,
+          "p95": 85.73176014315685
+        }
+      },
+      "missing_completed_timing": 0,
+      "model": "nanbeige",
+      "stage": "dialogue",
+      "suite": "eq",
+      "text_bearing_calls": 28,
+      "tool_only_calls": 0
+    },
+    {
+      "attempts": 10,
+      "completed_timing": 10,
+      "failures": [],
+      "metrics": {
+        "cached_prompt_tokens": {
+          "mean": 4892.7,
+          "n": 10,
+          "p50": 5340.0,
+          "p95": 6248.25
+        },
+        "decode_tokens_per_second": {
+          "mean": 19.536599448405724,
+          "n": 10,
+          "p50": 19.342754379252426,
+          "p95": 20.632541506136004
+        },
+        "first_text_seconds": {
+          "mean": 0.39258662510546855,
+          "n": 10,
+          "p50": 0.4070743140182458,
+          "p95": 0.4282971671636915
+        },
+        "fresh_prompt_tokens": {
+          "mean": 118.0,
+          "n": 10,
+          "p50": 118.0,
+          "p95": 118.0
+        },
+        "output_tokens": {
+          "mean": 1175.0,
+          "n": 10,
+          "p50": 1147.0,
+          "p95": 1405.2
+        },
+        "reported_prompt_tokens": {
+          "mean": 5010.7,
+          "n": 10,
+          "p50": 5458.0,
+          "p95": 6366.25
+        },
+        "server_decode_seconds": {
+          "mean": 60.1653584,
+          "n": 10,
+          "p50": 58.8783725,
+          "p95": 71.1764781
+        },
+        "server_prompt_seconds": {
+          "mean": 0.2008923,
+          "n": 10,
+          "p50": 0.20367249999999998,
+          "p95": 0.20726625
+        },
+        "wall_seconds": {
+          "mean": 60.55829103149008,
+          "n": 10,
+          "p50": 59.30206896548043,
+          "p95": 71.57785043049661
+        }
+      },
+      "missing_completed_timing": 0,
+      "model": "nanbeige",
+      "stage": "debrief",
+      "suite": "eq",
+      "text_bearing_calls": 10,
+      "tool_only_calls": 0
+    },
+    {
+      "attempts": 141,
+      "completed_timing": 141,
+      "failures": [],
+      "metrics": {
+        "cached_prompt_tokens": {
+          "mean": 7178.631205673759,
+          "n": 141,
+          "p50": 6453.0,
+          "p95": 11787.0
+        },
+        "decode_tokens_per_second": {
+          "mean": 18.898790840665384,
+          "n": 141,
+          "p50": 19.05203484634979,
+          "p95": 19.67445134616624
+        },
+        "first_text_seconds": {
+          "mean": 0.65201338691752,
+          "n": 87,
+          "p50": 0.3439389049890451,
+          "p95": 1.581987955677323
+        },
+        "fresh_prompt_tokens": {
+          "mean": 286.0567375886525,
+          "n": 141,
+          "p50": 71.0,
+          "p95": 808.0
+        },
+        "output_tokens": {
+          "mean": 128.6595744680851,
+          "n": 141,
+          "p50": 93.0,
+          "p95": 341.0
+        },
+        "reported_prompt_tokens": {
+          "mean": 7464.687943262411,
+          "n": 141,
+          "p50": 6904.0,
+          "p95": 11844.0
+        },
+        "server_decode_seconds": {
+          "mean": 6.8313199645390075,
+          "n": 141,
+          "p50": 4.935199,
+          "p95": 18.499163
+        },
+        "server_prompt_seconds": {
+          "mean": 0.5365997234042553,
+          "n": 141,
+          "p50": 0.164531,
+          "p95": 1.582691
+        },
+        "wall_seconds": {
+          "mean": 7.39049039107247,
+          "n": 141,
+          "p50": 5.4693814649945125,
+          "p95": 19.868404818989802
+        }
+      },
+      "missing_completed_timing": 0,
+      "model": "nanbeige",
+      "stage": "all",
+      "suite": "retail",
+      "text_bearing_calls": 87,
+      "tool_only_calls": 54
+    }
+  ],
+  "first_text_definition": "Client request start to first nonempty content chunk; not first tool event or audible response",
+  "p95_method": "Linear interpolation at 0.95 * (n - 1) in sorted observations"
+}

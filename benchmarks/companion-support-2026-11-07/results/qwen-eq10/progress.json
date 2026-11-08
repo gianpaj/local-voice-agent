@@ -1,0 +1,15 @@
+{
+  "eq_response_sets": "10/10 complete",
+  "generation_calls": "38/38 complete",
+  "rubric_scenarios_judged": 10,
+  "quality_score": 4.3,
+  "quality_scale": "0-20",
+  "quality_status": "custom-judge rubric subset; not official Elo",
+  "retail_tasks_finished": 10,
+  "retail_tasks_expected": 10,
+  "retail_status": "completed",
+  "nanbeige_status": "completed",
+  "voice_latency_status": "not measured in this text pilot",
+  "tts_animal_training_status": "not started",
+  "voice_service": "see retail recovery evidence"
+}

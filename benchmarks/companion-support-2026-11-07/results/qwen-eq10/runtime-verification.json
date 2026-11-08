@@ -1,0 +1,53 @@
+{
+  "checked_at": "2026-11-07T19:27:18.165338+00:00",
+  "cpu": "",
+  "python": "3.14.4",
+  "tokenizer_runtime": "llama.cpp b12064 / 51fe42c5d",
+  "ollama_version": {
+    "version": "0.24.0"
+  },
+  "placement": {
+    "models": [
+      {
+        "name": "local-voice-qwen:latest",
+        "model": "local-voice-qwen:latest",
+        "size": 9853674112,
+        "digest": "86a5df6c5a671cbca32ae533f9980e5709889307caa08715b35daca335c72ced",
+        "details": {
+          "parent_model": "",
+          "format": "gguf",
+          "family": "qwen35",
+          "families": [
+            "qwen35"
+          ],
+          "parameter_size": "9.7B",
+          "quantization_level": "Q4_K_M"
+        },
+        "expires_at": "2026-11-07T19:32:00.780251416Z",
+        "size_vram": 9853674112,
+        "context_length": 32768
+      },
+      {
+        "name": "nomic-embed-text:latest",
+        "model": "nomic-embed-text:latest",
+        "size": 595142656,
+        "digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+        "details": {
+          "parent_model": "",
+          "format": "gguf",
+          "family": "nomic-bert",
+          "families": [
+            "nomic-bert"
+          ],
+          "parameter_size": "137M",
+          "quantization_level": "F16"
+        },
+        "expires_at": "2026-11-07T19:29:17.784924242Z",
+        "size_vram": 595142656,
+        "context_length": 2048
+      }
+    ]
+  },
+  "gpu": "NVIDIA GeForce RTX 4060 Ti, 8.9, 595.91.07, 16380 MiB, 10530 MiB, 5418 MiB",
+  "voice_unit": "ActiveState=active\nFreezerState=frozen\nSubState=running"
+}

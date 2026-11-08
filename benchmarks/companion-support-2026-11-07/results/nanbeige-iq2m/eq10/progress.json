@@ -1,0 +1,56 @@
+{
+  "finished": 10,
+  "expected": 10,
+  "rows": [
+    {
+      "id": "1",
+      "status": "error",
+      "error": "Debrief Run Error: "
+    },
+    {
+      "id": "2",
+      "status": "error",
+      "error": "Debrief Run Error: "
+    },
+    {
+      "id": "3",
+      "status": "error",
+      "error": "Debrief Run Error: "
+    },
+    {
+      "id": "6",
+      "status": "error",
+      "error": "Debrief Run Error: "
+    },
+    {
+      "id": "9",
+      "status": "error",
+      "error": "Debrief Run Error: "
+    },
+    {
+      "id": "13",
+      "status": "error",
+      "error": "Debrief Run Error: "
+    },
+    {
+      "id": "131",
+      "status": "error",
+      "error": "Debrief Run Error: "
+    },
+    {
+      "id": "133",
+      "status": "error",
+      "error": "Debrief Run Error: "
+    },
+    {
+      "id": "137",
+      "status": "error",
+      "error": "Debrief Run Error: "
+    },
+    {
+      "id": "302",
+      "status": "error",
+      "error": "Debrief Run Error: "
+    }
+  ]
+}

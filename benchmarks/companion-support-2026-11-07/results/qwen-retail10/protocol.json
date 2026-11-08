@@ -1,0 +1,151 @@
+{
+  "config": {
+    "elicitation": null,
+    "communicate_scoring": {
+      "scorer": "semantic",
+      "judge": {
+        "model": "codex-cli/gpt-6.1-sol",
+        "model_args": {
+          "reasoning_effort": "xhigh"
+        },
+        "prompt_version": "communicate-semantic-v1"
+      }
+    },
+    "llm_user": "codex-cli/gpt-6.1-sol",
+    "llm_args_user": {
+      "reasoning_effort": "xhigh"
+    },
+    "num_trials": 1,
+    "max_errors": 10,
+    "timeout": 1800.0,
+    "max_concurrency": 1,
+    "workers": 0,
+    "provider_limits": null,
+    "seed": 300,
+    "log_level": "ERROR",
+    "verbose_logs": false,
+    "max_retries": 0,
+    "retry_delay": 1.0,
+    "auto_resume": false,
+    "auto_review": false,
+    "review_mode": "full",
+    "review_model": "claude-opus-4-5",
+    "hallucination_retries": 0,
+    "is_remote": false,
+    "retrieval_config": null,
+    "retrieval_config_kwargs": null,
+    "agent": "llm_agent",
+    "llm_agent": "local-voice-qwen:latest",
+    "llm_args_agent": {
+      "temperature": 0.5
+    },
+    "user": "user_simulator",
+    "max_steps": 200,
+    "enforce_communication_protocol": false,
+    "text_streaming_config": null,
+    "language": "en",
+    "pack_extension": null,
+    "localize_db": null,
+    "language_artifacts": null,
+    "benchmark": null,
+    "domain": "retail",
+    "task_set_name": null,
+    "task_split_name": null,
+    "task_ids": [
+      "6",
+      "8",
+      "11",
+      "13",
+      "14",
+      "16",
+      "17",
+      "18",
+      "19",
+      "21"
+    ],
+    "num_tasks": null,
+    "save_to": null
+  },
+  "task_ids": [
+    "6",
+    "8",
+    "11",
+    "13",
+    "14",
+    "16",
+    "17",
+    "18",
+    "19",
+    "21"
+  ],
+  "user_tools": 0,
+  "agent_tools": 16,
+  "language_context": {
+    "language": "en",
+    "mode": "text",
+    "cross_lingual": false,
+    "pack_revision": "voice-v2-entity-order-v5-schema3-textneutral-voiceclauses",
+    "pack_sha256": "6453ef2c2f06ca34fb0a4f90841780913a2f7af28b680a08be402190876e6435",
+    "domain_revision": "voice-v2-frozen50-v1",
+    "tasks_sha256": "2ba1277c495189385f000e1c001a7f775c40c2a768a7146c730ab769b1157690",
+    "metadata_sha256": "2c28ba93593c772a1708c2fa25a654f3a301e1e432914a4fca16377e17150524",
+    "scenario_mode": "pack",
+    "scenario_sha256": "0f173e03eaa245fa9ce9c5b6c177be03910f49f2d93ad661c66a84293d7bb9b0",
+    "localization_map_sha256": null,
+    "localization_revision": null,
+    "runtime_rules_version": "regional-tools-v1",
+    "runtime_rules_sha256": "03443b64d7dcaadcfe33458ef532c6f757265137e559fb68f47c4b21ef817b6a",
+    "task_selection": {
+      "task_set_name": null,
+      "task_split_name": null,
+      "task_kwargs": {}
+    },
+    "task_sha256": "783bc6bbbdca54f715ec3f44f02b717547ab7fd62d9f4edbff009da3d1922149",
+    "canonical_task_id": "6",
+    "agent_greeting": "Hi! How can I help you today?",
+    "agent_language_clause": "Respond in English using Latin script; keep all tool calls, arguments, and structured outputs in English exactly as specified.",
+    "speech_insert_events_per_minute": null,
+    "backchannel_level": null,
+    "backchannel_prompt_version": null,
+    "caller_gender": "female",
+    "persona": {
+      "verbosity": "standard",
+      "interrupt_tendency": null,
+      "persona_id": "priya_patil",
+      "mode": "text",
+      "gender": "female",
+      "locale": "Maharashtra, India",
+      "variety": "English",
+      "language": "en",
+      "display_language": "English",
+      "gender_guidance": "You are a female customer (she/her).",
+      "pragmatics_clauses": [
+        "Short punchy sentences are natural to this variety. You often repeat what you already said to make sure it lands — 'Like I said, the order's been wrong twice now'.",
+        "When you open and get right to it, natural forms are 'Yeah, hi, so here's the problem', 'Okay, I've been waiting forever, I need this fixed today'. In this register you can skip small talk and state the issue immediately.",
+        "When you're not getting somewhere fast, asking for a supervisor or a timeline early is characteristic.",
+        "When you decline or push back, natural realizations are direct — 'No, that doesn't work for me', 'Nope, not doing that', 'That's not what I asked'. In this style the refusal is not softened.",
+        "When frustration builds, you become more insistent — 'Okay, like I literally just told you'. Then a direct ask — 'Can I just talk to someone who can actually fix this'. Even when annoyed your language stays coherent."
+      ],
+      "user_guidelines": "",
+      "mode_guidelines": "",
+      "agent_background_clause": "",
+      "language_directive": null,
+      "spellout_section": "",
+      "voice": null
+    },
+    "spelling_normalization_version": null,
+    "prompt_version": "language-runtime-v8",
+    "guideline_template_version": "language-guidelines-v4",
+    "assignment_version": "canonical-id-sha256-v1"
+  },
+  "candidate_options": {
+    "num_ctx": 32768,
+    "num_predict": 1024,
+    "think": false,
+    "temperature": 0.5,
+    "seed": 42
+  },
+  "custom_provider": true,
+  "official_full_score": false,
+  "notes": "Pinned tau2 engine unchanged; fresh Codex CLI sessions for caller and semantic judges. Subscription usage, no dollar cost inferred."
+}

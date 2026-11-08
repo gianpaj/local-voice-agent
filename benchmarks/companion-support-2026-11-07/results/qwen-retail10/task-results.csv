@@ -1,0 +1,11 @@
+task_id,reward,termination_reason,messages
+11,1.0,user_stop,24
+13,1.0,user_stop,28
+14,0.0,user_stop,24
+16,1.0,user_stop,28
+17,1.0,user_stop,16
+18,1.0,user_stop,26
+19,0.0,candidate_output_cap,
+21,1.0,user_stop,34
+6,1.0,user_stop,28
+8,1.0,user_stop,24

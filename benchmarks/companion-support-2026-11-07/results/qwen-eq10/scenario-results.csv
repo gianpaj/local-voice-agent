@@ -1,0 +1,11 @@
+scenario_id,title,status,expected_dialogue_turns,collected_dialogue_turns,required_sections_present,debrief_present,quality_score,quality_status,error
+1,Lunchroom Theft Scapegoat,completed,3,3,True,True,,awaiting independent judging,
+2,Flirtation Accusation,completed,3,3,True,True,,awaiting independent judging,
+3,Violent Boss Fantasies,completed,4,4,True,True,,awaiting independent judging,
+6,Teen Dishes Showdown,completed,3,3,True,True,,awaiting independent judging,
+9,Wedding Dress Misstep,completed,1,1,True,True,,awaiting independent judging,
+13,Laundry Program Clash,completed,1,1,True,True,,awaiting independent judging,
+131,Teen Privacy Battle,completed,3,3,True,True,,awaiting independent judging,
+133,Theater Passion Dispute,completed,3,3,True,True,,awaiting independent judging,
+137,Shared Room Conflict,completed,3,3,True,True,,awaiting independent judging,
+302,Texting Ex Boundaries,completed,4,4,True,True,,awaiting independent judging,

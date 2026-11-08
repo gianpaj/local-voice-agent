@@ -13,10 +13,20 @@ pilot does not prove better voice quality or latency. See [why we switched,
 evidence, setup, and rollback](docs/nanbeige.md#why-we-changed-llms--2026-11-08).
 Portable defaults remain Qwen; the local service was verified and left stopped.
 
-![Qwen versus Nanbeige: average EQ rubric 4.30 vs 5.57 out of 20; both pass 8 of 10 retail tasks. Custom text pilot on separate scales; not a voice-latency benchmark.](docs/assets/qwen-nanbeige-comparison.svg)
+![Qwen versus Nanbeige: average EQ rubric 4.30 vs 5.57 out of 20; both pass 8 of 10 retail tasks. Custom text pilot on separate scales; not a voice-latency benchmark.](benchmarks/companion-support-2026-11-07/assets/qwen-nanbeige-comparison.svg)
 
 EQ averages and retail outcomes are different metrics, not a combined score.
-[Detailed comparison and chart provenance](docs/nanbeige.md#benchmark-comparison-chart).
+[Detailed comparison and chart provenance](benchmarks/companion-support-2026-11-07/COMPARISON.md).
+
+![Qwen versus Nanbeige p50/p95 first-text and prompt-processing latency, native-token decode speed and complete-call time.](benchmarks/companion-support-2026-11-07/assets/qwen-nanbeige-performance.svg)
+
+Solid = p50; hatched = p95. [Performance definitions, prompt/cache chart and saved evidence](benchmarks/companion-support-2026-11-07/PERFORMANCE.md).
+These are text-call distributions with different tokenizers/cache behavior,
+not measured audible latency or a controlled speed ranking.
+
+**Repository scope:** [LLM benchmarks and charts live here](benchmarks/README.md).
+Custom TTS training, fine-tuning/LoRA and non-speech/animal-sound research live in
+[ideas/expressive-voice-models](https://github.com/gianpaj/ideas/tree/master/expressive-voice-models).
 
 Measured native optimization: [resident Parakeet](docs/native-inference.md)
 keeps the same checkpoint/precision in a supervised CUDA worker. The controlled

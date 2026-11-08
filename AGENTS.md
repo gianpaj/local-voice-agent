@@ -6,6 +6,12 @@
 - Browser mic/speaker over private Tailscale HTTPS is the active audio mode.
 - Follow docs/superpowers/specs and the implementation plan. User explicitly authorized writing the plan and starting implementation, without another approval pause.
 
+## Repository ownership
+- `benchmarks/` is the canonical home for voice-agent LLM comparisons, Qwen/Nanbeige scores, fixtures, charts, retained timing evidence and reproduction scripts.
+- Custom TTS training, LoRA/fine-tuning, dataset preparation and non-speech/animal-sound model research belong in `gianpaj/ideas/expressive-voice-models`, not this repository. Link there instead of duplicating its research.
+- The synthetic benchmark scenarios, trajectories and judgments under `benchmarks/companion-support-2026-11-07/` are intentional published test evidence, not real-user conversations. Preserve their bytes and provenance; never add real recordings, private conversations, raw token streams or authentication.
+- Keep text benchmark quality/performance distinct from end-to-end audible latency. Documentation migration/regeneration does not authorize inference or service starts.
+
 ## Git workflow
 - The user authorized private publication to `gianpaj/local-voice-agent` on 2026-11-05. Use the verified `origin` remote for that repository; do not change its visibility or publish elsewhere without authorization.
 - Never commit to main or push main; use feature branches and conventional commits. No PRs.

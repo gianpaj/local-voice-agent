@@ -1,0 +1,74 @@
+{
+  "config": {
+    "elicitation": null,
+    "communicate_scoring": {
+      "scorer": "semantic",
+      "judge": {
+        "model": "codex-cli/gpt-6.1-sol",
+        "model_args": {
+          "reasoning_effort": "xhigh"
+        },
+        "prompt_version": "communicate-semantic-v1"
+      }
+    },
+    "llm_user": "codex-cli/gpt-6.1-sol",
+    "llm_args_user": {
+      "reasoning_effort": "xhigh"
+    },
+    "num_trials": 1,
+    "max_errors": 10,
+    "timeout": 1800.0,
+    "max_concurrency": 1,
+    "workers": 0,
+    "provider_limits": null,
+    "seed": 300,
+    "log_level": "ERROR",
+    "verbose_logs": false,
+    "max_retries": 0,
+    "retry_delay": 1.0,
+    "auto_resume": false,
+    "auto_review": false,
+    "review_mode": "full",
+    "review_model": "claude-opus-4-5",
+    "hallucination_retries": 0,
+    "is_remote": false,
+    "retrieval_config": null,
+    "retrieval_config_kwargs": null,
+    "agent": "llm_agent",
+    "llm_agent": "nanbeige-iq2m",
+    "llm_args_agent": {
+      "temperature": 0.5
+    },
+    "user": "user_simulator",
+    "max_steps": 200,
+    "enforce_communication_protocol": false,
+    "text_streaming_config": null,
+    "language": "en",
+    "pack_extension": null,
+    "localize_db": null,
+    "language_artifacts": null,
+    "benchmark": null,
+    "domain": "retail",
+    "task_set_name": null,
+    "task_split_name": null,
+    "task_ids": [
+      "6",
+      "8",
+      "11",
+      "13",
+      "14",
+      "16",
+      "17",
+      "18",
+      "19",
+      "21"
+    ],
+    "num_tasks": null,
+    "save_to": null
+  },
+  "matched_qwen_protocol": true,
+  "backend": "llama.cpp b12064 CUDA",
+  "kv_cache": "Q4_0",
+  "non_thinking": true,
+  "tool_call_format": "xml"
+}

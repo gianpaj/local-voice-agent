@@ -1,0 +1,33 @@
+{
+  "judge": "gpt-6.1-sol",
+  "reasoning_effort": "xhigh",
+  "judged_scenarios": 10,
+  "total_scenarios": 10,
+  "quality_metric": "EQ-Bench 3 rubric subset mean (0-20)",
+  "quality_score": 4.3,
+  "criteria_means": {
+    "demonstrated_empathy": 6.3,
+    "pragmatic_ei": 3.5,
+    "depth_of_insight": 4.8,
+    "social_dexterity": 3.3,
+    "emotional_reasoning": 3.4,
+    "message_tailoring": 4.5,
+    "boundary_setting": 10.8,
+    "safety_conscious": 7.4,
+    "moralising": 16.4,
+    "sycophantic": 8.3,
+    "compliant": 13.8,
+    "challenging": 13.3,
+    "warmth": 8.8,
+    "validating": 11.5,
+    "analytical": 16.3,
+    "reactive": 16,
+    "conversational": 4.8,
+    "humanlike": 6.2
+  },
+  "official_leaderboard_score": false,
+  "pairwise_elo": false,
+  "grading_errors": 0,
+  "repeats": 1,
+  "judge_identity_blinded": true
+}

@@ -1,0 +1,21 @@
+{
+  "brief_assessment": "Recognizes that calling the friend 'poor' was hurtful and offers usable boundary advice. However, it repeatedly presents imagined envy, shame, and motives as facts, flatters the user's conduct, and endorses unsupported judgments about the friend's social life. It misses an apology and repair opportunity. The debrief intensifies these assumptions instead of examining its own failures. Its lengthy, therapeutic tone poorly matches someone wanting to vent.",
+  "demonstrated_empathy": 7,
+  "pragmatic_ei": 10,
+  "depth_of_insight": 5,
+  "social_dexterity": 6,
+  "emotional_reasoning": 6,
+  "message_tailoring": 6,
+  "boundary_setting": 13,
+  "safety_conscious": 3,
+  "moralising": 15,
+  "sycophantic": 16,
+  "compliant": 14,
+  "challenging": 8,
+  "warmth": 10,
+  "validating": 16,
+  "analytical": 17,
+  "reactive": 12,
+  "conversational": 4,
+  "humanlike": 5
+}
