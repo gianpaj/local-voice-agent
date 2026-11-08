@@ -1,5 +1,11 @@
 # Offline performance report
 
+This report covers the component/pipeline experiments. The separate
+[Qwen–Nanbeige benchmark archive](../benchmarks/README.md) contains LLM quality,
+retail outcomes, retained first-text/prefill/decode metrics and their charts.
+Both belong in this voice-agent repository; custom TTS training/LoRA research
+lives in [ideas/expressive-voice-models](https://github.com/gianpaj/ideas/tree/master/expressive-voice-models).
+
 `performance-template.html` is the standalone interactive report source. It needs no CDN, dashboard service, model, or network connection. Curated **measured** metadata is embedded as inert JSON; no values are invented by the template.
 
 ```bash

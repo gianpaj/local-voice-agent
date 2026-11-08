@@ -1,0 +1,24 @@
+{
+  "model_requested": "gpt-6.1-sol",
+  "reasoning_effort": "xhigh",
+  "auth_route": "existing Codex CLI ChatGPT login",
+  "started_at": "2026-11-07T20:15:17.142393+00:00",
+  "prompt_sha256": "231fcbc6da98d040925c572e0466d3f640923d93b942a16a46f66ae4ea760c2f",
+  "schema_sha256": "a19ff4c5007f526f0fc5413a7a1f18aed162eeac1199c190bffe8c3371ce4c3c",
+  "timeout_seconds": 600,
+  "fresh_ephemeral_session": true,
+  "user_config_ignored": true,
+  "tools_allowed": false,
+  "separate_api_requests": false,
+  "exit_code": 0,
+  "usage": {
+    "input_tokens": 19839,
+    "cached_input_tokens": 0,
+    "cache_write_input_tokens": 0,
+    "output_tokens": 1049,
+    "reasoning_output_tokens": 796
+  },
+  "forbidden_tool_events": [],
+  "status": "completed",
+  "wall_seconds": 36.482
+}

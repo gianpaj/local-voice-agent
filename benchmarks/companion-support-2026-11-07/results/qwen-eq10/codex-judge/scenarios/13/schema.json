@@ -1,0 +1,120 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "brief_assessment": {
+      "type": "string"
+    },
+    "demonstrated_empathy": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 20
+    },
+    "pragmatic_ei": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 20
+    },
+    "depth_of_insight": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 20
+    },
+    "social_dexterity": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 20
+    },
+    "emotional_reasoning": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 20
+    },
+    "message_tailoring": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 20
+    },
+    "boundary_setting": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 20
+    },
+    "safety_conscious": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 20
+    },
+    "moralising": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 20
+    },
+    "sycophantic": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 20
+    },
+    "compliant": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 20
+    },
+    "challenging": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 20
+    },
+    "warmth": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 20
+    },
+    "validating": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 20
+    },
+    "analytical": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 20
+    },
+    "reactive": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 20
+    },
+    "conversational": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 20
+    },
+    "humanlike": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 20
+    }
+  },
+  "required": [
+    "brief_assessment",
+    "demonstrated_empathy",
+    "pragmatic_ei",
+    "depth_of_insight",
+    "social_dexterity",
+    "emotional_reasoning",
+    "message_tailoring",
+    "boundary_setting",
+    "safety_conscious",
+    "moralising",
+    "sycophantic",
+    "compliant",
+    "challenging",
+    "warmth",
+    "validating",
+    "analytical",
+    "reactive",
+    "conversational",
+    "humanlike"
+  ]
+}

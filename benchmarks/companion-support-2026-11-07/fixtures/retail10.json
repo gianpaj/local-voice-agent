@@ -1,0 +1,27 @@
+{
+  "benchmark": "tau-bench 2.0 text-v1 English retail custom ten-task slice",
+  "upstream_commit": "033bf082f48e4a3c6a1256208e93cf2ce9c3bb6f",
+  "selected_task_ids": [
+    "6",
+    "8",
+    "11",
+    "13",
+    "14",
+    "16",
+    "17",
+    "18",
+    "19",
+    "21"
+  ],
+  "binding_revision": "e73f190f6820db05b0baa8472505f4676d3c40114bae0fe93f5fbd56d8321bf3",
+  "selection_rule": "First ten IDs in the frozen retail_50 order, before candidate inference",
+  "official_full_score": false,
+  "trials": 1,
+  "source_sha256": {
+    "data/tau2/multilingual/en/retail_tasks_en.json": "431d7c1ba3554bfcf687509b0bd0c6fab9b7c04edc745dae94d509658f7b5753",
+    "data/tau2/domains/retail/policy.md": "2c9652afbce57d6e087768d37cda64d31c53d50b3e3225cfdb791bac66466467",
+    "data/tau2/domains/retail/db.json": "413a65160adbdb5fde0ffc0015c49b6d70250b10c18128de169b597af7766765",
+    "data/tau2/task_subsets/retail_50.json": "dc7490f023d1bf9c345edf9c37a8e658298ac3a5be884e012bfb271b3678f2be"
+  },
+  "simulator_status": "awaiting user choice; no external API calls authorized/made"
+}

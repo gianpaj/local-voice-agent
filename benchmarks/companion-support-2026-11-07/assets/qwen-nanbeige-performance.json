@@ -1,0 +1,456 @@
+{
+  "benchmark_date": "2026-11-07",
+  "scope": "Retained custom text pilot; not voice latency or controlled speed ranking",
+  "first_text_definition": "Candidate HTTP request start to first nonempty text-content chunk; tool-only nulls excluded",
+  "quantiles": "p50 median; p95 linear interpolation at .95*(n-1); each metric excludes its own nulls",
+  "models": {
+    "qwen": "Qwen3.5 9B Q4_K_M / Ollama",
+    "nanbeige": "Nanbeige4.3-33B IQ2_M / llama.cpp"
+  },
+  "coverage": {
+    "attempts": 333,
+    "completed_timing": 332,
+    "first_text": 262
+  },
+  "qwen_cache_split_available": false,
+  "counter_caveat": "Independent percentiles are not additive. Cross-backend counters/tokenizers/cache/order differ.",
+  "bars": [
+    {
+      "model": "qwen",
+      "suite": "eq",
+      "metric": "first_text_seconds",
+      "statistic": "p50",
+      "value": 1.0457858899899293,
+      "n": 38,
+      "maximum": 2
+    },
+    {
+      "model": "qwen",
+      "suite": "eq",
+      "metric": "first_text_seconds",
+      "statistic": "p95",
+      "value": 1.723977928739623,
+      "n": 38,
+      "maximum": 2
+    },
+    {
+      "model": "nanbeige",
+      "suite": "eq",
+      "metric": "first_text_seconds",
+      "statistic": "p50",
+      "value": 0.49170026250067167,
+      "n": 38,
+      "maximum": 2
+    },
+    {
+      "model": "nanbeige",
+      "suite": "eq",
+      "metric": "first_text_seconds",
+      "statistic": "p95",
+      "value": 0.9260472181951627,
+      "n": 38,
+      "maximum": 2
+    },
+    {
+      "model": "qwen",
+      "suite": "retail",
+      "metric": "first_text_seconds",
+      "statistic": "p50",
+      "value": 0.6970910209929571,
+      "n": 99,
+      "maximum": 2
+    },
+    {
+      "model": "qwen",
+      "suite": "retail",
+      "metric": "first_text_seconds",
+      "statistic": "p95",
+      "value": 1.3605305980949196,
+      "n": 99,
+      "maximum": 2
+    },
+    {
+      "model": "nanbeige",
+      "suite": "retail",
+      "metric": "first_text_seconds",
+      "statistic": "p50",
+      "value": 0.3439389049890451,
+      "n": 87,
+      "maximum": 2
+    },
+    {
+      "model": "nanbeige",
+      "suite": "retail",
+      "metric": "first_text_seconds",
+      "statistic": "p95",
+      "value": 1.581987955677323,
+      "n": 87,
+      "maximum": 2
+    },
+    {
+      "model": "qwen",
+      "suite": "eq",
+      "metric": "server_prompt_seconds",
+      "statistic": "p50",
+      "value": 0.9375413345,
+      "n": 38,
+      "maximum": 2
+    },
+    {
+      "model": "qwen",
+      "suite": "eq",
+      "metric": "server_prompt_seconds",
+      "statistic": "p95",
+      "value": 1.61503301475,
+      "n": 38,
+      "maximum": 2
+    },
+    {
+      "model": "nanbeige",
+      "suite": "eq",
+      "metric": "server_prompt_seconds",
+      "statistic": "p50",
+      "value": 0.471128,
+      "n": 38,
+      "maximum": 2
+    },
+    {
+      "model": "nanbeige",
+      "suite": "eq",
+      "metric": "server_prompt_seconds",
+      "statistic": "p95",
+      "value": 0.8427329,
+      "n": 38,
+      "maximum": 2
+    },
+    {
+      "model": "qwen",
+      "suite": "retail",
+      "metric": "server_prompt_seconds",
+      "statistic": "p50",
+      "value": 0.564237041,
+      "n": 115,
+      "maximum": 2
+    },
+    {
+      "model": "qwen",
+      "suite": "retail",
+      "metric": "server_prompt_seconds",
+      "statistic": "p95",
+      "value": 1.2242900394999998,
+      "n": 115,
+      "maximum": 2
+    },
+    {
+      "model": "nanbeige",
+      "suite": "retail",
+      "metric": "server_prompt_seconds",
+      "statistic": "p50",
+      "value": 0.164531,
+      "n": 141,
+      "maximum": 2
+    },
+    {
+      "model": "nanbeige",
+      "suite": "retail",
+      "metric": "server_prompt_seconds",
+      "statistic": "p95",
+      "value": 1.582691,
+      "n": 141,
+      "maximum": 2
+    },
+    {
+      "model": "qwen",
+      "suite": "eq",
+      "metric": "decode_tokens_per_second",
+      "statistic": "p50",
+      "value": 43.286750910778736,
+      "n": 38,
+      "maximum": 50
+    },
+    {
+      "model": "qwen",
+      "suite": "eq",
+      "metric": "decode_tokens_per_second",
+      "statistic": "p95",
+      "value": 44.024588044543734,
+      "n": 38,
+      "maximum": 50
+    },
+    {
+      "model": "nanbeige",
+      "suite": "eq",
+      "metric": "decode_tokens_per_second",
+      "statistic": "p50",
+      "value": 20.44610464701543,
+      "n": 38,
+      "maximum": 50
+    },
+    {
+      "model": "nanbeige",
+      "suite": "eq",
+      "metric": "decode_tokens_per_second",
+      "statistic": "p95",
+      "value": 21.41840257703688,
+      "n": 38,
+      "maximum": 50
+    },
+    {
+      "model": "qwen",
+      "suite": "retail",
+      "metric": "decode_tokens_per_second",
+      "statistic": "p50",
+      "value": 43.02507281098468,
+      "n": 115,
+      "maximum": 50
+    },
+    {
+      "model": "qwen",
+      "suite": "retail",
+      "metric": "decode_tokens_per_second",
+      "statistic": "p95",
+      "value": 44.013833252507645,
+      "n": 115,
+      "maximum": 50
+    },
+    {
+      "model": "nanbeige",
+      "suite": "retail",
+      "metric": "decode_tokens_per_second",
+      "statistic": "p50",
+      "value": 19.05203484634979,
+      "n": 141,
+      "maximum": 50
+    },
+    {
+      "model": "nanbeige",
+      "suite": "retail",
+      "metric": "decode_tokens_per_second",
+      "statistic": "p95",
+      "value": 19.67445134616624,
+      "n": 141,
+      "maximum": 50
+    },
+    {
+      "model": "qwen",
+      "suite": "eq",
+      "metric": "wall_seconds",
+      "statistic": "p50",
+      "value": 34.16468742550933,
+      "n": 38,
+      "maximum": 100
+    },
+    {
+      "model": "qwen",
+      "suite": "eq",
+      "metric": "wall_seconds",
+      "statistic": "p95",
+      "value": 48.11639195323514,
+      "n": 38,
+      "maximum": 100
+    },
+    {
+      "model": "nanbeige",
+      "suite": "eq",
+      "metric": "wall_seconds",
+      "statistic": "p50",
+      "value": 66.32959936198313,
+      "n": 38,
+      "maximum": 100
+    },
+    {
+      "model": "nanbeige",
+      "suite": "eq",
+      "metric": "wall_seconds",
+      "statistic": "p95",
+      "value": 81.82505102761205,
+      "n": 38,
+      "maximum": 100
+    },
+    {
+      "model": "qwen",
+      "suite": "retail",
+      "metric": "wall_seconds",
+      "statistic": "p50",
+      "value": 3.1807482030126266,
+      "n": 115,
+      "maximum": 100
+    },
+    {
+      "model": "qwen",
+      "suite": "retail",
+      "metric": "wall_seconds",
+      "statistic": "p95",
+      "value": 11.332565170683655,
+      "n": 115,
+      "maximum": 100
+    },
+    {
+      "model": "nanbeige",
+      "suite": "retail",
+      "metric": "wall_seconds",
+      "statistic": "p50",
+      "value": 5.4693814649945125,
+      "n": 141,
+      "maximum": 100
+    },
+    {
+      "model": "nanbeige",
+      "suite": "retail",
+      "metric": "wall_seconds",
+      "statistic": "p95",
+      "value": 19.868404818989802,
+      "n": 141,
+      "maximum": 100
+    },
+    {
+      "model": "qwen",
+      "suite": "eq",
+      "metric": "reported_prompt_tokens",
+      "statistic": "p50",
+      "value": 2725.0,
+      "n": 38,
+      "maximum": 14000
+    },
+    {
+      "model": "qwen",
+      "suite": "eq",
+      "metric": "reported_prompt_tokens",
+      "statistic": "p95",
+      "value": 6349.7,
+      "n": 38,
+      "maximum": 14000
+    },
+    {
+      "model": "qwen",
+      "suite": "retail",
+      "metric": "reported_prompt_tokens",
+      "statistic": "p50",
+      "value": 6110.0,
+      "n": 115,
+      "maximum": 14000
+    },
+    {
+      "model": "qwen",
+      "suite": "retail",
+      "metric": "reported_prompt_tokens",
+      "statistic": "p95",
+      "value": 10176.5,
+      "n": 115,
+      "maximum": 14000
+    },
+    {
+      "model": "nanbeige",
+      "suite": "eq",
+      "metric": "reported_prompt_tokens",
+      "statistic": "p50",
+      "value": 2559.0,
+      "n": 38,
+      "maximum": 14000
+    },
+    {
+      "model": "nanbeige",
+      "suite": "eq",
+      "metric": "reported_prompt_tokens",
+      "statistic": "p95",
+      "value": 6063.2,
+      "n": 38,
+      "maximum": 14000
+    },
+    {
+      "model": "nanbeige",
+      "suite": "retail",
+      "metric": "reported_prompt_tokens",
+      "statistic": "p50",
+      "value": 6904.0,
+      "n": 141,
+      "maximum": 14000
+    },
+    {
+      "model": "nanbeige",
+      "suite": "retail",
+      "metric": "reported_prompt_tokens",
+      "statistic": "p95",
+      "value": 11844.0,
+      "n": 141,
+      "maximum": 14000
+    },
+    {
+      "model": "nanbeige",
+      "suite": "eq",
+      "metric": "cached_prompt_tokens",
+      "statistic": "p50",
+      "value": 2200.5,
+      "n": 38,
+      "maximum": 14000
+    },
+    {
+      "model": "nanbeige",
+      "suite": "eq",
+      "metric": "cached_prompt_tokens",
+      "statistic": "p95",
+      "value": 5945.2,
+      "n": 38,
+      "maximum": 14000
+    },
+    {
+      "model": "nanbeige",
+      "suite": "retail",
+      "metric": "cached_prompt_tokens",
+      "statistic": "p50",
+      "value": 6453.0,
+      "n": 141,
+      "maximum": 14000
+    },
+    {
+      "model": "nanbeige",
+      "suite": "retail",
+      "metric": "cached_prompt_tokens",
+      "statistic": "p95",
+      "value": 11787.0,
+      "n": 141,
+      "maximum": 14000
+    },
+    {
+      "model": "nanbeige",
+      "suite": "eq",
+      "metric": "fresh_prompt_tokens",
+      "statistic": "p50",
+      "value": 280.0,
+      "n": 38,
+      "maximum": 1000
+    },
+    {
+      "model": "nanbeige",
+      "suite": "eq",
+      "metric": "fresh_prompt_tokens",
+      "statistic": "p95",
+      "value": 571.9,
+      "n": 38,
+      "maximum": 1000
+    },
+    {
+      "model": "nanbeige",
+      "suite": "retail",
+      "metric": "fresh_prompt_tokens",
+      "statistic": "p50",
+      "value": 71.0,
+      "n": 141,
+      "maximum": 1000
+    },
+    {
+      "model": "nanbeige",
+      "suite": "retail",
+      "metric": "fresh_prompt_tokens",
+      "statistic": "p95",
+      "value": 808.0,
+      "n": 141,
+      "maximum": 1000
+    }
+  ],
+  "source_sha256": {
+    "performance/candidate-call-metrics.csv": "b0c1752f1e371608b46a05320ed36ef45de5a31975e016c95b5ae5319095625a",
+    "performance/summary.json": "1b647d4807de2d9673dc6b4904bb372f1ea2f6afa04f3098bd4166377258c683",
+    "performance-evidence.py": "8cc90e98c9cc6e1d79e6c4b4dac39a8781fd690c55bb052fe43ffd985d7be220"
+  }
+}

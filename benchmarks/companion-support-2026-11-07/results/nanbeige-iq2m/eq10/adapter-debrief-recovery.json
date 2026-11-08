@@ -1,0 +1,18 @@
+{
+  "kind": "pre-inference-debrief-profile-assertion",
+  "reason": "Initial transport assertion allowed dialogue temperature0.7/min_p0.1 but blocked upstream debrief temperature0.5/min_pNone before any model request",
+  "recovery": "Keep all dialogue responses; invoke only previously uncalled debriefs before grading; no model answer retry",
+  "qwen_actual_debrief": {
+    "temperature": 0.5,
+    "min_p_sent": null,
+    "effective_min_p": 0.0,
+    "max_tokens": 12000
+  },
+  "nanbeige_debrief": {
+    "temperature": 0.5,
+    "min_p": 0.0,
+    "max_tokens": 12000
+  },
+  "ordering_difference": "Recorded run batches the missing debriefs after all dialogue cases; contexts remain case-local. Not matched cache/prefill latency.",
+  "ollama_default_source": "https://raw.githubusercontent.com/ollama/ollama/v0.24.0/api/types.go"
+}

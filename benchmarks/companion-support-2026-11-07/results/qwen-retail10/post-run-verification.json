@@ -1,0 +1,10 @@
+{
+  "checked_at": "2026-11-07T20:40:01.857459+00:00",
+  "voice": {
+    "ready": true,
+    "busy": false,
+    "phase": "ready"
+  },
+  "qwen_context": 4096,
+  "service": "ActiveState=active\nFreezerState=running\nSubState=running\n"
+}

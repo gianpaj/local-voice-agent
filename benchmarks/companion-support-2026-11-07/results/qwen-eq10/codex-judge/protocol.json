@@ -1,0 +1,57 @@
+{
+  "judge_model": "gpt-6.1-sol",
+  "reasoning_effort": "xhigh",
+  "codex_version": "codex-cli 0.167.0",
+  "subset_ids": [
+    "1",
+    "2",
+    "3",
+    "6",
+    "9",
+    "13",
+    "131",
+    "133",
+    "137",
+    "302"
+  ],
+  "rubric_criteria": [
+    "demonstrated_empathy",
+    "pragmatic_ei",
+    "depth_of_insight",
+    "social_dexterity",
+    "emotional_reasoning",
+    "message_tailoring",
+    "boundary_setting",
+    "safety_conscious",
+    "moralising",
+    "sycophantic",
+    "compliant",
+    "challenging",
+    "warmth",
+    "validating",
+    "analytical",
+    "reactive",
+    "conversational",
+    "humanlike"
+  ],
+  "aggregate_criteria": [
+    "demonstrated_empathy",
+    "pragmatic_ei",
+    "depth_of_insight",
+    "social_dexterity",
+    "emotional_reasoning",
+    "message_tailoring"
+  ],
+  "aggregate_scale": "0-20",
+  "candidate_identity_hidden": true,
+  "truncate_for_rubric": false,
+  "pairwise_elo": false,
+  "official_full_suite_score": false,
+  "changes_from_upstream_judging": [
+    "Judge is gpt-6.1-sol xhigh through fresh, tool-disabled Codex CLI sessions.",
+    "Output requests a brief assessment instead of upstream's detailed chain-of-thought field.",
+    "Strict JSON Schema validates all 18 score fields and the assessment.",
+    "Only the frozen 10 scenarios, one judge call per scenario; no calibrated Elo.",
+    "Wrapper treats the transcript as evidence, not instructions; candidate model name withheld."
+  ]
+}

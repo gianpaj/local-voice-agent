@@ -1,0 +1,12 @@
+{
+  "task_id": "19",
+  "status": "candidate_output_cap",
+  "reward": 0.0,
+  "candidate_budget_failure": true,
+  "trajectory_complete": false,
+  "upstream_outcome_evaluation_completed": false,
+  "reason": "Candidate generation reached the fixed 1024-token cap; no retry",
+  "call_evidence": "calls/0155-19-agent_response",
+  "eval_count": 1024,
+  "done_reason": "length"
+}

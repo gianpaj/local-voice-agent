@@ -12,7 +12,7 @@ Qwen3.5 9B Q4_K_M to Nanbeige4.3-33B IQ2_M, following the user's choice after
 reviewing the matched companion/customer-support pilot. This is a reversible
 product trial, not a finding that Nanbeige is universally better.
 
-The [audited comparison and reproducible evidence](https://github.com/gianpaj/ideas/blob/e9fb273552d7e6d4fda95e2f34cc512356c26a8c/expressive-voice-models/benchmarks/companion-support-2026-11-07/COMPARISON.md)
+The [audited comparison and reproducible evidence](../benchmarks/companion-support-2026-11-07/COMPARISON.md)
 record the signal behind that choice:
 
 - **Companion-style conversation:** Nanbeige averaged **5.57/20**, versus
@@ -46,13 +46,14 @@ rollback and leave the voice service stopped after this change, as requested.
 
 ## Benchmark comparison chart
 
-![Qwen versus Nanbeige: EQ rubric mean 4.30 vs 5.57 out of 20 across ten scenarios each; retail outcomes tied at 8 of 10. Custom text pilots, one trial per case.](assets/qwen-nanbeige-comparison.svg)
+![Qwen versus Nanbeige: EQ rubric mean 4.30 vs 5.57 out of 20 across ten scenarios each; retail outcomes tied at 8 of 10. Custom text pilots, one trial per case.](../benchmarks/companion-support-2026-11-07/assets/qwen-nanbeige-comparison.svg)
 
 Separate zero-based axes preserve the original scales; EQ and retail are not
 averaged into an overall score. All failures remain in the denominators.
-[PNG](assets/qwen-nanbeige-comparison.png) ·
-[Data snapshot and source hashes](assets/qwen-nanbeige-comparison.json) ·
-[Canonical data and regeneration script](https://github.com/gianpaj/ideas/blob/docs/voice-agent-evaluations-2026-11-07/expressive-voice-models/benchmarks/companion-support-2026-11-07/plot-comparison.py).
+[PNG](../benchmarks/companion-support-2026-11-07/assets/qwen-nanbeige-comparison.png) ·
+[Data snapshot and source hashes](../benchmarks/companion-support-2026-11-07/assets/qwen-nanbeige-comparison.json) ·
+[Canonical data and regeneration script](../benchmarks/companion-support-2026-11-07/plot-comparison.py) ·
+[Performance charts and per-call evidence](../benchmarks/companion-support-2026-11-07/PERFORMANCE.md).
 
 The chart reflects the recorded **benchmark runtimes**, not the installed
 Nanbeige/Ollama voice configuration. This is a ten-case, one-trial custom text

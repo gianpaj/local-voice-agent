@@ -1,0 +1,29 @@
+{
+  "checked_at": "2026-11-07T21:58:33.961645+00:00",
+  "independent_post_controller_check": true,
+  "service": {
+    "ActiveState": "active",
+    "FreezerState": "running",
+    "SubState": "running"
+  },
+  "voice": {
+    "ready": true,
+    "busy": false,
+    "phase": "ready"
+  },
+  "qwen": {
+    "name": "local-voice-qwen:latest",
+    "digest": "86a5df6c5a671cbca32ae533f9980e5709889307caa08715b35daca335c72ced",
+    "context_length": 4096
+  },
+  "remaining_benchmark_processes": [],
+  "checks": {
+    "service_active_running_thawed": true,
+    "voice_ready_idle": true,
+    "qwen_context_4096": true,
+    "nanbeige_endpoint_absent": true,
+    "nanbeige_controller_and_server_absent": true
+  },
+  "all_checks_passed": true,
+  "end_to_end_audio_tested": false
+}

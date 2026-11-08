@@ -1,0 +1,1001 @@
+{
+  "language_context": {
+    "language": "en",
+    "mode": "text",
+    "cross_lingual": false,
+    "pack_revision": "voice-v2-entity-order-v5-schema3-textneutral-voiceclauses",
+    "pack_sha256": "6453ef2c2f06ca34fb0a4f90841780913a2f7af28b680a08be402190876e6435",
+    "domain_revision": "voice-v2-frozen50-v1",
+    "tasks_sha256": "2ba1277c495189385f000e1c001a7f775c40c2a768a7146c730ab769b1157690",
+    "metadata_sha256": "2c28ba93593c772a1708c2fa25a654f3a301e1e432914a4fca16377e17150524",
+    "scenario_mode": "pack",
+    "scenario_sha256": "0f173e03eaa245fa9ce9c5b6c177be03910f49f2d93ad661c66a84293d7bb9b0",
+    "localization_map_sha256": null,
+    "localization_revision": null,
+    "runtime_rules_version": "regional-tools-v1",
+    "runtime_rules_sha256": "03443b64d7dcaadcfe33458ef532c6f757265137e559fb68f47c4b21ef817b6a",
+    "task_selection": {
+      "task_set_name": null,
+      "task_split_name": null,
+      "task_kwargs": {}
+    },
+    "task_sha256": "e82b0b5516d908e6c5aaacf2ec479108a504987f124cc9ba11618df6a0862022",
+    "canonical_task_id": "8",
+    "agent_greeting": "Hi! How can I help you today?",
+    "agent_language_clause": "Respond in English using Latin script; keep all tool calls, arguments, and structured outputs in English exactly as specified.",
+    "speech_insert_events_per_minute": null,
+    "backchannel_level": null,
+    "backchannel_prompt_version": null,
+    "caller_gender": "female",
+    "persona": {
+      "verbosity": "standard",
+      "interrupt_tendency": null,
+      "persona_id": "priya_patil",
+      "mode": "text",
+      "gender": "female",
+      "locale": "Maharashtra, India",
+      "variety": "English",
+      "language": "en",
+      "display_language": "English",
+      "gender_guidance": "You are a female customer (she/her).",
+      "pragmatics_clauses": [
+        "Short punchy sentences are natural to this variety. You often repeat what you already said to make sure it lands — 'Like I said, the order's been wrong twice now'.",
+        "When you open and get right to it, natural forms are 'Yeah, hi, so here's the problem', 'Okay, I've been waiting forever, I need this fixed today'. In this register you can skip small talk and state the issue immediately.",
+        "When you're not getting somewhere fast, asking for a supervisor or a timeline early is characteristic.",
+        "When you decline or push back, natural realizations are direct — 'No, that doesn't work for me', 'Nope, not doing that', 'That's not what I asked'. In this style the refusal is not softened.",
+        "When frustration builds, you become more insistent — 'Okay, like I literally just told you'. Then a direct ask — 'Can I just talk to someone who can actually fix this'. Even when annoyed your language stays coherent."
+      ],
+      "user_guidelines": "",
+      "mode_guidelines": "",
+      "agent_background_clause": "",
+      "language_directive": null,
+      "spellout_section": "",
+      "voice": null
+    },
+    "spelling_normalization_version": null,
+    "prompt_version": "language-runtime-v8",
+    "guideline_template_version": "language-guidelines-v4",
+    "assignment_version": "canonical-id-sha256-v1"
+  },
+  "agent_voice": null,
+  "agent_voice_gender": null,
+  "agent_voice_catalog": null,
+  "id": "77ccd2ed-52c1-49f4-a5b7-c8aa2274193c",
+  "complication": null,
+  "task_id": "8",
+  "timestamp": "2026-11-07T21:33:16.546506",
+  "start_time": "2026-11-07T21:30:16.037780",
+  "end_time": "2026-11-07T21:33:16.546483",
+  "duration": 180.50804763502674,
+  "termination_reason": "user_stop",
+  "agent_cost": null,
+  "user_cost": null,
+  "agent_usage": null,
+  "reward_info": {
+    "reward": 1.0,
+    "db_check": {
+      "db_match": true,
+      "db_reward": 1.0
+    },
+    "env_assertions": [],
+    "action_checks": [
+      {
+        "action": {
+          "action_id": "8_0",
+          "requestor": "assistant",
+          "name": "find_user_id_by_name_zip",
+          "arguments": {
+            "first_name": "Mei",
+            "last_name": "Kovacs",
+            "zip": "28236"
+          },
+          "info": null,
+          "compare_args": null
+        },
+        "action_match": true,
+        "action_reward": 1.0,
+        "tool_type": "read"
+      },
+      {
+        "action": {
+          "action_id": "8_1",
+          "requestor": "assistant",
+          "name": "get_user_details",
+          "arguments": {
+            "user_id": "mei_kovacs_8020"
+          },
+          "info": null,
+          "compare_args": null
+        },
+        "action_match": true,
+        "action_reward": 1.0,
+        "tool_type": "read"
+      },
+      {
+        "action": {
+          "action_id": "8_2",
+          "requestor": "assistant",
+          "name": "get_order_details",
+          "arguments": {
+            "order_id": "#W6390527"
+          },
+          "info": null,
+          "compare_args": null
+        },
+        "action_match": true,
+        "action_reward": 1.0,
+        "tool_type": "read"
+      },
+      {
+        "action": {
+          "action_id": "8_3",
+          "requestor": "assistant",
+          "name": "get_product_details",
+          "arguments": {
+            "product_id": "8310926033"
+          },
+          "info": null,
+          "compare_args": null
+        },
+        "action_match": false,
+        "action_reward": 0.0,
+        "tool_type": "read"
+      },
+      {
+        "action": {
+          "action_id": "8_4",
+          "requestor": "assistant",
+          "name": "get_product_details",
+          "arguments": {
+            "product_id": "6817146515"
+          },
+          "info": null,
+          "compare_args": null
+        },
+        "action_match": true,
+        "action_reward": 1.0,
+        "tool_type": "read"
+      },
+      {
+        "action": {
+          "action_id": "8_5",
+          "requestor": "assistant",
+          "name": "exchange_delivered_order_items",
+          "arguments": {
+            "order_id": "#W6390527",
+            "item_ids": [
+              "8384507844"
+            ],
+            "new_item_ids": [
+              "9083642334"
+            ],
+            "payment_method_id": "paypal_7644869"
+          },
+          "info": null,
+          "compare_args": null
+        },
+        "action_match": true,
+        "action_reward": 1.0,
+        "tool_type": "write"
+      }
+    ],
+    "nl_assertions": [],
+    "communicate_checks": null,
+    "reward_basis": [
+      "DB",
+      "NL_ASSERTION"
+    ],
+    "reward_breakdown": {
+      "DB": 1.0,
+      "NL_ASSERTION": 1.0
+    },
+    "info": {
+      "env": null,
+      "nl": {
+        "note": "No nl_assertions to evaluate"
+      },
+      "communicate": null,
+      "action": null
+    }
+  },
+  "messages": [
+    {
+      "role": "assistant",
+      "content": "Hi! How can I help you today?",
+      "tool_calls": null,
+      "is_audio": false,
+      "turn_idx": 0,
+      "timestamp": "2026-11-07T21:30:16.037911",
+      "cost": null,
+      "usage": null,
+      "raw_data": null,
+      "generation_time_seconds": null,
+      "audio_format": null,
+      "audio_path": null,
+      "audio_script_gold": null,
+      "speech_effects": null,
+      "source_effects": null,
+      "channel_effects": null,
+      "turn_taking_action": null,
+      "utterance_ids": null,
+      "chunk_id": null,
+      "is_final_chunk": true,
+      "source": null,
+      "contains_speech": true
+    },
+    {
+      "role": "user",
+      "content": "Yeah, hi. I want to exchange my water bottle for a bigger one and my desk lamp for a brighter one.",
+      "tool_calls": null,
+      "is_audio": false,
+      "turn_idx": 1,
+      "timestamp": "2026-11-07T21:30:22.166588",
+      "cost": null,
+      "usage": {
+        "prompt_tokens": 14001,
+        "completion_tokens": 119
+      },
+      "raw_data": {
+        "provider": "codex-cli/gpt-6.1-sol",
+        "reasoning_effort": "xhigh"
+      },
+      "generation_time_seconds": null,
+      "audio_format": null,
+      "audio_path": null,
+      "audio_script_gold": null,
+      "speech_effects": null,
+      "source_effects": null,
+      "channel_effects": null,
+      "turn_taking_action": null,
+      "utterance_ids": null,
+      "chunk_id": null,
+      "is_final_chunk": true,
+      "source": null,
+      "contains_speech": true
+    },
+    {
+      "role": "assistant",
+      "content": "I can help with that. First, I need to authenticate your identity. Could you please provide your email address? If you don’t have access to your email, I can look you up using your first name, last name, and zip code.\nOnce authenticated, I’ll review your delivered order and the available variants for your water bottle and desk lamp so we can choose the exact options you want.",
+      "tool_calls": null,
+      "is_audio": false,
+      "turn_idx": 2,
+      "timestamp": "2026-11-07T21:30:26.504373",
+      "cost": 0.0,
+      "usage": {
+        "prompt_tokens": 5304,
+        "completion_tokens": 84
+      },
+      "raw_data": null,
+      "generation_time_seconds": 4.322802228969522,
+      "audio_format": null,
+      "audio_path": null,
+      "audio_script_gold": null,
+      "speech_effects": null,
+      "source_effects": null,
+      "channel_effects": null,
+      "turn_taking_action": null,
+      "utterance_ids": null,
+      "chunk_id": null,
+      "is_final_chunk": true,
+      "source": null,
+      "contains_speech": true
+    },
+    {
+      "role": "user",
+      "content": "I don’t remember my email. My name is Mei Kovacs, and my zip code is 28236.",
+      "tool_calls": null,
+      "is_audio": false,
+      "turn_idx": 3,
+      "timestamp": "2026-11-07T21:30:33.184420",
+      "cost": null,
+      "usage": {
+        "prompt_tokens": 14133,
+        "completion_tokens": 121
+      },
+      "raw_data": {
+        "provider": "codex-cli/gpt-6.1-sol",
+        "reasoning_effort": "xhigh"
+      },
+      "generation_time_seconds": null,
+      "audio_format": null,
+      "audio_path": null,
+      "audio_script_gold": null,
+      "speech_effects": null,
+      "source_effects": null,
+      "channel_effects": null,
+      "turn_taking_action": null,
+      "utterance_ids": null,
+      "chunk_id": null,
+      "is_final_chunk": true,
+      "source": null,
+      "contains_speech": true
+    },
+    {
+      "role": "assistant",
+      "content": null,
+      "tool_calls": [
+        {
+          "id": "yfcSXDCoObcCRgSq96PxHleSjOzI1uAt",
+          "name": "find_user_id_by_name_zip",
+          "arguments": {
+            "first_name": "Mei",
+            "last_name": "Kovacs",
+            "zip": "28236"
+          },
+          "requestor": "assistant"
+        }
+      ],
+      "is_audio": false,
+      "turn_idx": 4,
+      "timestamp": "2026-11-07T21:30:36.918090",
+      "cost": 0.0,
+      "usage": {
+        "prompt_tokens": 5434,
+        "completion_tokens": 71
+      },
+      "raw_data": null,
+      "generation_time_seconds": 3.7183211800293066,
+      "audio_format": null,
+      "audio_path": null,
+      "audio_script_gold": null,
+      "speech_effects": null,
+      "source_effects": null,
+      "channel_effects": null,
+      "turn_taking_action": null,
+      "utterance_ids": null,
+      "chunk_id": null,
+      "is_final_chunk": true,
+      "source": null,
+      "contains_speech": true
+    },
+    {
+      "id": "yfcSXDCoObcCRgSq96PxHleSjOzI1uAt",
+      "role": "tool",
+      "content": "mei_kovacs_8020",
+      "requestor": "assistant",
+      "error": false,
+      "execution_status": "executed",
+      "turn_idx": 5,
+      "timestamp": "2026-11-07T21:30:36.918777"
+    },
+    {
+      "role": "assistant",
+      "content": "Thank you, Mei. I’ve located your user ID: mei_kovacs_8020.\nTo proceed with the exchange, please share the order ID for the delivered order containing the water bottle and desk lamp. If you don’t have the order ID handy, I can look up your recent orders.\nAlso, let me know the exact new options you want for each item (for example, water bottle size/color and desk lamp brightness/color), and I’ll check availability and pricing for you.",
+      "tool_calls": null,
+      "is_audio": false,
+      "turn_idx": 6,
+      "timestamp": "2026-11-07T21:30:42.703879",
+      "cost": 0.0,
+      "usage": {
+        "prompt_tokens": 5546,
+        "completion_tokens": 110
+      },
+      "raw_data": null,
+      "generation_time_seconds": 5.769752146967221,
+      "audio_format": null,
+      "audio_path": null,
+      "audio_script_gold": null,
+      "speech_effects": null,
+      "source_effects": null,
+      "channel_effects": null,
+      "turn_taking_action": null,
+      "utterance_ids": null,
+      "chunk_id": null,
+      "is_final_chunk": true,
+      "source": null,
+      "contains_speech": true
+    },
+    {
+      "role": "user",
+      "content": "Please look up my recent orders. I want a bigger bottle and a brighter lamp. For the lamp, I’d prefer battery power, then USB, then AC. What options are available?",
+      "tool_calls": null,
+      "is_audio": false,
+      "turn_idx": 7,
+      "timestamp": "2026-11-07T21:30:51.390464",
+      "cost": null,
+      "usage": {
+        "prompt_tokens": 14284,
+        "completion_tokens": 257
+      },
+      "raw_data": {
+        "provider": "codex-cli/gpt-6.1-sol",
+        "reasoning_effort": "xhigh"
+      },
+      "generation_time_seconds": null,
+      "audio_format": null,
+      "audio_path": null,
+      "audio_script_gold": null,
+      "speech_effects": null,
+      "source_effects": null,
+      "channel_effects": null,
+      "turn_taking_action": null,
+      "utterance_ids": null,
+      "chunk_id": null,
+      "is_final_chunk": true,
+      "source": null,
+      "contains_speech": true
+    },
+    {
+      "role": "assistant",
+      "content": null,
+      "tool_calls": [
+        {
+          "id": "etHJHAwLUobD65dbBLkFIzRus6J4cM50",
+          "name": "get_user_details",
+          "arguments": {
+            "user_id": "mei_kovacs_8020"
+          },
+          "requestor": "assistant"
+        }
+      ],
+      "is_audio": false,
+      "turn_idx": 8,
+      "timestamp": "2026-11-07T21:30:53.564142",
+      "cost": 0.0,
+      "usage": {
+        "prompt_tokens": 5714,
+        "completion_tokens": 40
+      },
+      "raw_data": null,
+      "generation_time_seconds": 2.1567173179937527,
+      "audio_format": null,
+      "audio_path": null,
+      "audio_script_gold": null,
+      "speech_effects": null,
+      "source_effects": null,
+      "channel_effects": null,
+      "turn_taking_action": null,
+      "utterance_ids": null,
+      "chunk_id": null,
+      "is_final_chunk": true,
+      "source": null,
+      "contains_speech": true
+    },
+    {
+      "id": "etHJHAwLUobD65dbBLkFIzRus6J4cM50",
+      "role": "tool",
+      "content": "{\"user_id\": \"mei_kovacs_8020\", \"name\": {\"first_name\": \"Mei\", \"last_name\": \"Kovacs\"}, \"address\": {\"address1\": \"317 Elm Street\", \"address2\": \"Suite 461\", \"city\": \"Charlotte\", \"country\": \"USA\", \"state\": \"NC\", \"zip\": \"28236\"}, \"email\": \"mei.kovacs8232@example.com\", \"payment_methods\": {\"paypal_7644869\": {\"source\": \"paypal\", \"id\": \"paypal_7644869\"}}, \"orders\": [\"#W6390527\", \"#W7800651\", \"#W8065207\"]}",
+      "requestor": "assistant",
+      "error": false,
+      "execution_status": "executed",
+      "turn_idx": 9,
+      "timestamp": "2026-11-07T21:30:53.564412"
+    },
+    {
+      "role": "assistant",
+      "content": "Thank you. I see three orders on your account: #W6390527, #W7800651, and #W8065207.\nI’ll check which of these orders is delivered and includes the water bottle and desk lamp. May I look up the details of these orders to identify the correct one? If you have a preferred order ID, you can also share it directly.\nOnce we identify the order, I’ll pull the product variants for the water bottle and desk lamp and share available options and price differences. For the lamp, I’ll prioritize battery power, then USB, then AC as you requested.\nPlease confirm which order you’d like me to check, or I can review all three.",
+      "tool_calls": null,
+      "is_audio": false,
+      "turn_idx": 10,
+      "timestamp": "2026-11-07T21:31:02.271287",
+      "cost": 0.0,
+      "usage": {
+        "prompt_tokens": 5970,
+        "completion_tokens": 162
+      },
+      "raw_data": null,
+      "generation_time_seconds": 8.690137760015205,
+      "audio_format": null,
+      "audio_path": null,
+      "audio_script_gold": null,
+      "speech_effects": null,
+      "source_effects": null,
+      "channel_effects": null,
+      "turn_taking_action": null,
+      "utterance_ids": null,
+      "chunk_id": null,
+      "is_final_chunk": true,
+      "source": null,
+      "contains_speech": true
+    },
+    {
+      "role": "user",
+      "content": "Go ahead and check all three. Actually, just exchange the desk lamp. What brighter options are available?",
+      "tool_calls": null,
+      "is_audio": false,
+      "turn_idx": 11,
+      "timestamp": "2026-11-07T21:31:11.467642",
+      "cost": null,
+      "usage": {
+        "prompt_tokens": 14494,
+        "completion_tokens": 252
+      },
+      "raw_data": {
+        "provider": "codex-cli/gpt-6.1-sol",
+        "reasoning_effort": "xhigh"
+      },
+      "generation_time_seconds": null,
+      "audio_format": null,
+      "audio_path": null,
+      "audio_script_gold": null,
+      "speech_effects": null,
+      "source_effects": null,
+      "channel_effects": null,
+      "turn_taking_action": null,
+      "utterance_ids": null,
+      "chunk_id": null,
+      "is_final_chunk": true,
+      "source": null,
+      "contains_speech": true
+    },
+    {
+      "role": "assistant",
+      "content": null,
+      "tool_calls": [
+        {
+          "id": "7XANet30b3rny3z4wng2nISAwAgGPUSJ",
+          "name": "get_order_details",
+          "arguments": {
+            "order_id": "#W6390527"
+          },
+          "requestor": "assistant"
+        }
+      ],
+      "is_audio": false,
+      "turn_idx": 12,
+      "timestamp": "2026-11-07T21:31:13.793740",
+      "cost": 0.0,
+      "usage": {
+        "prompt_tokens": 6172,
+        "completion_tokens": 40
+      },
+      "raw_data": null,
+      "generation_time_seconds": 2.1614586299983785,
+      "audio_format": null,
+      "audio_path": null,
+      "audio_script_gold": null,
+      "speech_effects": null,
+      "source_effects": null,
+      "channel_effects": null,
+      "turn_taking_action": null,
+      "utterance_ids": null,
+      "chunk_id": null,
+      "is_final_chunk": true,
+      "source": null,
+      "contains_speech": true
+    },
+    {
+      "id": "7XANet30b3rny3z4wng2nISAwAgGPUSJ",
+      "role": "tool",
+      "content": "{\"order_id\": \"#W6390527\", \"user_id\": \"mei_kovacs_8020\", \"address\": {\"address1\": \"317 Elm Street\", \"address2\": \"Suite 461\", \"city\": \"Charlotte\", \"country\": \"USA\", \"state\": \"NC\", \"zip\": \"28236\"}, \"items\": [{\"name\": \"Desk Lamp\", \"product_id\": \"6817146515\", \"item_id\": \"8384507844\", \"price\": 137.94, \"options\": {\"color\": \"white\", \"brightness\": \"medium\", \"power source\": \"USB\"}}, {\"name\": \"Hiking Boots\", \"product_id\": \"7363354090\", \"item_id\": \"1615379700\", \"price\": 253.89, \"options\": {\"size\": \"10\", \"material\": \"synthetic\", \"waterproof\": \"yes\"}}, {\"name\": \"Water Bottle\", \"product_id\": \"8310926033\", \"item_id\": \"8538875209\", \"price\": 45.13, \"options\": {\"capacity\": \"500ml\", \"material\": \"glass\", \"color\": \"black\"}}], \"status\": \"delivered\", \"fulfillments\": [{\"tracking_id\": [\"745984883162\"], \"item_ids\": [\"8384507844\", \"1615379700\", \"8538875209\"]}], \"payment_history\": [{\"transaction_type\": \"payment\", \"amount\": 436.96, \"payment_method_id\": \"paypal_7644869\"}], \"cancel_reason\": null, \"exchange_items\": null, \"exchange_new_items\": null, \"exchange_payment_method_id\": null, \"exchange_price_difference\": null, \"return_items\": null, \"return_payment_method_id\": null}",
+      "requestor": "assistant",
+      "error": false,
+      "execution_status": "executed",
+      "turn_idx": 13,
+      "timestamp": "2026-11-07T21:31:13.794000"
+    },
+    {
+      "role": "assistant",
+      "content": null,
+      "tool_calls": [
+        {
+          "id": "6j6jk3myEe073f5KKVFXVWlF9eiyckWy",
+          "name": "get_order_details",
+          "arguments": {
+            "order_id": "#W7800651"
+          },
+          "requestor": "assistant"
+        }
+      ],
+      "is_audio": false,
+      "turn_idx": 14,
+      "timestamp": "2026-11-07T21:31:16.822129",
+      "cost": 0.0,
+      "usage": {
+        "prompt_tokens": 6737,
+        "completion_tokens": 40
+      },
+      "raw_data": null,
+      "generation_time_seconds": 3.0100253100390546,
+      "audio_format": null,
+      "audio_path": null,
+      "audio_script_gold": null,
+      "speech_effects": null,
+      "source_effects": null,
+      "channel_effects": null,
+      "turn_taking_action": null,
+      "utterance_ids": null,
+      "chunk_id": null,
+      "is_final_chunk": true,
+      "source": null,
+      "contains_speech": true
+    },
+    {
+      "id": "6j6jk3myEe073f5KKVFXVWlF9eiyckWy",
+      "role": "tool",
+      "content": "{\"order_id\": \"#W7800651\", \"user_id\": \"mei_kovacs_8020\", \"address\": {\"address1\": \"576 Oak Street\", \"address2\": \"Suite 970\", \"city\": \"San Francisco\", \"country\": \"USA\", \"state\": \"CA\", \"zip\": \"94137\"}, \"items\": [{\"name\": \"Gaming Mouse\", \"product_id\": \"5713490933\", \"item_id\": \"5796612084\", \"price\": 158.89, \"options\": {\"color\": \"RGB\", \"sensor type\": \"optical\", \"connectivity\": \"wired\"}}, {\"name\": \"Bookshelf\", \"product_id\": \"8600330539\", \"item_id\": \"3778705663\", \"price\": 473.48, \"options\": {\"material\": \"metal\", \"color\": \"black\", \"height\": \"6 ft\"}}, {\"name\": \"Office Chair\", \"product_id\": \"4794339885\", \"item_id\": \"4648362606\", \"price\": 503.76, \"options\": {\"material\": \"leather\", \"color\": \"black\", \"armrest\": \"adjustable\", \"backrest height\": \"high-back\"}}], \"status\": \"pending\", \"fulfillments\": [], \"payment_history\": [{\"transaction_type\": \"payment\", \"amount\": 1136.13, \"payment_method_id\": \"paypal_7644869\"}], \"cancel_reason\": null, \"exchange_items\": null, \"exchange_new_items\": null, \"exchange_payment_method_id\": null, \"exchange_price_difference\": null, \"return_items\": null, \"return_payment_method_id\": null}",
+      "requestor": "assistant",
+      "error": false,
+      "execution_status": "executed",
+      "turn_idx": 15,
+      "timestamp": "2026-11-07T21:31:16.822417"
+    },
+    {
+      "role": "assistant",
+      "content": null,
+      "tool_calls": [
+        {
+          "id": "1bVWISE5N2lBpNE2TAZtEUmXO2Q8Zv4Y",
+          "name": "get_order_details",
+          "arguments": {
+            "order_id": "#W8065207"
+          },
+          "requestor": "assistant"
+        }
+      ],
+      "is_audio": false,
+      "turn_idx": 16,
+      "timestamp": "2026-11-07T21:31:19.814661",
+      "cost": 0.0,
+      "usage": {
+        "prompt_tokens": 7253,
+        "completion_tokens": 40
+      },
+      "raw_data": null,
+      "generation_time_seconds": 2.97362708800938,
+      "audio_format": null,
+      "audio_path": null,
+      "audio_script_gold": null,
+      "speech_effects": null,
+      "source_effects": null,
+      "channel_effects": null,
+      "turn_taking_action": null,
+      "utterance_ids": null,
+      "chunk_id": null,
+      "is_final_chunk": true,
+      "source": null,
+      "contains_speech": true
+    },
+    {
+      "id": "1bVWISE5N2lBpNE2TAZtEUmXO2Q8Zv4Y",
+      "role": "tool",
+      "content": "{\"order_id\": \"#W8065207\", \"user_id\": \"mei_kovacs_8020\", \"address\": {\"address1\": \"317 Elm Street\", \"address2\": \"Suite 461\", \"city\": \"Charlotte\", \"country\": \"USA\", \"state\": \"NC\", \"zip\": \"28236\"}, \"items\": [{\"name\": \"Smart Watch\", \"product_id\": \"6945232052\", \"item_id\": \"5694328282\", \"price\": 323.19, \"options\": {\"color\": \"gold\", \"band material\": \"leather\", \"display\": \"AMOLED\"}}, {\"name\": \"Smartphone\", \"product_id\": \"1801728040\", \"item_id\": \"1631373418\", \"price\": 1291.21, \"options\": {\"color\": \"gold\", \"storage\": \"128GB\", \"RAM\": \"6GB\", \"screen size\": \"6.1-inch\"}}, {\"name\": \"Luggage Set\", \"product_id\": \"5426915165\", \"item_id\": \"9956648681\", \"price\": 452.62, \"options\": {\"piece count\": \"4-piece\", \"color\": \"red\", \"material\": \"hardshell\"}}, {\"name\": \"Garden Hose\", \"product_id\": \"6679515468\", \"item_id\": \"4024196380\", \"price\": 102.9, \"options\": {\"length\": \"50ft\", \"material\": \"latex\", \"color\": \"black\"}}], \"status\": \"delivered\", \"fulfillments\": [{\"tracking_id\": [\"731287459054\"], \"item_ids\": [\"5694328282\", \"1631373418\", \"9956648681\", \"4024196380\"]}], \"payment_history\": [{\"transaction_type\": \"payment\", \"amount\": 2169.92, \"payment_method_id\": \"paypal_7644869\"}], \"cancel_reason\": null, \"exchange_items\": null, \"exchange_new_items\": null, \"exchange_payment_method_id\": null, \"exchange_price_difference\": null, \"return_items\": null, \"return_payment_method_id\": null}",
+      "requestor": "assistant",
+      "error": false,
+      "execution_status": "executed",
+      "turn_idx": 17,
+      "timestamp": "2026-11-07T21:31:19.814940"
+    },
+    {
+      "role": "assistant",
+      "content": "Thank you for your patience. Here’s what I found:\n- Order #W6390527 (delivered) includes:\n- Desk Lamp (item_id 8384507844, white, medium brightness, USB power) at $137.94\n- Water Bottle (item_id 8538875209, 500ml, glass, black) at $45.13\n- Other items: Hiking Boots and (in this order) other items as listed.\n- Order #W7800651 is pending and does not include the desk lamp or water bottle.\n- Order #W8065207 is delivered but does not include the desk lamp or water bottle.\nSo the relevant order for your exchange is #W6390527.\nNow I’ll check the available variants for the Desk Lamp. You asked for a brighter option, and you prefer battery power, then USB, then AC. I’ll also pull the Water Bottle options in case you still want to exchange the bottle (you mentioned earlier you want a bigger one).\nPlease confirm:\n- Which item(s) you want to exchange (lamp only, or lamp + water bottle)?\n- For the lamp, any color preference (e.g., white, black, metal)?\n- For the water bottle, what capacity/material/color would you like?\nOnce I have these, I’ll list the available options with prices and total price differences.\nNote: For delivered orders, we can process an exchange once, so please confirm all items to be exchanged now.\nI can also provide the tracking number for order #W6390527 if you need it.\nYour current payment method on file is PayPal (paypal_7644869), which can be used to handle any price difference.\nHow would you like to proceed?",
+      "tool_calls": null,
+      "is_audio": false,
+      "turn_idx": 18,
+      "timestamp": "2026-11-07T21:31:43.555087",
+      "cost": 0.0,
+      "usage": {
+        "prompt_tokens": 7927,
+        "completion_tokens": 421
+      },
+      "raw_data": null,
+      "generation_time_seconds": 23.720210915023927,
+      "audio_format": null,
+      "audio_path": null,
+      "audio_script_gold": null,
+      "speech_effects": null,
+      "source_effects": null,
+      "channel_effects": null,
+      "turn_taking_action": null,
+      "utterance_ids": null,
+      "chunk_id": null,
+      "is_final_chunk": true,
+      "source": null,
+      "contains_speech": true
+    },
+    {
+      "role": "user",
+      "content": "Just the desk lamp, like I said. Please show me the brighter options. Battery power first, then USB, then AC.",
+      "tool_calls": null,
+      "is_audio": false,
+      "turn_idx": 19,
+      "timestamp": "2026-11-07T21:31:52.350340",
+      "cost": null,
+      "usage": {
+        "prompt_tokens": 14912,
+        "completion_tokens": 240
+      },
+      "raw_data": {
+        "provider": "codex-cli/gpt-6.1-sol",
+        "reasoning_effort": "xhigh"
+      },
+      "generation_time_seconds": null,
+      "audio_format": null,
+      "audio_path": null,
+      "audio_script_gold": null,
+      "speech_effects": null,
+      "source_effects": null,
+      "channel_effects": null,
+      "turn_taking_action": null,
+      "utterance_ids": null,
+      "chunk_id": null,
+      "is_final_chunk": true,
+      "source": null,
+      "contains_speech": true
+    },
+    {
+      "role": "assistant",
+      "content": null,
+      "tool_calls": [
+        {
+          "id": "N8AaN2RhXyyBM7wmTEXChEeZB4tP7Utn",
+          "name": "get_product_details",
+          "arguments": {
+            "product_id": "6817146515"
+          },
+          "requestor": "assistant"
+        }
+      ],
+      "is_audio": false,
+      "turn_idx": 20,
+      "timestamp": "2026-11-07T21:31:54.669831",
+      "cost": 0.0,
+      "usage": {
+        "prompt_tokens": 8393,
+        "completion_tokens": 41
+      },
+      "raw_data": null,
+      "generation_time_seconds": 2.2974857889930718,
+      "audio_format": null,
+      "audio_path": null,
+      "audio_script_gold": null,
+      "speech_effects": null,
+      "source_effects": null,
+      "channel_effects": null,
+      "turn_taking_action": null,
+      "utterance_ids": null,
+      "chunk_id": null,
+      "is_final_chunk": true,
+      "source": null,
+      "contains_speech": true
+    },
+    {
+      "id": "N8AaN2RhXyyBM7wmTEXChEeZB4tP7Utn",
+      "role": "tool",
+      "content": "{\"name\": \"Desk Lamp\", \"product_id\": \"6817146515\", \"variants\": {\"9083642334\": {\"item_id\": \"9083642334\", \"options\": {\"color\": \"white\", \"brightness\": \"high\", \"power source\": \"USB\"}, \"available\": true, \"price\": 164.28}, \"4385534692\": {\"item_id\": \"4385534692\", \"options\": {\"color\": \"white\", \"brightness\": \"high\", \"power source\": \"AC adapter\"}, \"available\": false, \"price\": 138.07}, \"7624783998\": {\"item_id\": \"7624783998\", \"options\": {\"color\": \"black\", \"brightness\": \"high\", \"power source\": \"AC adapter\"}, \"available\": true, \"price\": 154.17}, \"1270145486\": {\"item_id\": \"1270145486\", \"options\": {\"color\": \"white\", \"brightness\": \"high\", \"power source\": \"battery\"}, \"available\": false, \"price\": 144.07}, \"5320792178\": {\"item_id\": \"5320792178\", \"options\": {\"color\": \"black\", \"brightness\": \"medium\", \"power source\": \"AC adapter\"}, \"available\": true, \"price\": 135.24}, \"5370728469\": {\"item_id\": \"5370728469\", \"options\": {\"color\": \"silver\", \"brightness\": \"medium\", \"power source\": \"USB\"}, \"available\": true, \"price\": 164.97}, \"6805564527\": {\"item_id\": \"6805564527\", \"options\": {\"color\": \"black\", \"brightness\": \"medium\", \"power source\": \"USB\"}, \"available\": true, \"price\": 158.41}, \"1569765161\": {\"item_id\": \"1569765161\", \"options\": {\"color\": \"silver\", \"brightness\": \"low\", \"power source\": \"AC adapter\"}, \"available\": true, \"price\": 143.02}, \"7453605304\": {\"item_id\": \"7453605304\", \"options\": {\"color\": \"silver\", \"brightness\": \"low\", \"power source\": \"battery\"}, \"available\": true, \"price\": 150.01}, \"9190635437\": {\"item_id\": \"9190635437\", \"options\": {\"color\": \"black\", \"brightness\": \"low\", \"power source\": \"USB\"}, \"available\": true, \"price\": 153.23}, \"4447749792\": {\"item_id\": \"4447749792\", \"options\": {\"color\": \"white\", \"brightness\": \"medium\", \"power source\": \"AC adapter\"}, \"available\": false, \"price\": 139.8}, \"8384507844\": {\"item_id\": \"8384507844\", \"options\": {\"color\": \"white\", \"brightness\": \"medium\", \"power source\": \"USB\"}, \"available\": false, \"price\": 137.94}}}",
+      "requestor": "assistant",
+      "error": false,
+      "execution_status": "executed",
+      "turn_idx": 21,
+      "timestamp": "2026-11-07T21:31:54.670126"
+    },
+    {
+      "role": "assistant",
+      "content": "Here are the brighter Desk Lamp options based on your priority (battery → USB → AC). Availability and price are included:\n- Battery (high brightness):\n- item_id 1270145486: white, high brightness, battery — $144.07 — not available\n- item_id 7453605304: silver, low brightness, battery — $150.01 — available\n- USB (high brightness):\n- item_id 9083642334: white, high brightness, USB — $164.28 — available\n- AC adapter (high brightness):\n- item_id 4385534692: white, high brightness, AC adapter — $138.07 — not available\n- item_id 7624783998: black, high brightness, AC adapter — $154.17 — available\nOther high-brightness battery options are not available. If you want high brightness specifically, the available options are:\n- item_id 9083642334 (white, high, USB) — $164.28\n- item_id 7624783998 (black, high, AC adapter) — $154.17\nIf you’re open to lower brightness, there is also item_id 7453605304 (silver, low, battery) — $150.01.\nYour current lamp (item_id 8384507844) is $137.94. Price differences:\n- 9083642334: +$26.34\n- 7624783998: +$16.23\n- 7453605304: +$12.07\nPlease let me know which option you’d like to exchange to. I’ll also need the payment method to handle the price difference. Your PayPal on file (paypal_7644869) can be used.\nOnce you confirm, I’ll submit the exchange request. Remember, for delivered orders we can only do one exchange, so please confirm all details.\nHow would you like to proceed?",
+      "tool_calls": null,
+      "is_audio": false,
+      "turn_idx": 22,
+      "timestamp": "2026-11-07T21:32:25.376038",
+      "cost": 0.0,
+      "usage": {
+        "prompt_tokens": 9301,
+        "completion_tokens": 528
+      },
+      "raw_data": null,
+      "generation_time_seconds": 30.6841800250113,
+      "audio_format": null,
+      "audio_path": null,
+      "audio_script_gold": null,
+      "speech_effects": null,
+      "source_effects": null,
+      "channel_effects": null,
+      "turn_taking_action": null,
+      "utterance_ids": null,
+      "chunk_id": null,
+      "is_final_chunk": true,
+      "source": null,
+      "contains_speech": true
+    },
+    {
+      "role": "user",
+      "content": "Go with the white, high-brightness USB lamp. Use my PayPal on file for the $26.34 difference. Just the desk lamp.",
+      "tool_calls": null,
+      "is_audio": false,
+      "turn_idx": 23,
+      "timestamp": "2026-11-07T21:32:33.567956",
+      "cost": null,
+      "usage": {
+        "prompt_tokens": 15374,
+        "completion_tokens": 203
+      },
+      "raw_data": {
+        "provider": "codex-cli/gpt-6.1-sol",
+        "reasoning_effort": "xhigh"
+      },
+      "generation_time_seconds": null,
+      "audio_format": null,
+      "audio_path": null,
+      "audio_script_gold": null,
+      "speech_effects": null,
+      "source_effects": null,
+      "channel_effects": null,
+      "turn_taking_action": null,
+      "utterance_ids": null,
+      "chunk_id": null,
+      "is_final_chunk": true,
+      "source": null,
+      "contains_speech": true
+    },
+    {
+      "role": "assistant",
+      "content": "Great. Here’s the exchange summary for your confirmation:\n- Order ID: #W6390527\n- Item to exchange: Desk Lamp (item_id 8384507844, white, medium, USB) — $137.94\n- New item: Desk Lamp (item_id 9083642334, white, high brightness, USB) — $164.28\n- Price difference: +$26.34\n- Payment method for difference: PayPal (paypal_7644869)\n- Order status will change to “exchange requested”. You’ll receive an email with instructions on how to return the original item. A new order is not needed.\nPlease confirm “yes” to proceed with this exchange.\nNote: Since this is a delivered order, we can only process one exchange, and after this request we won’t be able to modify or cancel this order further.\nIs there anything else you want to include? If not, please confirm to proceed.",
+      "tool_calls": null,
+      "is_audio": false,
+      "turn_idx": 24,
+      "timestamp": "2026-11-07T21:32:46.678552",
+      "cost": 0.0,
+      "usage": {
+        "prompt_tokens": 9879,
+        "completion_tokens": 234
+      },
+      "raw_data": null,
+      "generation_time_seconds": 13.086204040038865,
+      "audio_format": null,
+      "audio_path": null,
+      "audio_script_gold": null,
+      "speech_effects": null,
+      "source_effects": null,
+      "channel_effects": null,
+      "turn_taking_action": null,
+      "utterance_ids": null,
+      "chunk_id": null,
+      "is_final_chunk": true,
+      "source": null,
+      "contains_speech": true
+    },
+    {
+      "role": "user",
+      "content": "Yes, go ahead. Just the desk lamp. Use my PayPal on file for the $26.34 difference.",
+      "tool_calls": null,
+      "is_audio": false,
+      "turn_idx": 25,
+      "timestamp": "2026-11-07T21:32:53.259323",
+      "cost": null,
+      "usage": {
+        "prompt_tokens": 15632,
+        "completion_tokens": 145
+      },
+      "raw_data": {
+        "provider": "codex-cli/gpt-6.1-sol",
+        "reasoning_effort": "xhigh"
+      },
+      "generation_time_seconds": null,
+      "audio_format": null,
+      "audio_path": null,
+      "audio_script_gold": null,
+      "speech_effects": null,
+      "source_effects": null,
+      "channel_effects": null,
+      "turn_taking_action": null,
+      "utterance_ids": null,
+      "chunk_id": null,
+      "is_final_chunk": true,
+      "source": null,
+      "contains_speech": true
+    },
+    {
+      "role": "assistant",
+      "content": null,
+      "tool_calls": [
+        {
+          "id": "FZQ2BMOKEXdWz0RsekP1zTq80l6eY7E5",
+          "name": "exchange_delivered_order_items",
+          "arguments": {
+            "order_id": "#W6390527",
+            "item_ids": [
+              "8384507844"
+            ],
+            "new_item_ids": [
+              "9083642334"
+            ],
+            "payment_method_id": "paypal_7644869"
+          },
+          "requestor": "assistant"
+        }
+      ],
+      "is_audio": false,
+      "turn_idx": 26,
+      "timestamp": "2026-11-07T21:33:00.024614",
+      "cost": 0.0,
+      "usage": {
+        "prompt_tokens": 10157,
+        "completion_tokens": 119
+      },
+      "raw_data": null,
+      "generation_time_seconds": 6.734739770996384,
+      "audio_format": null,
+      "audio_path": null,
+      "audio_script_gold": null,
+      "speech_effects": null,
+      "source_effects": null,
+      "channel_effects": null,
+      "turn_taking_action": null,
+      "utterance_ids": null,
+      "chunk_id": null,
+      "is_final_chunk": true,
+      "source": null,
+      "contains_speech": true
+    },
+    {
+      "id": "FZQ2BMOKEXdWz0RsekP1zTq80l6eY7E5",
+      "role": "tool",
+      "content": "{\"order_id\": \"#W6390527\", \"user_id\": \"mei_kovacs_8020\", \"address\": {\"address1\": \"317 Elm Street\", \"address2\": \"Suite 461\", \"city\": \"Charlotte\", \"country\": \"USA\", \"state\": \"NC\", \"zip\": \"28236\"}, \"items\": [{\"name\": \"Desk Lamp\", \"product_id\": \"6817146515\", \"item_id\": \"8384507844\", \"price\": 137.94, \"options\": {\"color\": \"white\", \"brightness\": \"medium\", \"power source\": \"USB\"}}, {\"name\": \"Hiking Boots\", \"product_id\": \"7363354090\", \"item_id\": \"1615379700\", \"price\": 253.89, \"options\": {\"size\": \"10\", \"material\": \"synthetic\", \"waterproof\": \"yes\"}}, {\"name\": \"Water Bottle\", \"product_id\": \"8310926033\", \"item_id\": \"8538875209\", \"price\": 45.13, \"options\": {\"capacity\": \"500ml\", \"material\": \"glass\", \"color\": \"black\"}}], \"status\": \"exchange requested\", \"fulfillments\": [{\"tracking_id\": [\"745984883162\"], \"item_ids\": [\"8384507844\", \"1615379700\", \"8538875209\"]}], \"payment_history\": [{\"transaction_type\": \"payment\", \"amount\": 436.96, \"payment_method_id\": \"paypal_7644869\"}], \"cancel_reason\": null, \"exchange_items\": [\"8384507844\"], \"exchange_new_items\": [\"9083642334\"], \"exchange_payment_method_id\": \"paypal_7644869\", \"exchange_price_difference\": 26.34, \"return_items\": null, \"return_payment_method_id\": null}",
+      "requestor": "assistant",
+      "error": false,
+      "execution_status": "executed",
+      "turn_idx": 27,
+      "timestamp": "2026-11-07T21:33:00.024945"
+    },
+    {
+      "role": "assistant",
+      "content": "Your exchange request has been submitted successfully. Here are the details:\n- Order ID: #W6390527\n- Exchanged item: Desk Lamp (item_id 8384507844 → 9083642334)\n- Price difference charged: $26.34 to PayPal (paypal_7644869)\n- Order status: exchange requested\n- Tracking number for the original delivery: 745984883162\nYou’ll receive an email shortly with instructions on how to return the original lamp. Once we receive it, we’ll process the exchange. No new order is needed.\nIf there’s anything else you’d like to adjust or any other questions, let me know.\nIs there anything else I can help you with today?",
+      "tool_calls": null,
+      "is_audio": false,
+      "turn_idx": 28,
+      "timestamp": "2026-11-07T21:33:12.066385",
+      "cost": 0.0,
+      "usage": {
+        "prompt_tokens": 10837,
+        "completion_tokens": 189
+      },
+      "raw_data": null,
+      "generation_time_seconds": 12.01636414398672,
+      "audio_format": null,
+      "audio_path": null,
+      "audio_script_gold": null,
+      "speech_effects": null,
+      "source_effects": null,
+      "channel_effects": null,
+      "turn_taking_action": null,
+      "utterance_ids": null,
+      "chunk_id": null,
+      "is_final_chunk": true,
+      "source": null,
+      "contains_speech": true
+    },
+    {
+      "role": "user",
+      "content": "###STOP###",
+      "tool_calls": null,
+      "is_audio": false,
+      "turn_idx": 29,
+      "timestamp": "2026-11-07T21:33:16.545798",
+      "cost": null,
+      "usage": {
+        "prompt_tokens": 18563,
+        "completion_tokens": 58
+      },
+      "raw_data": {
+        "provider": "codex-cli/gpt-6.1-sol",
+        "reasoning_effort": "xhigh"
+      },
+      "generation_time_seconds": null,
+      "audio_format": null,
+      "audio_path": null,
+      "audio_script_gold": null,
+      "speech_effects": null,
+      "source_effects": null,
+      "channel_effects": null,
+      "turn_taking_action": null,
+      "utterance_ids": null,
+      "chunk_id": null,
+      "is_final_chunk": true,
+      "source": null,
+      "contains_speech": true
+    }
+  ],
+  "ticks": null,
+  "trial": null,
+  "seed": 300,
+  "mode": "half_duplex",
+  "speech_environment": null,
+  "review": null,
+  "user_only_review": null,
+  "info": null,
+  "auth_classification": null,
+  "hallucination_retries_used": 0,
+  "hallucination_check": null,
+  "provider_session_id": null,
+  "policy": "# Retail agent policy\n\nAs a retail agent, you can help users:\n\n- **cancel or modify pending orders**\n- **return or exchange delivered orders**\n- **modify their default user address**\n- **provide information about their own profile, orders, and related products**\n\nAt the beginning of the conversation, you have to authenticate the user identity by locating their user id via email, or via name + zip code. This has to be done even when the user already provides the user id.\n\nOnce the user has been authenticated, you can provide the user with information about order, product, profile information, e.g. help the user look up order id.\n\nYou can only help one user per conversation (but you can handle multiple requests from the same user), and must deny any requests for tasks related to any other user.\n\nBefore taking any action that updates the database (cancel, modify, return, exchange), you must list the action details and obtain explicit user confirmation (yes) to proceed.\n\nYou should not make up any information or knowledge or procedures not provided by the user or the tools, or give subjective recommendations or comments.\n\nYou should at most make one tool call at a time, and if you take a tool call, you should not respond to the user at the same time. If you respond to the user, you should not make a tool call at the same time.\n\nYou should deny user requests that are against this policy.\n\nYou should transfer the user to a human agent if and only if the request cannot be handled within the scope of your actions. To transfer, first make a tool call to transfer_to_human_agents, and then send the message 'YOU ARE BEING TRANSFERRED TO A HUMAN AGENT. PLEASE HOLD ON.' to the user.\n\n## Domain basic\n\n- All times in the database are EST and 24 hour based. For example \"02:30:00\" means 2:30 AM EST.\n\n### User\n\nEach user has a profile containing:\n\n- unique user id\n- email\n- default address\n- payment methods.\n\nThere are three types of payment methods: **gift card**, **paypal account**, **credit card**.\n\n### Product\n\nOur retail store has 50 types of products.\n\nFor each **type of product**, there are **variant items** of different **options**.\n\nFor example, for a 't-shirt' product, there could be a variant item with option 'color blue size M', and another variant item with option 'color red size L'.\n\nEach product has the following attributes:\n\n- unique product id\n- name\n- list of variants\n\nEach variant item has the following attributes:\n\n- unique item id\n- information about the value of the product options for this item.\n- availability\n- price\n\nNote: Product ID and Item ID have no relations and should not be confused!\n\n### Order\n\nEach order has the following attributes:\n\n- unique order id\n- user id\n- address\n- items ordered\n- status\n- fullfilments info (tracking id and item ids)\n- payment history\n\nThe status of an order can be: **pending**, **processed**, **delivered**, or **cancelled**.\n\nOrders can have other optional attributes based on the actions that have been taken (cancellation reason, which items have been exchanged, what was the exchane price difference etc)\n\n## Generic action rules\n\nGenerally, you can only take action on pending or delivered orders.\n\nExchange or modify order tools can only be called once per order. Be sure that all items to be changed are collected into a list before making the tool call!!!\n\n## Cancel pending order\n\nAn order can only be cancelled if its status is 'pending', and you should check its status before taking the action.\n\nThe user needs to confirm the order id and the reason (either 'no longer needed' or 'ordered by mistake') for cancellation. Other reasons are not acceptable.\n\nAfter user confirmation, the order status will be changed to 'cancelled', and the total will be refunded via the original payment method immediately if it is gift card, otherwise in 5 to 7 business days.\n\n## Modify pending order\n\nAn order can only be modified if its status is 'pending', and you should check its status before taking the action.\n\nFor a pending order, you can take actions to modify its shipping address, payment method, or product item options, but nothing else.\n\n### Modify payment\n\nThe user can only choose a single payment method different from the original payment method.\n\nIf the user wants the modify the payment method to gift card, it must have enough balance to cover the total amount.\n\nAfter user confirmation, the order status will be kept as 'pending'. The original payment method will be refunded immediately if it is a gift card, otherwise it will be refunded within 5 to 7 business days.\n\n### Modify items\n\nThis action can only be called once, and will change the order status to 'pending (items modifed)'. The agent will not be able to modify or cancel the order anymore. So you must confirm all the details are correct and be cautious before taking this action. In particular, remember to remind the customer to confirm they have provided all the items they want to modify.\n\nFor a pending order, each item can be modified to an available new item of the same product but of different product option. There cannot be any change of product types, e.g. modify shirt to shoe.\n\nThe user must provide a payment method to pay or receive refund of the price difference. If the user provides a gift card, it must have enough balance to cover the price difference.\n\n## Return delivered order\n\nAn order can only be returned if its status is 'delivered', and you should check its status before taking the action.\n\nThe user needs to confirm the order id and the list of items to be returned.\n\nThe user needs to provide a payment method to receive the refund.\n\nThe refund must either go to the original payment method, or an existing gift card.\n\nAfter user confirmation, the order status will be changed to 'return requested', and the user will receive an email regarding how to return items.\n\n## Exchange delivered order\n\nAn order can only be exchanged if its status is 'delivered', and you should check its status before taking the action. In particular, remember to remind the customer to confirm they have provided all items to be exchanged.\n\nFor a delivered order, each item can be exchanged to an available new item of the same product but of different product option. There cannot be any change of product types, e.g. modify shirt to shoe.\n\nThe user must provide a payment method to pay or receive refund of the price difference. If the user provides a gift card, it must have enough balance to cover the price difference.\n\nAfter user confirmation, the order status will be changed to 'exchange requested', and the user will receive an email regarding how to return items. There is no need to place a new order.\n",
+  "effect_timeline": null
+}
