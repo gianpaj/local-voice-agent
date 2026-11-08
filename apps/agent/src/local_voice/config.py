@@ -15,6 +15,7 @@ class Config:
     ollama_url: str = "http://127.0.0.1:11434"
     ollama_source: str = "qwen3.5:9b"
     ollama_model: str = "local-voice-qwen"
+    llm_max_checkpoint_bytes: int = 8_000_000_000
     allowed_origins: tuple[str, ...] = ("http://localhost:3000", "http://127.0.0.1:3000")
     stt_timeout: float = 15
     max_utterance_seconds: float = 30
@@ -67,6 +68,7 @@ class Config:
             ollama_url=os.getenv("OLLAMA_URL", "http://127.0.0.1:11434").rstrip("/"),
             ollama_source=os.getenv("OLLAMA_SOURCE_MODEL", "qwen3.5:9b"),
             ollama_model=os.getenv("OLLAMA_MODEL", "local-voice-qwen"),
+            llm_max_checkpoint_bytes=int(os.getenv("LLM_MAX_CHECKPOINT_BYTES", "8000000000")),
             metrics_dir=Path(os.getenv("METRICS_DIR", str(Path(__file__).resolve().parents[4] / ".local/metrics"))).expanduser().resolve(),
             metrics_max_bytes=int(os.getenv("METRICS_MAX_BYTES", "10000000")),
             metrics_backups=int(os.getenv("METRICS_BACKUPS", "5")),
@@ -81,6 +83,8 @@ class Config:
         return result
 
     def validate(self):
+        if not 1 <= self.llm_max_checkpoint_bytes <= 64_000_000_000:
+            raise ValueError("LLM_MAX_CHECKPOINT_BYTES must be between 1 and 64000000000")
         if self.stt_backend not in {"parakeet", "whistle"}:
             raise ValueError("STT_BACKEND must be parakeet or whistle")
         if not 1 <= self.stt_threads <= 64:

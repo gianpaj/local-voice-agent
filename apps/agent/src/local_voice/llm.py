@@ -27,8 +27,8 @@ async def prepare_ollama(config: Config):
         source = next((m for m in response.json()["models"] if m["name"] == config.ollama_source), None)
         if not source:
             raise ValueError(f"Install {config.ollama_source} locally first; automatic pulls are disabled")
-        if source["size"] >= 8_000_000_000:
-            raise ValueError("The configured LLM checkpoint exceeds 8 GB")
+        if source["size"] >= config.llm_max_checkpoint_bytes:
+            raise ValueError("The configured LLM checkpoint exceeds LLM_MAX_CHECKPOINT_BYTES")
         created = await client.post("/api/create", json={
             "model": config.ollama_model, "from": config.ollama_source,
             "parameters": {"num_ctx": 4096, "num_predict": 128, "temperature": 0.5},

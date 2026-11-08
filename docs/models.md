@@ -12,7 +12,7 @@ Setup deliberately does not fetch weights. Populate ignored `.env` using portabl
 
 The adapter uses VAD-completed 16 kHz mono int16 PCM and transcript-only output files. No NeMo/ONNX substitution or Whisper dependency. This application remains English-only even though v3 supports other languages.
 
-For an explicit smaller CPU ASR experiment, see [optional Needle/Whistle](whistle.md). This leaves Parakeet as default and does not replace the conversational Qwen model with Needle's text/tool-routing model.
+For an explicit smaller CPU ASR experiment, see [optional Needle/Whistle](whistle.md). This leaves Parakeet as default and does not replace the conversational LLM with Needle's text/tool-routing model.
 
 ## Phonon
 
@@ -23,10 +23,27 @@ For an explicit smaller CPU ASR experiment, see [optional Needle/Whistle](whistl
 
 Acquire explicitly with the official `ptts --model hf://gradium/phonon-31m-en --lang en --device cpu --quant q8_0 ...` CLI or Hugging Face snapshot tools. Runtime uses a local directory, not a hub URL.
 
-## Qwen/Ollama
+## Nanbeige/Ollama — installed selection
+
+The installed deployment selected Nanbeige4.3-33B IQ2_M on 2026-11-08 after the
+companion/support pilot. See [the decision, exact artifact, local import, and
+rollback](nanbeige.md). Its 12,187,167,872-byte checkpoint exceeds the original
+8 GB LLM limit, so this deployment explicitly sets
+`LLM_MAX_CHECKPOINT_BYTES=16000000000`. The quantizer and original model identify
+Apache-2.0 licensing. Weights are reused locally, not redistributed in this repo.
+
+## Qwen/Ollama — portable default and rollback
 
 Reuse installed `qwen3.5:9b` Q4_K_M, 6,594,474,711 bytes, digest `6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7`. Install/acquire deliberately if missing; the app does not pull. Check the selected upstream model's terms before redistribution.
 
-Startup creates only alias `local-voice-qwen`, reusing blobs with 4,096 context/128 output tokens. The tested server is 0.24.0; `/v1/chat/completions` supports `reasoning_effort: none`. Normal final text alone reaches TTS, and a reply has a 30-second deadline.
+With the default configuration, startup creates alias `local-voice-qwen`; with
+the Nanbeige configuration, it creates only `local-voice-nanbeige`. Both reuse
+existing blobs with 4,096 context/128 output tokens. The tested server is 0.24.0;
+`/v1/chat/completions` accepts `reasoning_effort: none`. Final-answer text is
+forwarded to TTS, and a reply has a 30-second deadline.
 
-Documented sizes are for tested artifacts; preflight checks actual files/local metadata against 8,000,000,000 bytes per model. KV cache, runtime tensors and RAM/VRAM can exceed download size. Pin named revisions to reproduce quality; a different same-named file is not automatically equivalent.
+Documented sizes are for tested artifacts. STT/TTS preflight limits remain
+8,000,000,000 bytes; the LLM limit defaults to that value and may be explicitly
+overridden per project. KV cache, runtime tensors and RAM/VRAM can exceed download
+size. Pin named revisions to reproduce quality; a different same-named file is
+not automatically equivalent.
