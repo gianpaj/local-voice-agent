@@ -27,8 +27,8 @@ async def check(smoke=False, audio=None):
         tags = await client.get("/api/tags")
         tags.raise_for_status()
         source = next((m for m in tags.json()["models"] if m["name"] == config.ollama_source), None)
-        if not source or source["size"] >= 8_000_000_000:
-            raise ValueError("Configured local LLM must already exist and be smaller than 8 GB")
+        if not source or source["size"] >= config.llm_max_checkpoint_bytes:
+            raise ValueError("Configured local LLM must already exist below LLM_MAX_CHECKPOINT_BYTES")
         result.update(ollama_version=version.json()["version"], llm_bytes=source["size"])
     if smoke:
         result.update(await prepare_ollama(config))

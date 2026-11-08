@@ -6,6 +6,9 @@ An English-only voice playground. Talk through **your browser's microphone and s
 
 Optional CPU ASR comparison: [Needle + Whistle](docs/whistle.md). Parakeet remains the default; this experiment is a model-quality tradeoff to measure, not a promised equivalent.
 
+Optional local LLM replacement: [Nanbeige4.3-33B IQ2_M](docs/nanbeige.md), using
+existing weights through Ollama with an explicit project checkpoint-size override.
+
 Measured native optimization: [resident Parakeet](docs/native-inference.md)
 keeps the same checkpoint/precision in a supervised CUDA worker. The controlled
 comparison measured **487.6 → 52.3 ms median STT**, with **35/35 exact output

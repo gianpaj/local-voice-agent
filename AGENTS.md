@@ -1,7 +1,7 @@
 # Local Voice Agent
 
 ## Scope
-- English only. Parakeet STT, Phonon31M CPU TTS, local Ollama Qwen. No Whisper or hosted inference fallback.
+- English only. Parakeet STT, Phonon31M CPU TTS, local Ollama LLM (Qwen default; optional Nanbeige IQ2_M via ignored project configuration). No Whisper or hosted inference fallback.
 - Next.js frontend; Python Pipecat backend; direct SmallWebRTC. No LiveKit/Daily rooms/cloud service.
 - Browser mic/speaker over private Tailscale HTTPS is the active audio mode.
 - Follow docs/superpowers/specs and the implementation plan. User explicitly authorized writing the plan and starting implementation, without another approval pause.
