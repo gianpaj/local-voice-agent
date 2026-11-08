@@ -2,12 +2,16 @@
 
 An English-only voice playground. Talk through **your browser's microphone and speaker**; inference runs on your GPU computer.
 
-**Next.js + Pipecat SmallWebRTC + Parakeet + Ollama Qwen + Phonon.** No LiveKit server, Daily room, hosted inference, Whisper, cloud API key, database, or recording. The Python agent is the direct WebRTC peer; there is no separate media-server service.
+**Next.js + Pipecat SmallWebRTC + Parakeet + local Ollama LLM + Phonon.** No LiveKit server, Daily room, hosted inference, Whisper, cloud API key, database, or recording. The Python agent is the direct WebRTC peer; there is no separate media-server service.
 
 Optional CPU ASR comparison: [Needle + Whistle](docs/whistle.md). Parakeet remains the default; this experiment is a model-quality tradeoff to measure, not a promised equivalent.
 
-Optional local LLM replacement: [Nanbeige4.3-33B IQ2_M](docs/nanbeige.md), using
-existing weights through Ollama with an explicit project checkpoint-size override.
+**Current local LLM selection (2026-11-08): Nanbeige4.3-33B IQ2_M.** We chose
+to try it for the companion use case after a higher custom EQ rubric mean
+(5.57/20 vs Qwen's 4.30/20), with retail outcomes tied at 8/10. This small text
+pilot does not prove better voice quality or latency. See [why we switched,
+evidence, setup, and rollback](docs/nanbeige.md#why-we-changed-llms--2026-11-08).
+Portable defaults remain Qwen; the local service was verified and left stopped.
 
 Measured native optimization: [resident Parakeet](docs/native-inference.md)
 keeps the same checkpoint/precision in a supervised CUDA worker. The controlled
@@ -44,14 +48,19 @@ On another tailnet device use private **Tailscale HTTPS**, not plain HTTP to an 
 ## Models
 
 - Parakeet TDT 0.6B v3 Q8_0: **739 MB**, matching Handy CUDA runner. Utterance-level recognition after VAD, not live partial STT; pause at least every 30 seconds.
-- Qwen3.5 9B Q4_K_M through Ollama: **6.6 GB** weights. Startup creates only `local-voice-qwen`, reusing existing blobs, with 4,096 context and 128 output tokens. Warmed before ready; no pulls or server upgrade.
+- Nanbeige4.3-33B IQ2_M through Ollama: **12.2 GB** weights, selected in the installed deployment as `local-voice-nanbeige`. Reuses the benchmarked checkpoint; requires an explicit project checkpoint-size override. See [setup and rationale](docs/nanbeige.md).
+- Qwen3.5 9B Q4_K_M through Ollama: **6.6 GB** weights. Retained as portable default/rollback, using `local-voice-qwen`. Both configurations use 4,096 context and 128 output tokens, warmed before ready; no automatic pulls.
 - Phonon 31M English Q8_0: **64.5 MB** weights, about 65 MB selected snapshot. Kept loaded on CPU with four threads and 24 kHz PCM streaming.
 
-Each downloaded model is below 8 GB. Qwen's **resident allocation is around 8.6 GB**; runtime memory is not checkpoint size. Phonon stays on CPU to leave GPU room for Qwen and Parakeet. See [acquisition and licenses](docs/models.md).
+The original Qwen stack keeps each checkpoint below 8 GB; Nanbeige deliberately
+opts into a larger LLM checkpoint without changing the STT/TTS limits. Runtime
+allocation is not checkpoint size. Phonon stays on CPU to leave GPU room for the
+LLM and Parakeet. See [acquisition and licenses](docs/models.md).
 
 ## One concurrent call: measured performance
 
-**2026-11-06 — one active browser call at a time, with warmed local models.**
+**Historical Qwen baseline, 2026-11-06 — not Nanbeige performance.** One active
+browser call at a time, with warmed local models.
 This is an observed workload on the following computer, not a minimum-spec claim
 or a multi-call capacity benchmark.
 

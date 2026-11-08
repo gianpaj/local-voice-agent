@@ -5,6 +5,45 @@ IQ2_M** checkpoint instead of Qwen. Parakeet, Phonon, the system prompt,
 4,096-token context, 128-token replies, and finite model keepalive are unchanged.
 This changes the LLM, not its historical Qwen benchmark results.
 
+## Why we changed LLMs — 2026-11-08
+
+**Decision:** switch this installed companion/voice-agent deployment from
+Qwen3.5 9B Q4_K_M to Nanbeige4.3-33B IQ2_M, following the user's choice after
+reviewing the matched companion/customer-support pilot. This is a reversible
+product trial, not a finding that Nanbeige is universally better.
+
+The [audited comparison and reproducible evidence](https://github.com/gianpaj/ideas/blob/e9fb273552d7e6d4fda95e2f34cc512356c26a8c/expressive-voice-models/benchmarks/companion-support-2026-11-07/COMPARISON.md)
+record the signal behind that choice:
+
+- **Companion-style conversation:** Nanbeige averaged **5.57/20**, versus
+  Qwen's **4.30/20**, across the same ten EQ roleplay/debrief scenarios: a
+  **+1.27-point** custom-rubric difference. Companion dialogue is closer to this
+  product's purpose than the earlier coding-task evaluation.
+- **Customer-support outcomes:** both passed **8/10** retail tasks. This is a
+  tie in verified task outcomes, not an improvement in support success; the
+  failed cases differ. All failures, including Qwen's reply-cap failure, remain
+  in the denominators, and no scored cases were retried.
+- **Local feasibility:** the exact cached IQ2_M artifact fit the GPU. After the
+  choice, we also verified the installed Ollama integration with resident
+  Parakeet, Phonon, and real browser-decoded speech. No cloud inference or
+  STT/TTS replacement was needed.
+
+**Limits of the decision:** the EQ numbers are custom rubric means, not pass
+rates or official EQ-Bench leaderboard scores. Both absolute scores are low.
+The pilot used ten cases, one trial, and one evaluator route
+(`gpt-6.1-sol` / `xhigh` through Codex CLI, also the independent retail customer
+simulator). It does not establish statistical superiority, better everyday
+spoken naturalness, comprehensive policy compliance, or lower voice latency.
+The benchmark used 32K context and llama.cpp/Q4_0 KV for Nanbeige; the installed
+voice app uses Ollama, 4K context, and 128-token replies. Its browser smoke check
+establishes integration, not comparative quality or speed.
+
+The portable `.env.example` still defaults to Qwen and the 8 GB checkpoint
+limit. Only the ignored deployment configuration selects Nanbeige and opts into
+the larger LLM checkpoint. Historical Qwen timings remain labeled as Qwen;
+they must not be presented as Nanbeige performance. Keep Qwen available for
+rollback and leave the voice service stopped after this change, as requested.
+
 ## Setup with existing weights
 
 Use the exact [quantizer artifact](https://huggingface.co/bartowski/Nanbeige_Nanbeige4.3-33B-GGUF):
