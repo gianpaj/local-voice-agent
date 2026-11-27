@@ -1,0 +1,114 @@
+{
+  "configurations": [
+    {
+      "name": "inkling-sq10-128k",
+      "completed": 10,
+      "verifier_passes": 2,
+      "timeouts": 7,
+      "clean_passes": 0,
+      "coding_decode_median": 74.2,
+      "decode_samples": 55,
+      "coding_decode_min": 51.9,
+      "coding_decode_max": 119.3,
+      "draft_tokens": 95033,
+      "http_counts": {
+        "200": 67
+      },
+      "long_input_tokens": 119996,
+      "long_retrieval_passed": true,
+      "long_wall_seconds": 166.04638853901997,
+      "long_timings": {
+        "cache_n": 0,
+        "prompt_n": 119996,
+        "prompt_ms": 165045.1,
+        "prompt_per_token_ms": 1.375,
+        "prompt_per_second": 727.0,
+        "predicted_n": 36,
+        "predicted_ms": 855.4,
+        "predicted_per_token_ms": 23.761,
+        "predicted_per_second": 42.1,
+        "draft_n": 51,
+        "draft_n_accepted": 28
+      },
+      "peak_gpu_used_mib": 14776,
+      "system_paging_delta": {
+        "pswpin": 36155,
+        "pswpout": 115
+      }
+    },
+    {
+      "name": "qwen-iq3xxs-128k",
+      "completed": 10,
+      "verifier_passes": 3,
+      "timeouts": 10,
+      "clean_passes": 0,
+      "coding_decode_median": 21.7687331769544,
+      "decode_samples": 58,
+      "coding_decode_min": 16.312096449145823,
+      "coding_decode_max": 22.744708474309544,
+      "draft_tokens": 0,
+      "http_counts": {
+        "200": 58,
+        "502": 5
+      },
+      "long_input_tokens": 119989,
+      "long_retrieval_passed": true,
+      "long_wall_seconds": 236.32804065896198,
+      "long_timings": {
+        "cache_n": 0,
+        "prompt_n": 119989,
+        "prompt_ms": 229766.265,
+        "prompt_per_token_ms": 1.9148944069873073,
+        "prompt_per_second": 522.222006785896,
+        "predicted_n": 52,
+        "predicted_ms": 6292.832,
+        "predicted_per_token_ms": 123.38886274509805,
+        "predicted_per_second": 8.104459168781242
+      },
+      "peak_gpu_used_mib": 14168,
+      "system_paging_delta": {
+        "pswpin": 182800,
+        "pswpout": 195974
+      }
+    },
+    {
+      "name": "inkling-sq15-128k",
+      "completed": 10,
+      "verifier_passes": 0,
+      "timeouts": 9,
+      "clean_passes": 0,
+      "coding_decode_median": 36.0,
+      "decode_samples": 28,
+      "coding_decode_min": 34.2,
+      "coding_decode_max": 36.9,
+      "draft_tokens": 0,
+      "http_counts": {
+        "200": 40,
+        "502": 9
+      },
+      "long_input_tokens": 119996,
+      "long_retrieval_passed": true,
+      "long_wall_seconds": 204.97325744689442,
+      "long_timings": {
+        "cache_n": 0,
+        "prompt_n": 119996,
+        "prompt_ms": 199540.1,
+        "prompt_per_token_ms": 1.663,
+        "prompt_per_second": 601.4,
+        "predicted_n": 36,
+        "predicted_ms": 5281.5,
+        "predicted_per_token_ms": 146.708,
+        "predicted_per_second": 6.8,
+        "draft_n": 0,
+        "draft_n_accepted": 0
+      },
+      "peak_gpu_used_mib": 15646,
+      "system_paging_delta": {
+        "pswpin": 144842,
+        "pswpout": 296781
+      }
+    }
+  ],
+  "all_task_checksums_match": true,
+  "task_files_verified": 116
+}

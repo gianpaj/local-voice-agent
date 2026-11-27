@@ -1,0 +1,23 @@
+[
+  {
+    "repo": "strata-engine/Inkling-2-Mini-Strata",
+    "revision": "5623ceb47d7a01db827460ce1c23e7818a75661b",
+    "filename": "Inkling-2-Mini-SQ-10.strata",
+    "size": 10471526400,
+    "sha256": "ac4d452ad03e4930abd9d46f9c5eec22b2f75a1da45a1e49bd24ccd58b065934"
+  },
+  {
+    "repo": "unsloth/Qwen3.8-27B-GGUF",
+    "revision": "4af51b3542f775b0a8e4b310bfb3f17e01c306c9",
+    "filename": "Qwen3.8-27B-UD-IQ3_XXS.gguf",
+    "size": 10934860704,
+    "sha256": "c0b7c3038681ed2e3040456c1dd45f9858b6c2290bed172c70388a94874f3eee"
+  },
+  {
+    "repo": "strata-engine/Inkling-2-Mini-Strata",
+    "revision": "5623ceb47d7a01db827460ce1c23e7818a75661b",
+    "filename": "Inkling-2-Mini-SQ-15.strata",
+    "size": 14348316672,
+    "sha256": "2ea32eed533afba257e2cbee7b073dc2c3da80fe55d1d2d794779b5498e30737"
+  }
+]
