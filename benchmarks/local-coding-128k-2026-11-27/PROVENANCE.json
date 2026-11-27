@@ -1,0 +1,19 @@
+{
+  "event_date": "2026-11-27",
+  "scope": "Assistant retrospective based on retained local verifier results and runtime traces; not an official leaderboard score.",
+  "dataset_commit": "f30b14415dd733c83627204bad0af69a89ceb46f",
+  "source_sha256": {
+    "REPORT.md": "c1352c89c40b2e41e02ba450b488cd5aeaf97593a21d0b63e6c6fc16ba345d99",
+    "comparison.json": "7c29bb711d0c672fc49e6786bb6b45615d811cac706aa1ee442586a7aa606c32",
+    "task-results.csv": "b248de9bf42cbdce13722047ce0403ac81031dba6d3e426e255de7c367aca5fa",
+    "configs/models.json": "944c4f4977270307cc1c98010289de95bc5ffdf66f9bd1aca7eaa73e567fdff0",
+    "complete-report-all-files.zip": "2c4766dda863fe17fda4b854e3636ece10df27f879c02768f054a4f5a556194c"
+  },
+  "repo_derivatives": {
+    "results-summary.json": "comparison.json, parsed and serialized without changing metric values",
+    "model-artifacts.json": "configs/models.json",
+    "task-results.csv": "Original CSV with error text and absolute result paths omitted"
+  },
+  "raw_token_streams_in_git": false,
+  "inference_for_documentation": false
+}

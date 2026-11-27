@@ -26,6 +26,16 @@ as matched prefill throughput. Nothing was rerun during the repository move.
 The [existing component-performance report](../reports/README.md) covers the
 separate STT/TTS/pipeline experiments; it is not relabeled as this LLM pilot.
 
+## Local coding at 128K — 2026-11-27 retrospective
+
+- [Results, lessons and proposed next-run protocol](local-coding-128k-2026-11-27/README.md)
+- [Compact audited metrics](local-coding-128k-2026-11-27/results-summary.json)
+
+Thirty fixed Python task attempts across Inkling SQ-10, Qwen3.8 IQ3_XXS and
+Inkling SQ-15. Timeout-heavy agent outcomes and a long-context drafting fallback
+limit model-quality conclusions; this is not a voice benchmark or official
+Aider/Terminal-Bench score. No inference was performed to write this retrospective.
+
 ## Reproduce charts without inference
 
 From the repository root, with Matplotlib available:
